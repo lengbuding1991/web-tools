@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>离职生存计算器 Pro Max</title>
+    <script src="./js/vue.global.min.js"></script>
+    <script src="./js/echarts.min.js"></script>
+    <script src="./js/html2canvas.min.js"></script>
+    <style>
+        :root { --blue: #3b82f6; --indigo: #4f46e5; --orange: #f97316; --green: #10b981; --gray-50: #f8fafc; --gray-200: #e2e8f0; --gray-600: #475569; }
+        body { background-color: var(--gray-50); font-family: system-ui, -apple-system, sans-serif; color: #1e293b; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1024px) { .container { grid-template-columns: 420px 1fr; } }
+        
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--gray-200); }
+        header { text-align: center; margin-bottom: 30px; grid-column: 1 / -1; }
+        
+        .input-group { margin-bottom: 12px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--gray-600); }
+        .input-box { position: relative; }
+        input { width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.2s; font-size: 14px; }
+        input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #94a3b8; }
+
+        .result-panel { background: linear-gradient(135deg, var(--blue), var(--indigo)); color: white; border-radius: 16px; padding: 24px; }
+        .stats-container { display: flex; justify-content: space-around; align-items: center; text-align: center; }
+        .big-num { font-size: 48px; font-weight: 800; line-height: 1; margin: 5px 0; }
+        .sub-text { font-size: 12px; opacity: 0.8; }
+        
+        .chart-card { display: flex; flex-direction: column; height: 100%; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        #chart { width: 100%; flex: 1; min-height: 380px; }
+        
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="app" v-cloak class="container">
+    <header>
+        <h1 style="margin:0; font-size: 28px;">🏕️ 离职生存计算器 Pro Max</h1>
+        <p style="color: #64748b; margin-top: 5px;">更真实的 FIRE (提前退休) 路线图，精准算出你的“裸辞底气”</p>
+    </header>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-200); margin-bottom: 15px; padding-bottom: 10px;">
+            <b style="font-size: 16px;">💰 资产与收入</b>
+            <span @click="resetData" style="font-size: 12px; color: #94a3b8; cursor: pointer;">🔄 重置数据</span>
+        </div>
+        
+        <div class="input-group">
+            <label>当前总存款</label>
+            <div class="input-box"><input v-model.number="data.savings" type="number"><span class="unit">元</span></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group"><label>N+1赔偿金</label><div class="input-box"><input v-model.number="data.severance" type="number"><span class="unit">元</span></div></div>
+            <div class="input-group"><label>理财年化 (%)</label><div class="input-box"><input v-model.number="data.interestRate" type="number" step="0.1"><span class="unit">%</span></div></div>
+        </div>
+
+        <div class="input-group">
+            <label style="color: var(--orange);">🏥 紧急备用金 (绝不动用)</label>
+            <div class="input-box">
+                <input v-model.number="data.emergencyFund" type="number" style="background:#fff7ed; border-color:#ffedd5;">
+                <span class="unit" style="color:var(--orange);">元</span>
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--gray-200); margin-top: 20px; padding-top: 20px;">
+            <b style="display:block; margin-bottom: 15px;">📉 每月消耗</b>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="input-group"><label>房租/房贷</label><input v-model.number="data.rent" type="number"></div>
+                <div class="input-group"><label>社保代缴</label><input v-model.number="data.insurance" type="number"></div>
+                <div class="input-group"><label>日常餐饮</label><input v-model.number="data.food" type="number"></div>
+                <div class="input-group"><label>其他杂项</label><input v-model.number="data.other" type="number"></div>
+            </div>
+            <div class="input-group">
+                <label style="color: var(--green);">预计每月副业/接单收入</label>
+                <div class="input-box">
+                    <input v-model.number="data.sideIncome" type="number" style="background:#f0fdf4; border-color:#dcfce7;">
+                    <span class="unit" style="color:var(--green);">元</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="posterArea" style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="result-panel">
+            <div v-if="isInfinite" style="text-align: center; padding: 20px;">
+                <div style="font-size: 24px; font-weight: 800;">🚀 已达成永动机模式！</div>
+                <p>被动收益已覆盖日常支出，恭喜提前实现真正的“打工人自由”。</p>
+            </div>
+            <div v-else class="stats-container">
+                <div>
+                    <div class="sub-text">预计生存极限</div>
+                    <div class="big-num">{{ survivalResult.months }}<span style="font-size:18px; font-weight:400;">{{ typeof survivalResult.months === 'number' ? '月' : '' }}</span></div>
+                    <div class="sub-text">预计破产：{{ survivalResult.bankruptcyDate }}</div>
+                </div>
+                <div style="width:1px; height:50px; background: rgba(255,255,255,0.2);"></div>
+                <div>
+                    <div class="sub-text">月均净烧钱</div>
+                    <div style="font-size: 32px; font-weight: 700; margin: 10px 0;">{{ netBurnRate }}<span style="font-size:14px; font-weight:400;">元</span></div>
+                    <div class="sub-text">已计算理财收益</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-card">
+            <div class="chart-header">
+                <b style="font-size: 16px;">资金消耗曲线预测</b>
+                <button @click="generatePoster" style="font-size: 12px; border: 1px solid var(--gray-200); background: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; color: var(--blue); font-weight: bold;">🖼️ 测测你的，分享海报</button>
+            </div>
+            <div id="chart"></div>
+        </div>
+        
+        <div class="card" style="background: linear-gradient(to right, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; text-align: center; padding: 20px;">
+            <b style="font-size: 16px; color: var(--green);">🤖 算力赋能：生成专属生存与搞钱规划</b>
+            <p style="font-size: 13px; color: var(--gray-600); margin: 10px 0;">
+                将当前计算结果发送至 NAS 算力中心，由 DeepSeek 大模型为你定制《离职生存深度报告》。
+            </p>
+            
+            <div style="margin: 15px 0; text-align: left;">
+                <label for="userEmail" style="font-size: 13px; color: var(--gray-600); font-weight: bold;">接收报告的邮箱地址 <span style="color:red;">*</span></label>
+                <input type="email" id="userEmail" placeholder="例如：hello@example.com" style="width: 100%; padding: 12px; border: 2px solid #bbf7d0; border-radius: 8px; margin-top: 5px; outline: none; transition: 0.3s;">
+            </div>
+
+            <button id="aiReportBtn" style="background: var(--green); color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; width: 100%; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
+                🚀 投递数据，发送 AI 报告至邮箱
+            </button>
+            <p id="aiStatusText" style="font-size: 13px; margin-top: 12px; color: var(--green); font-weight: bold; display: none;"></p>
+        </div>
+        <!-- <div class="card" style="background: linear-gradient(to right, #f8fafc, #e0e7ff); border: none; text-align: center; padding: 15px;">
+            <b style="font-size: 14px; color: var(--indigo);">💡 觉得还不够细？告诉我你想计算什么！</b>
+            <p style="font-size: 12px; color: var(--gray-600); margin: 8px 0; line-height: 1.6;">
+                我是这个计算器的开发者。<br>
+                如果你觉得现在的维度还不够（或者想要什么样的工具），扫码加我微信（备注：建议），告诉我你的痛点，没准我下周就把它开发出来！
+            </p>
+        </div> -->
+    </div>
+</div>
+
+<script src="./js/logic.js?v=1.0.0"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const aiBtn = document.getElementById('aiReportBtn');
+            const emailInput = document.getElementById('userEmail');
+            
+            // 聚焦时边框变色，提升体验
+            emailInput.addEventListener('focus', () => emailInput.style.borderColor = 'var(--green)');
+            emailInput.addEventListener('blur', () => emailInput.style.borderColor = '#bbf7d0');
+
+            if(!aiBtn) return;
+            
+            aiBtn.addEventListener('click', function() {
+                const statusText = document.getElementById('aiStatusText');
+                const emailValue = emailInput.value.trim();
+                const originalText = this.innerText;
+                
+                // 1. 严格的邮箱正则校验
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailValue || !emailRegex.test(emailValue)) {
+                    statusText.style.display = "block";
+                    statusText.innerText = "⚠️ 请先输入有效的邮箱地址，否则报告无法送达！";
+                    statusText.style.color = "#ef4444";
+                    emailInput.style.borderColor = "#ef4444";
+                    // 抖动动画提示
+                    emailInput.style.transform = "translateX(-5px)";
+                    setTimeout(() => emailInput.style.transform = "translateX(5px)", 100);
+                    setTimeout(() => emailInput.style.transform = "translateX(0)", 200);
+                    return;
+                }
+                
+                // 2. 更新按钮 UI 状态
+                this.disabled = true;
+                this.innerText = "⏳ 数据打包中，正在呼叫 NAS 算力...";
+                this.style.background = "#94d3a2";
+                statusText.style.display = "block";
+                statusText.innerText = "正在通过 n8n 调度 DeepSeek 大模型...";
+                statusText.style.color = "var(--green)";
+
+                // 3. 抓取页面数据
+                const inputs = document.querySelectorAll('input[type="number"]');
+                const bigNums = document.querySelectorAll('.big-num');
+                const survivalLimit = bigNums.length > 0 ? bigNums[0].innerText : '未知';
+                const monthlyBurn = bigNums.length > 1 ? bigNums[1].innerText : '未知';
+
+                // 4. 组装发给 n8n 的 JSON 弹药包（新增 email 字段）
+                const payload = {
+                    persona: "Buding Who Doesn't Work",
+                    email: emailValue, // 前端传来的邮箱地址
+                    finances: {
+                        savings: inputs[0].value || 0,
+                        severance: inputs[1].value || 0,
+                        emergency_fund: inputs[3].value || 0,
+                        monthly_rent: inputs[4].value || 0,
+                        side_income: inputs[8].value || 0
+                    },
+                    survival_metrics: {
+                        limit: survivalLimit,
+                        monthly_net_burn: monthlyBurn
+                    },
+                    timestamp: new Date().toISOString()
+                };
+
+                // 5. 发送请求给你的 NAS 中枢
+                // 注意：本地测试时可以用 /webhook-test/，正式上线请改回 /webhook/
+                // 发送请求给你的 NAS 中枢
+                fetch('https://nas-n8n.lbuding.com/webhook/lizhi-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => res.json()) // 核心改动：解析后端传回来的 JSON
+                .then(data => {
+                    if(data.code === 200) {
+                        // 绿灯放行
+                        statusText.innerText = data.msg;
+                        statusText.style.color = "var(--green)";
+                        aiBtn.innerText = "🎉 报告已投递";
+                    } else if (data.code === 429) {
+                        // 红灯阻断 (防刷拦截)
+                        statusText.innerText = data.msg;
+                        statusText.style.color = "#ea580c"; // 醒目的橙红色
+                        aiBtn.innerText = "🚫 今日额度耗尽";
+                        aiBtn.style.background = "#94a3b8"; // 按钮变灰
+                    } else {
+                        throw new Error("未知状态码");
+                    }
+                })
+                .catch(err => {
+                    statusText.innerText = "❌ 算力连接失败，请确认你的 n8n 容器在线。";
+                    statusText.style.color = "#ef4444";
+                    console.error(err);
+                    aiBtn.disabled = false;
+                    aiBtn.innerText = "🚀 投递数据，发送 AI 报告至邮箱";
+                    aiBtn.style.background = "var(--green)";
+                });
+            });
+        }, 1500);
+    });
+</script>
+</body>
+</html>
