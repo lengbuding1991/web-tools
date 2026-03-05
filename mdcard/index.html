@@ -13,10 +13,9 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --accent: #a78bfa; 
-            --card-width: 400px;
+            --card-base-width: 400px; /* 导出时的标准宽度 */
         }
         
-        /* 基础布局优化 */
         body { 
             margin: 0; 
             font-family: system-ui, -apple-system, sans-serif; 
@@ -27,124 +26,125 @@
             overflow: hidden; 
         }
 
-        /* 响应式调整：手机端堆叠显示 */
+        /* 移动端适配：上下布局 */
         @media (max-width: 768px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
-            .config-panel { flex: none !important; width: 100%; border-right: none !important; border-bottom: 1px solid #334155; }
-            .preview-container { padding: 40px 10px !important; min-height: 500px; }
-            :root { --card-width: 95vw; }
+            .config-panel { flex: none; width: 100%; border-right: none; border-bottom: 1px solid #334155; }
+            .preview-container { padding: 30px 10px; min-height: 100vh; }
+            .card-wrapper { width: 92vw !important; } /* 预览时自适应手机宽度 */
+        }
+
+        /* PC端适配：左右布局 */
+        @media (min-width: 769px) {
+            .config-panel { flex: 0 0 350px; }
+            .card-wrapper { width: var(--card-base-width); }
         }
         
-        /* 左侧配置面板 */
-        .config-panel { flex: 0 0 320px; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow-y: auto; background-color: var(--panel-bg); box-sizing: border-box; }
+        /* 配置面板样式 */
+        .config-panel { padding: 25px; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow-y: auto; background-color: var(--panel-bg); box-sizing: border-box; }
         .config-group { margin-bottom: 20px; }
         .config-group label { display: block; color: var(--text-muted); font-size: 13px; margin-bottom: 8px; font-weight: bold; }
-        .config-group input[type="text"], .config-group textarea, .config-group select { width: 100%; background-color: #020617; color: var(--text-main); border: 1px solid #334155; border-radius: 8px; padding: 10px; font-size: 14px; box-sizing: border-box; outline: none; }
-        .config-group textarea { height: 120px; resize: vertical; font-family: monospace; }
-        
-        /* 风格切换按钮 */
-        .style-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .style-btn { background: #1e293b; border: 1px solid #334155; color: var(--text-muted); padding: 10px 5px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .config-group input, .config-group textarea { width: 100%; background-color: #020617; color: var(--text-main); border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 14px; box-sizing: border-box; outline: none; }
+        .config-group textarea { height: 150px; resize: vertical; }
+
+        /* 风格切换 */
+        .style-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .style-btn { background: #1e293b; border: 1px solid #334155; color: var(--text-muted); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px; }
         .style-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* 上传按钮 */
-        .btn-upload { border: 1px dashed #4b5563; color: var(--text-muted); background-color: #020617; padding: 12px; border-radius: 8px; width: 100%; text-align: center; cursor: pointer; font-size: 14px; box-sizing: border-box; display: block; }
-
-        /* 右侧预览区 */
-        .preview-container { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: #0b1120; overflow-y: auto; position: relative; }
+        /* 预览容器 */
+        .preview-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: #0b1120; overflow-y: auto; padding-top: 40px; }
         
-        /* 卡片容器 */
+        /* ==================== 卡片核心样式 ==================== */
         .card-wrapper { 
-            width: var(--card-width); 
-            min-height: 300px;
+            background: #1e293b; 
             border-radius: 24px; 
-            padding: 30px; 
+            padding: 35px; 
             box-sizing: border-box; 
             position: relative; 
-            word-wrap: break-word; /* 防止长单词撑破卡片 */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
         }
 
-        /* 风格代码保持不变，仅优化间距 */
-        .theme-cyber { background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(167, 139, 250, 0.2); }
-        .theme-light { background: #ffffff; border: 1px solid #e5e7eb; }
-        .theme-sea { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border: 1px solid rgba(56, 189, 248, 0.2); }
+        /* 主题定义 */
+        .theme-cyber { background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(167, 139, 250, 0.3); color: #fff; }
+        .theme-light { background: #ffffff; color: #1f2937; border: 1px solid #e5e7eb; }
+        .theme-sea { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #fff; }
 
-        .card-header { display: flex; align-items: center; margin-bottom: 20px; }
-        .avatar { width: 48px; height: 48px; margin-right: 15px; border-radius: 12px; object-fit: cover; }
-        .author-info h3 { margin: 0; font-size: 17px; }
-        .author-info p { margin: 4px 0 0 0; font-size: 12px; }
+        .card-header { display: flex; align-items: center; margin-bottom: 25px; }
+        .avatar { width: 50px; height: 50px; border-radius: 12px; margin-right: 15px; object-fit: cover; background: #334155; }
+        .author-info h3 { margin: 0; font-size: 18px; }
+        .author-info p { margin: 4px 0 0; font-size: 12px; opacity: 0.7; }
 
-        .markdown-body { line-height: 1.6; font-size: 15px; }
-        .markdown-body h3 { font-size: 18px; margin: 20px 0 10px 0; }
-        .markdown-body blockquote { margin: 15px 0; padding: 10px 15px; border-left: 4px solid var(--accent); background: rgba(255,255,255,0.05); border-radius: 4px; }
+        .markdown-body { line-height: 1.7; font-size: 15px; min-height: 100px; }
+        .markdown-body h3 { margin: 20px 0 10px; font-size: 1.2em; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 5px; }
+        .markdown-body blockquote { border-left: 4px solid var(--accent); margin: 15px 0; padding-left: 15px; color: var(--text-muted); font-style: italic; }
         
-        .card-footer { margin-top: 30px; text-align: center; font-size: 10px; color: #64748b; opacity: 0.6; }
+        .card-footer { margin-top: 40px; text-align: center; font-size: 11px; opacity: 0.5; letter-spacing: 1px; }
 
-        .save-btn { margin: 25px 0; width: 100%; max-width: var(--card-width); padding: 16px; background-color: var(--accent); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); }
+        /* 保存按钮 */
+        .save-btn { margin: 30px 0; width: 100%; max-width: 400px; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px -5px rgba(167, 139, 250, 0.5); }
+        .save-btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
     <div class="config-panel">
-        <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 18px;">🎛️ 卡片配置</h2>
+        <h2 style="margin: 0 0 20px 0; font-size: 20px;">🎛️ 配置卡片</h2>
         
         <div class="config-group">
-            <label>风格选择</label>
+            <label>卡片风格</label>
             <div class="style-selector">
-                <button class="style-btn active" data-theme="theme-cyber">赛博</button>
-                <button class="style-btn" data-theme="theme-light">极简</button>
-                <button class="style-btn" data-theme="theme-sea">深海</button>
+                <button class="style-btn active" data-theme="theme-cyber">赛博霓虹</button>
+                <button class="style-btn" data-theme="theme-light">极简白</button>
+                <button class="style-btn" data-theme="theme-sea">深海蓝</button>
             </div>
         </div>
 
         <div class="config-group">
-            <label>1. 头像上传</label>
-            <label class="btn-upload" for="avatar-input" id="file-name-display">选择图片</label>
-            <input type="file" id="avatar-input" accept="image/*" style="display:none">
+            <label>头像上传</label>
+            <input type="file" id="avatar-input" accept="image/*">
         </div>
 
         <div class="config-group">
-            <label>2. 昵称 / 签名</label>
-            <input type="text" id="name-input" value="不打工的布丁" style="margin-bottom: 8px;">
-            <input type="text" id="desc-input" value="@Code & Life | 数字主理人">
+            <label>基本信息</label>
+            <input type="text" id="name-input" value="不打工的布丁" placeholder="输入昵称" style="margin-bottom: 10px;">
+            <input type="text" id="desc-input" value="@Code & Life | 数字主理人" placeholder="输入签名">
         </div>
 
         <div class="config-group">
-            <label>3. Markdown 内容</label>
-            <textarea id="md-input">
-### 🚀 2026 一人 AI 公司计划
+            <label>Markdown 内容</label>
+            <textarea id="md-input">### 🚀 2026 计划
 
-放弃了内耗，正式开启**独立开发**之旅。
+* **核心**：独立开发
+* **工具**：Cursor + AI
+* **愿景**：代码驱动生活
 
-* **核心**：自动化 + 大模型
-* **目标**：打造数字资产。
-
-> “底气是代码给的。”</textarea>
+> “Stay hungry, stay foolish.”</textarea>
         </div>
     </div>
 
     <div class="preview-container">
         <div class="card-wrapper theme-cyber" id="capture-area">
             <div class="card-header">
-                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMjQiIGZpbGw9IiMzNzQxNTEiLz48cGF0aCBkPSJNMjQgMTJjLTMuMzEgMC02IDIuNjktNiA2czIuNjkgNiA2IDYgNi0yLjY5IDYtNi0yLjY5LTYtNi02em0wIDIyYy00Ljk3IDAtOS0yLjA2LTktNC42OXYtMS42MWMwLTIuNjMgNC4wMy00LjY5IDktNC42OXM5IDIuMDYgOSA0LjY5djEuNjFjMCAyLjYzLTQuMDMgNC42OS05IDQuNjl6IiBmaWxsPSIjOWRhM2I4Ii8+PC9zdmc+" alt="avatar" class="avatar" id="p-avatar">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMjQiIGZpbGw9IiMzNzQxNTEiLz48cGF0aCBkPSJNMjQgMTJjLTMuMzEgMC02IDIuNjktNiA2czIuNjkgNiA2IDYgNi0yLjY5IDYtNi0yLjY5LTYtNi02em0wIDIyYy00Ljk3IDAtOS0yLjA2LTktNC42OXYtMS42MWMwLTIuNjMgNC4wMy00LjY5IDktNC42OXM5IDIuMDYgOSA0LjY5djEuNjFjMCAyLjYzLTQuMDMgNC42OS05IDQuNjl6IiBmaWxsPSIjOWRhM2I4Ii8+PC9zdmc+" class="avatar" id="p-avatar">
                 <div class="author-info">
                     <h3 id="p-name">不打工的布丁</h3>
                     <p id="p-desc">@Code & Life | 数字主理人</p>
                 </div>
             </div>
             <div class="markdown-body" id="p-markdown"></div>
-            <div class="card-footer">tools.lbuding.com</div>
+            <div class="card-footer" id="p-footer">tools.lbuding.com</div>
         </div>
-        <button class="save-btn" id="save-btn">⬇️ 保存为高清图片</button>
+        
+        <button class="save-btn" id="save-btn">⬇️ 保存高清图片</button>
     </div>
 
     <script>
-        // 脚本逻辑保持原样，仅做少量兼容性检查
         const avatarInput = document.getElementById('avatar-input');
         const nameInput = document.getElementById('name-input');
         const descInput = document.getElementById('desc-input');
         const mdInput = document.getElementById('md-input');
-        const fileNameDisplay = document.getElementById('file-name-display');
         const pAvatar = document.getElementById('p-avatar');
         const pName = document.getElementById('p-name');
         const pDesc = document.getElementById('p-desc');
@@ -153,43 +153,73 @@
         const captureArea = document.getElementById('capture-area');
         const styleBtns = document.querySelectorAll('.style-btn');
 
+        // 切换风格
         styleBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 styleBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                captureArea.className = `card-wrapper ${btn.getAttribute('data-theme')}`;
+                captureArea.className = `card-wrapper ${btn.dataset.theme}`;
             });
         });
 
-        avatarInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            fileNameDisplay.innerText = "已选择: " + file.name.substring(0,10) + "...";
-            const reader = new FileReader();
-            reader.onload = (event) => pAvatar.src = event.target.result;
-            reader.readAsDataURL(file);
-        });
-
+        // 实时同步文字
         nameInput.addEventListener('input', () => pName.innerText = nameInput.value);
         descInput.addEventListener('input', () => pDesc.innerText = descInput.value);
-        function updateMarkdownPreview() { pMarkdown.innerHTML = marked.parse(mdInput.value); }
-        mdInput.addEventListener('input', updateMarkdownPreview);
-        updateMarkdownPreview();
+        mdInput.addEventListener('input', () => pMarkdown.innerHTML = marked.parse(mdInput.value));
+        
+        // 首次加载渲染 Markdown
+        pMarkdown.innerHTML = marked.parse(mdInput.value);
 
-        saveBtn.addEventListener('click', () => {
-            saveBtn.innerText = "⏳ 处理中...";
-            html2canvas(captureArea, {
-                scale: 2, // 手机端2倍足够，3倍可能导致部分安卓机内存崩溃
-                backgroundColor: null,
-                useCORS: true,
-                allowTaint: true
-            }).then(canvas => {
+        // 头像预览
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => pAvatar.src = ev.target.result;
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 核心：改进后的截图保存逻辑
+        saveBtn.addEventListener('click', async () => {
+            saveBtn.innerText = "⏳ 正在导出 (400px)...";
+            saveBtn.disabled = true;
+
+            // 1. 记录手机上的原始宽度
+            const isMobile = window.innerWidth <= 768;
+            const originalStyle = captureArea.style.cssText;
+
+            // 2. 强制设为标准物理尺寸（导出专用尺寸）
+            // 这样无论手机屏幕多宽，生成的图片永远是 400px 基础宽度
+            captureArea.style.width = '400px';
+            captureArea.style.flex = 'none';
+
+            try {
+                const canvas = await html2canvas(captureArea, {
+                    scale: 2, // 2倍采样，最终图片宽度为 800px，足够发朋友圈/小红书
+                    useCORS: true,
+                    backgroundColor: null,
+                    logging: false,
+                    // 确保截图区域不受当前滚动位置影响
+                    width: 400,
+                    windowWidth: 400 
+                });
+
+                // 3. 恢复原始布局样式
+                captureArea.style.cssText = originalStyle;
+
+                // 4. 下载图片
                 const link = document.createElement('a');
-                link.download = `card_${Date.now()}.png`;
+                link.download = ` PuddingCard_${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                saveBtn.innerText = "⬇️ 保存为高清图片";
-            });
+            } catch (err) {
+                console.error("导出出错:", err);
+                alert("导出失败，请重试");
+            } finally {
+                saveBtn.innerText = "⬇️ 保存高清图片";
+                saveBtn.disabled = false;
+            }
         });
     </script>
 </body>
