@@ -114,29 +114,28 @@
             <div id="chart"></div>
         </div>
         
-        <div class="card" style="background: linear-gradient(to right, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; text-align: center; padding: 20px;">
-            <b style="font-size: 16px; color: var(--green);">🤖 算力赋能：生成专属生存与搞钱规划</b>
-            <p style="font-size: 13px; color: var(--gray-600); margin: 10px 0;">
-                将当前计算结果发送至 NAS 算力中心，由 DeepSeek 大模型为你定制《离职生存深度报告》。
+        <div class="card" style="background: linear-gradient(to right, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; text-align: center; padding: 24px;">
+            <b style="font-size: 18px; color: var(--green);">🤖 算力赋能：生成专属生存与搞钱规划</b>
+            <p style="font-size: 13px; color: var(--gray-600); margin: 12px 0;">
+                将当前计算结果发送至 NAS 算力中心，由 DeepSeek 大模型为你定制报告，并自动存入数据库。
             </p>
             
-            <div style="margin: 15px 0; text-align: left;">
-                <label for="userEmail" style="font-size: 13px; color: var(--gray-600); font-weight: bold;">接收报告的邮箱地址 <span style="color:red;">*</span></label>
-                <input type="email" id="userEmail" placeholder="例如：hello@example.com" style="width: 100%; padding: 12px; border: 2px solid #bbf7d0; border-radius: 8px; margin-top: 5px; outline: none; transition: 0.3s;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; text-align: left;">
+                <div>
+                    <label style="font-size: 13px; color: var(--gray-600); font-weight: bold;">你的昵称 <span style="color:red;">*</span></label>
+                    <input type="text" id="userName" placeholder="例如：不打工的布丁" style="width: 100%; padding: 12px; border: 2px solid #bbf7d0; border-radius: 8px; margin-top: 5px; outline: none; transition: 0.3s;">
+                </div>
+                <div>
+                    <label style="font-size: 13px; color: var(--gray-600); font-weight: bold;">接收报告的邮箱 <span style="color:red;">*</span></label>
+                    <input type="email" id="userEmail" placeholder="hello@example.com" style="width: 100%; padding: 12px; border: 2px solid #bbf7d0; border-radius: 8px; margin-top: 5px; outline: none; transition: 0.3s;">
+                </div>
             </div>
 
-            <button id="aiReportBtn" style="background: var(--green); color: white; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.3s; width: 100%; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
+            <button id="aiReportBtn" style="background: var(--green); color: white; border: none; padding: 16px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; width: 100%; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
                 🚀 投递数据，发送 AI 报告至邮箱
             </button>
-            <p id="aiStatusText" style="font-size: 13px; margin-top: 12px; color: var(--green); font-weight: bold; display: none;"></p>
+            <p id="aiStatusText" style="font-size: 13px; margin-top: 15px; color: var(--green); font-weight: bold; display: none;"></p>
         </div>
-        <!-- <div class="card" style="background: linear-gradient(to right, #f8fafc, #e0e7ff); border: none; text-align: center; padding: 15px;">
-            <b style="font-size: 14px; color: var(--indigo);">💡 觉得还不够细？告诉我你想计算什么！</b>
-            <p style="font-size: 12px; color: var(--gray-600); margin: 8px 0; line-height: 1.6;">
-                我是这个计算器的开发者。<br>
-                如果你觉得现在的维度还不够（或者想要什么样的工具），扫码加我微信（备注：建议），告诉我你的痛点，没准我下周就把它开发出来！
-            </p>
-        </div> -->
     </div>
 </div>
 
@@ -147,8 +146,8 @@
         setTimeout(() => {
             const aiBtn = document.getElementById('aiReportBtn');
             const emailInput = document.getElementById('userEmail');
+            const nameInput = document.getElementById('userName'); // 抓取昵称框
             
-            // 聚焦时边框变色，提升体验
             emailInput.addEventListener('focus', () => emailInput.style.borderColor = 'var(--green)');
             emailInput.addEventListener('blur', () => emailInput.style.borderColor = '#bbf7d0');
 
@@ -157,6 +156,7 @@
             aiBtn.addEventListener('click', function() {
                 const statusText = document.getElementById('aiStatusText');
                 const emailValue = emailInput.value.trim();
+                const nameValue = nameInput.value.trim() || "匿名用户"; // 默认昵称
                 const originalText = this.innerText;
                 
                 // 1. 严格的邮箱正则校验
@@ -166,7 +166,6 @@
                     statusText.innerText = "⚠️ 请先输入有效的邮箱地址，否则报告无法送达！";
                     statusText.style.color = "#ef4444";
                     emailInput.style.borderColor = "#ef4444";
-                    // 抖动动画提示
                     emailInput.style.transform = "translateX(-5px)";
                     setTimeout(() => emailInput.style.transform = "translateX(5px)", 100);
                     setTimeout(() => emailInput.style.transform = "translateX(0)", 200);
@@ -178,19 +177,33 @@
                 this.innerText = "⏳ 数据打包中，正在呼叫 NAS 算力...";
                 this.style.background = "#94d3a2";
                 statusText.style.display = "block";
-                statusText.innerText = "正在通过 n8n 调度 DeepSeek 大模型...";
+                statusText.innerText = "正在通过 n8n 调度 DeepSeek 并记录数据...";
                 statusText.style.color = "var(--green)";
 
-                // 3. 抓取页面数据
+                // 3. 回归你最稳健的数据抓取方式！
                 const inputs = document.querySelectorAll('input[type="number"]');
                 const bigNums = document.querySelectorAll('.big-num');
                 const survivalLimit = bigNums.length > 0 ? bigNums[0].innerText : '未知';
                 const monthlyBurn = bigNums.length > 1 ? bigNums[1].innerText : '未知';
 
-                // 4. 组装发给 n8n 的 JSON 弹药包（新增 email 字段）
+                // 处理数据库所需的天数计算
+                let dbDays = 99999;
+                if (survivalLimit !== '未知' && !survivalLimit.includes('+')) {
+                    dbDays = parseInt(survivalLimit) * 30 || 99999;
+                }
+
+                // 4. 组装发给 n8n 的 JSON 弹药包（完美融合双版本）
                 const payload = {
                     persona: "Buding Who Doesn't Work",
-                    email: emailValue, // 前端传来的邮箱地址
+                    nickname: nameValue, // 给数据库用的昵称
+                    email: emailValue,   // 发送报告用的邮箱
+                    
+                    // --- 数据库专属计算字段 ---
+                    savings: Number(inputs[0].value) || 0,
+                    cost: (Number(inputs[4].value) || 0) + (Number(inputs[5].value) || 0) + (Number(inputs[6].value) || 0) + (Number(inputs[7].value) || 0),
+                    days: dbDays,
+
+                    // --- 保持你原有 AI 逻辑的字段不变 ---
                     finances: {
                         savings: inputs[0].value || 0,
                         severance: inputs[1].value || 0,
@@ -206,28 +219,27 @@
                 };
 
                 // 5. 发送请求给你的 NAS 中枢
-                // 注意：本地测试时可以用 /webhook-test/，正式上线请改回 /webhook/
-                // 发送请求给你的 NAS 中枢
                 fetch('https://nas-n8n.lbuding.com/webhook/lizhi-report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 })
-                .then(res => res.json()) // 核心改动：解析后端传回来的 JSON
+                .then(res => res.json()) 
                 .then(data => {
                     if(data.code === 200) {
-                        // 绿灯放行
                         statusText.innerText = data.msg;
                         statusText.style.color = "var(--green)";
                         aiBtn.innerText = "🎉 报告已投递";
                     } else if (data.code === 429) {
-                        // 红灯阻断 (防刷拦截)
                         statusText.innerText = data.msg;
-                        statusText.style.color = "#ea580c"; // 醒目的橙红色
+                        statusText.style.color = "#ea580c"; 
                         aiBtn.innerText = "🚫 今日额度耗尽";
-                        aiBtn.style.background = "#94a3b8"; // 按钮变灰
+                        aiBtn.style.background = "#94a3b8"; 
                     } else {
-                        throw new Error("未知状态码");
+                        // 如果你后端的 n8n 没有配置固定的返回格式，就默认走成功
+                        statusText.innerText = "✅ 数据投递成功，AI报告生成中！";
+                        statusText.style.color = "var(--green)";
+                        aiBtn.innerText = "🎉 投递成功";
                     }
                 })
                 .catch(err => {
