@@ -18,7 +18,6 @@
         
         body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* 移动端布局 */
         @media (max-width: 768px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
             .config-panel { flex: none; width: 100%; border-right: none; border-bottom: 1px solid #334155; }
@@ -31,91 +30,57 @@
             .preview-container { flex: 1; padding: 60px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; background-color: #0b1120;}
         }
         
-        /* 配置面板 */
         .config-panel { padding: 25px; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow-y: auto; background-color: var(--panel-bg); box-sizing: border-box; }
         .config-group { margin-bottom: 20px; }
         .config-group label { display: block; color: var(--text-muted); font-size: 13px; margin-bottom: 8px; font-weight: bold; }
         .config-group input, .config-group textarea { width: 100%; background-color: #020617; color: var(--text-main); border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 14px; box-sizing: border-box; outline: none; }
         .config-group textarea { height: 150px; resize: vertical; font-family: monospace; }
 
-        /* 风格切换按钮 */
         .style-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .style-btn { background: #1e293b; border: 1px solid #334155; color: var(--text-muted); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: 0.2s; }
         .style-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* ==================== 样式引擎核心 (找回最初的风格) ==================== */
+        /* 卡片基础样式 */
         .card-wrapper { 
             width: var(--export-width); 
             border-radius: 24px; 
             padding: 35px; 
             box-sizing: border-box; 
             position: relative; 
-            transition: all 0.3s ease;
+            overflow: hidden; /* 核心：防止子元素溢出 */
+            background: #fff;
         }
 
-        /* 截图专用类：彻底解决透明边框 */
+        /* 截图专用：强制重置所有可能导致透明的属性 */
         .card-wrapper.is-capturing {
             box-shadow: none !important;
             margin: 0 !important;
             transform: none !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
+            border: none !important; /* 如果有边框也会被计入，先关掉或统一 */
         }
 
-        /* 风格 1：赛博霓虹 (Cyber) */
-        .theme-cyber {
-            background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); 
-            border: 1px solid rgba(167, 139, 250, 0.2); 
-            color: #ffffff;
-        }
-        .theme-cyber::before {
-            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 60px; height: 3px; background: #a78bfa; box-shadow: 0 0 15px #a78bfa; border-radius: 0 0 4px 4px;
-        }
+        /* 风格定义 */
+        .theme-cyber { background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%); color: #fff; border: 1px solid rgba(167, 139, 250, 0.2); }
+        .theme-cyber::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background: #a78bfa; }
         .theme-cyber .author-info p { color: #a78bfa; }
-        .theme-cyber .markdown-body h3 { color: #ffffff; border-bottom: 1px solid rgba(167, 139, 250, 0.2); }
-        .theme-cyber .markdown-body li::before { content: "◈"; color: var(--accent); }
 
-        /* 风格 2：极简纸张 (Light) */
-        .theme-light {
-            background: #ffffff; 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
-            border: 1px solid #e5e7eb; 
-            color: #374151;
-        }
+        .theme-light { background: #ffffff; color: #374151; border: 1px solid #e5e7eb; }
         .theme-light .author-info h3 { color: #111827; }
         .theme-light .author-info p { color: #6b7280; }
-        .theme-light .markdown-body h3 { color: #111827; border-bottom: 2px solid #f3f4f6; }
-        .theme-light .markdown-body li::before { content: "•"; color: #3b82f6; }
-        .theme-light .card-footer { color: #94a3b8; }
 
-        /* 风格 3：深海渐变 (Sea) */
-        .theme-sea {
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); 
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5); 
-            border: 1px solid rgba(56, 189, 248, 0.2); 
-            color: #ffffff;
-        }
+        .theme-sea { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #fff; }
         .theme-sea .author-info p { color: #38bdf8; }
-        .theme-sea .markdown-body h3 { color: #f0f9ff; border-bottom: 1px solid rgba(56, 189, 248, 0.2); }
-        .theme-sea .markdown-body li::before { content: "◈"; color: #38bdf8; }
 
-        /* 通用组件 */
         .card-header { display: flex; align-items: center; margin-bottom: 25px; }
-        .avatar { width: 52px; height: 52px; margin-right: 18px; object-fit: cover; border-radius: 14px; background-color: #374151; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar { width: 52px; height: 52px; margin-right: 18px; border-radius: 14px; object-fit: cover; background: #334155; }
         .author-info h3 { margin: 0; font-size: 19px; }
         .author-info p { margin: 4px 0 0; font-size: 12px; opacity: 0.8; }
         
         .markdown-body { line-height: 1.8; font-size: 15px; }
-        .markdown-body h3 { font-size: 20px; margin-top: 25px; margin-bottom: 15px; padding-bottom: 5px; display: block; }
-        .markdown-body ul { list-style: none; padding-left: 5px; }
-        .markdown-body li { position: relative; padding-left: 20px; margin-bottom: 8px; }
-        .markdown-body li::before { position: absolute; left: 0; font-weight: bold; }
-        .markdown-body blockquote { margin: 20px 0; padding: 12px 20px; font-style: italic; border-left: 4px solid var(--accent); background: rgba(128,128,128,0.05); border-radius: 0 8px 8px 0; }
+        .markdown-body h3 { font-size: 20px; margin: 25px 0 15px; border-bottom: 1px solid rgba(128,128,128,0.2); }
+        .markdown-body blockquote { border-left: 4px solid var(--accent); padding: 10px 20px; background: rgba(128,128,128,0.05); margin: 20px 0; }
         
-        .card-footer { margin-top: 40px; text-align: center; font-size: 11px; opacity: 0.5; font-family: monospace; letter-spacing: 2px; }
+        .card-footer { margin-top: 40px; text-align: center; font-size: 11px; opacity: 0.5; font-family: monospace; }
 
         .save-btn { margin-top: 30px; width: 100%; max-width: 400px; padding: 16px; background-color: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: block; }
     </style>
@@ -124,7 +89,6 @@
 
     <div class="config-panel">
         <h2 style="margin: 0 0 20px 0; font-size: 18px;">🎛️ 卡片配置</h2>
-        
         <div class="config-group">
             <label>风格切换</label>
             <div class="style-selector">
@@ -133,7 +97,6 @@
                 <button class="style-btn" data-theme="theme-sea">深海渐变</button>
             </div>
         </div>
-
         <div class="config-group">
             <label>1. 上传头像</label>
             <input type="file" id="avatar-input" accept="image/*">
@@ -144,7 +107,7 @@
             <input type="text" id="desc-input" value="@Code & Life | 数字主理人">
         </div>
         <div class="config-group">
-            <label>3. Markdown 内容</label>
+            <label>3. 内容内容</label>
             <textarea id="md-input">### 🚀 2026 计划
 
 * **核心**：独立开发
@@ -183,14 +146,11 @@
         const captureArea = document.getElementById('capture-area');
         const styleBtns = document.querySelectorAll('.style-btn');
 
-        // 重新找回的风格切换逻辑
         styleBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 styleBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                const theme = btn.getAttribute('data-theme');
-                // 仅更换主题类名，保留基础类名
-                captureArea.className = `card-wrapper ${theme}`;
+                captureArea.className = `card-wrapper ${btn.getAttribute('data-theme')}`;
             });
         });
 
@@ -211,48 +171,53 @@
             }
         });
 
-        // 终极裁剪保存逻辑
+        // ==================== 终极裁剪修正 (四向零边距) ====================
         saveBtn.addEventListener('click', async () => {
             saveBtn.innerText = "⏳ 正在导出...";
             saveBtn.disabled = true;
 
-            const exportWidth = 400; 
+            // 1. 记录状态
             const originalStyle = captureArea.style.cssText;
-            const originalClassName = captureArea.className;
-
-            // 进入截图模式
+            
+            // 2. 关键：截图前先精准测量元素的真实尺寸
+            const rect = captureArea.getBoundingClientRect();
+            
+            // 3. 强制进入导出状态
             captureArea.classList.add('is-capturing');
-            captureArea.style.width = exportWidth + 'px';
+            captureArea.style.width = '400px'; // 锁定宽度
+            captureArea.style.margin = '0';
+            captureArea.style.padding = '35px'; // 确保Padding固定
 
             try {
                 const canvas = await html2canvas(captureArea, {
-                    width: exportWidth,
-                    height: captureArea.offsetHeight,
                     scale: 2,
                     useCORS: true,
                     backgroundColor: null,
+                    // 核心参数：根据 getBoundingClientRect 精确指定裁剪区域
+                    width: 400,
+                    height: captureArea.scrollHeight, // 使用 scrollHeight 抓取包括溢出的完整高度
                     x: 0,
                     y: 0,
                     scrollX: 0,
                     scrollY: 0,
                     onclone: (clonedDoc) => {
                         const target = clonedDoc.getElementById('capture-area');
-                        target.style.position = 'absolute';
+                        // 在克隆页面里彻底移除干扰，并强行将其放置在原点
+                        target.style.position = 'fixed';
                         target.style.top = '0';
                         target.style.left = '0';
                         target.style.margin = '0';
+                        target.style.boxShadow = 'none';
                     }
                 });
 
                 const link = document.createElement('a');
-                link.download = `PuddingCard_${Date.now()}.png`;
+                link.download = `Card_${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             } catch (err) {
                 console.error(err);
-                alert("导出失败，请重试");
             } finally {
-                // 恢复原状
                 captureArea.classList.remove('is-capturing');
                 captureArea.style.cssText = originalStyle;
                 saveBtn.innerText = "⬇️ 保存精确裁剪图片";
