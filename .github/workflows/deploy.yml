@@ -1,28 +1,53 @@
-name: Deploy to Alibaba Cloud
+name: Deploy to Aliyun
 
-# 触发条件：当你向 master 分支推送代码时执行
 on:
   push:
     branches:
-      - master  # 已经根据你的截图改为 master 分支
+      - master  # 确认你的主分支是 master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+      - name: Execute remote ssh commands
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # 脚本说明：进入目录，强制同步 GitHub 上的代码
+          # 核心逻辑：配置 SSH 走 443 端口并执行同步
           script: |
+            # 确保 SSH 目录存在
+            mkdir -p ~/.ssh
+            
+            # 写入配置：强制 GitHub 走 443 端口（这在阿里云环境下通常比 22 端口更稳）
+            cat > ~/.ssh/config <<EOF
+            Host github.com
+              Hostname ssh.github.com
+              Port 443
+              User git
+              StrictHostKeyChecking no
+            EOF
+            
+            chmod 600 ~/.ssh/config
+
+            # 进入你的 web-tools 目录
             cd /www/wwwroot/tools.lbuding.com
-            git fetch --all
-            git reset --hard origin/master
-            git pull origin master
-            echo "同步完成！当前时间：$(date)"
+
+            # 强制切换远程仓库地址为 SSH 格式
+            git remote set-url origin git@github.com:lengbuding1991/web-tools.git
+
+            # 执行同步流程
+            echo "开始从 GitHub (SSH:443) 拉取代码..."
+            if git fetch origin master; then
+                git reset --hard origin/master
+                git pull origin master
+                echo "同步完成！当前时间: $(date)"
+            else
+                echo "错误：SSH 连接 GitHub 失败，请检查服务器出站防火墙是否允许 443 端口。"
+                exit 1
+            fi
