@@ -8,22 +8,23 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root {
-            --bg-color: #020617; 
+            --bg-color: #f1f5f9; /* 预览区域背景色，方便区分卡片 */
             --panel-bg: #111827;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
             --accent: #a78bfa; 
-            --export-width: 450px; /* 定义导出的标准宽度 */
+            --export-width: 450px; /* 导出的标准宽度 */
         }
         
-        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background-color: #020617; color: #fff; display: flex; height: 100vh; overflow: hidden; }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
             .config-panel { flex: none; width: 100%; border-right: none; border-bottom: 1px solid #334155; }
             .preview-container { padding: 30px 10px; min-height: 100vh; }
-            .card-wrapper { width: 92vw !important; } 
+            /* 预览时自适应 */
+            .card-wrapper:not(.is-capturing) { width: 92vw !important; margin: 0 auto; } 
         }
 
         @media (min-width: 769px) {
@@ -31,71 +32,100 @@
             .card-wrapper { width: var(--export-width); }
         }
         
-        .config-panel { padding: 25px; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow-y: auto; background-color: var(--panel-bg); box-sizing: border-box; }
+        /* 配置面板样式 */
+        .config-panel { padding: 25px; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow-y: auto; background-color: var(--panel-bg); box-sizing: border-box; color: #f8fafc; }
         .config-group { margin-bottom: 20px; }
-        .config-group label { display: block; color: var(--text-muted); font-size: 13px; margin-bottom: 8px; font-weight: bold; }
-        .config-group input, .config-group textarea { width: 100%; background-color: #020617; color: var(--text-main); border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 14px; box-sizing: border-box; outline: none; }
+        .config-group label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 8px; font-weight: bold; }
+        .config-group input, .config-group textarea { width: 100%; background-color: #020617; color: #fff; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 14px; box-sizing: border-box; outline: none; }
         .config-group textarea { height: 150px; resize: vertical; }
 
         .style-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .style-btn { background: #1e293b; border: 1px solid #334155; color: var(--text-muted); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        .style-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px; text-align: center;}
         .style-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        .preview-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: #0b1120; overflow-y: auto; padding-top: 40px; }
+        /* 预览容器 */
+        .preview-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: var(--bg-color); overflow-y: auto; padding-top: 40px; box-sizing: border-box;}
         
-        /* 卡片样式 */
+        /* ==================== 卡片样式核心 ==================== */
         .card-wrapper { 
-            background: #1e293b; 
-            border-radius: 24px; 
-            padding: 35px; 
+            background: #ffffff; 
+            border-radius: 32px; /* 稍微加大圆角，更精致 */
+            padding: 40px; 
             box-sizing: border-box; 
             position: relative; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            /* 关键：确保截图时不被裁剪 */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); /* 预览时的阴影 */
+            color: var(--text-main);
             word-wrap: break-word;
+            border: 1px solid #e5e7eb; /* 增加纤细边框 */
         }
 
-        .theme-cyber { background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(167, 139, 250, 0.3); color: #fff; }
-        .theme-light { background: #ffffff; color: #1f2937; border: 1px solid #e5e7eb; }
-        .theme-sea { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #fff; }
+        /* 🚀 截图时的专用类：移除一切多余空间和阴影 🚀 */
+        .card-wrapper.is-capturing {
+            box-shadow: none !important; /* 核心：移除阴影 */
+            margin: 0 !important;      /* 核心：移除外边距 */
+            border: 1px solid #e5e7eb !important; /* 保留圆角边框 */
+            position: static !important; /* 确保不产生位移 */
+        }
 
-        .card-header { display: flex; align-items: center; margin-bottom: 25px; }
-        .avatar { width: 50px; height: 50px; border-radius: 12px; margin-right: 15px; object-fit: cover; background: #334155; }
-        .author-info h3 { margin: 0; font-size: 18px; }
-        .author-info p { margin: 4px 0 0; font-size: 12px; opacity: 0.7; }
+        /* 主题定义 (简化以匹配图片效果) */
+        .theme-cyber { background: #ffffff; color: #1f2937; }
+        .theme-light { background: #ffffff; color: #1f2937; }
+        .theme-sea { background: #ffffff; color: #1f2937; }
 
-        .markdown-body { line-height: 1.7; font-size: 15px; }
-        .markdown-body h3 { margin: 20px 0 10px; font-size: 1.2em; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 5px; }
-        .markdown-body blockquote { border-left: 4px solid var(--accent); margin: 15px 0; padding-left: 15px; color: var(--text-muted); font-style: italic; }
+        .card-header { display: flex; align-items: center; margin-bottom: 30px; }
+        /* 模仿图片中的头像样式 */
+        .avatar-placeholder { 
+            width: 60px; height: 60px; border-radius: 16px; margin-right: 18px; 
+            background-color: #374151; display: flex; align-items: center; justify-content: center;
+            color: #9ca3af; font-size: 30px;
+        }
+        .avatar-img { width: 60px; height: 60px; border-radius: 16px; margin-right: 18px; object-fit: cover; display: none;}
         
-        .card-footer { margin-top: 40px; text-align: center; font-size: 11px; opacity: 0.5; letter-spacing: 1px; }
+        .author-info h3 { margin: 0; font-size: 22px; font-weight: 700; color: #000; }
+        .author-info p { margin: 4px 0 0; font-size: 14px; color: #6b7280; }
 
-        .save-btn { margin: 30px 0; width: 100%; max-width: 400px; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .markdown-body { line-height: 1.8; font-size: 16px; color: #374151;}
+        .markdown-body h3 { margin: 25px 0 15px; font-size: 20px; font-weight: 700; color: #000; display: flex; align-items: center; gap: 8px;}
+        /* 模仿图片中的分隔线 */
+        .markdown-body h3::after { content:''; flex: 1; height: 1px; background-color: #e5e7eb; margin-left: 10px;}
+
+        .markdown-body ul { padding-left: 20px; list-style-type: none; }
+        .markdown-body li { position: relative; margin-bottom: 8px; }
+        /* 模仿图片中的列表前缀 */
+        .markdown-body li::before { content: "•"; color: #000; font-weight: bold; position: absolute; left: -15px; }
+        
+        /* 模仿图片中的引用块 */
+        .markdown-body blockquote { 
+            border-left: 4px solid var(--accent); 
+            margin: 25px 0; 
+            padding: 10px 20px; 
+            color: #9ca3af; 
+            font-style: italic;
+            background-color: #f9fafb;
+            border-radius: 4px;
+        }
+        
+        .card-footer { margin-top: 50px; text-align: center; font-size: 13px; color: #9ca3af; letter-spacing: 1px; font-family: monospace; }
+
+        /* 保存按钮 */
+        .save-btn { margin: 30px auto; width: 100%; max-width: 400px; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px -5px rgba(167, 139, 250, 0.5); display: block;}
     </style>
 </head>
 <body>
 
     <div class="config-panel">
-        <h2 style="margin: 0 0 20px 0; font-size: 20px;">🎛️ 配置卡片</h2>
+        <h2 style="margin: 0 0 20px 0; font-size: 18px;">🎛️ 配置卡片</h2>
         <div class="config-group">
-            <label>卡片风格</label>
-            <div class="style-selector">
-                <button class="style-btn active" data-theme="theme-cyber">赛博霓虹</button>
-                <button class="style-btn" data-theme="theme-light">极简白</button>
-                <button class="style-btn" data-theme="theme-sea">深海蓝</button>
-            </div>
-        </div>
-        <div class="config-group">
-            <label>头像上传</label>
+            <label>1. 头像上传</label>
             <input type="file" id="avatar-input" accept="image/*">
         </div>
         <div class="config-group">
-            <label>基本信息</label>
+            <label>2. 基本信息</label>
             <input type="text" id="name-input" value="不打工的布丁" style="margin-bottom: 10px;">
             <input type="text" id="desc-input" value="@Code & Life | 数字主理人">
         </div>
         <div class="config-group">
-            <label>Markdown 内容</label>
+            <label>3. Markdown 内容</label>
             <textarea id="md-input">### 🚀 2026 计划
 
 * **核心**：独立开发
@@ -107,103 +137,107 @@
     </div>
 
     <div class="preview-container">
-        <div id="export-container">
-            <div class="card-wrapper theme-cyber" id="capture-area">
-                <div class="card-header">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMjQiIGZpbGw9IiMzNzQxNTEiLz48cGF0aCBkPSJNMjQgMTJjLTMuMzEgMC02IDIuNjktNiA2czIuNjkgNiA2IDYgNi0yLjY5IDYtNi0yLjY5LTYtNi02em0wIDIyYy00Ljk3IDAtOS0yLjA2LTktNC42OXYtMS42MWMwLTIuNjMgNC4wMy00LjY5IDktNC42OXM5IDIuMDYgOSA0LjY5djEuNjFjMCAyLjYzLTQuMDMgNC42OS05IDQuNjl6IiBmaWxsPSIjOWRhM2I4Ii8+PC9zdmc+" class="avatar" id="p-avatar">
-                    <div class="author-info">
-                        <h3 id="p-name">不打工的布丁</h3>
-                        <p id="p-desc">@Code & Life | 数字主理人</p>
-                    </div>
+        <div class="card-wrapper" id="capture-area">
+            <div class="card-header">
+                <div class="avatar-placeholder" id="p-avatar-place">👤</div>
+                <img src="" class="avatar-img" id="p-avatar-img">
+                <div class="author-info">
+                    <h3 id="p-name">不打工的布丁</h3>
+                    <p id="p-desc">@Code & Life | 数字主理人</p>
                 </div>
-                <div class="markdown-body" id="p-markdown"></div>
-                <div class="card-footer" id="p-footer">tools.lbuding.com</div>
             </div>
+            <div class="markdown-body" id="p-markdown"></div>
+            <div class="card-footer">tools.lbuding.com</div>
         </div>
-        <button class="save-btn" id="save-btn">⬇️ 保存高清图片</button>
+        
+        <button class="save-btn" id="save-btn">⬇️ 保存精确裁剪图片</button>
     </div>
 
     <script>
+        // 初始化 Marked
+        marked.setOptions({ breaks: true });
+
         const avatarInput = document.getElementById('avatar-input');
         const nameInput = document.getElementById('name-input');
         const descInput = document.getElementById('desc-input');
         const mdInput = document.getElementById('md-input');
-        const pAvatar = document.getElementById('p-avatar');
+        const pAvatarPlace = document.getElementById('p-avatar-place');
+        const pAvatarImg = document.getElementById('p-avatar-img');
         const pName = document.getElementById('p-name');
         const pDesc = document.getElementById('p-desc');
         const pMarkdown = document.getElementById('p-markdown');
         const saveBtn = document.getElementById('save-btn');
         const captureArea = document.getElementById('capture-area');
-        const styleBtns = document.querySelectorAll('.style-btn');
 
-        styleBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                styleBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                captureArea.className = `card-wrapper ${btn.dataset.theme}`;
-            });
-        });
-
+        // 实时同步
         const updatePreview = () => {
-            pName.innerText = nameInput.value;
-            pDesc.innerText = descInput.value;
-            pMarkdown.innerHTML = marked.parse(mdInput.value);
+            pName.innerText = nameInput.value || "昵称";
+            pDesc.innerText = descInput.value || "签名";
+            pMarkdown.innerHTML = marked.parse(mdInput.value || "输入内容...");
         };
         [nameInput, descInput, mdInput].forEach(el => el.addEventListener('input', updatePreview));
-        updatePreview();
+        updatePreview(); // 首次加载
 
+        // 头像上传
         avatarInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (ev) => pAvatar.src = ev.target.result;
+                reader.onload = (ev) => {
+                    pAvatarImg.src = ev.target.result;
+                    pAvatarImg.style.display = 'block';
+                    pAvatarPlace.style.display = 'none';
+                };
                 reader.readAsDataURL(file);
             }
         });
 
-        // --- 修正后的保存逻辑 ---
+        // ==================== 核心修正：精确裁剪逻辑 ====================
         saveBtn.addEventListener('click', async () => {
-            saveBtn.innerText = "⏳ 正在生成...";
+            saveBtn.innerText = "⏳ 正在精确裁剪...";
             saveBtn.disabled = true;
 
-            // 1. 关键：获取导出宽度
+            // 1. 准备阶段：锁定导出宽度 (450px)
             const exportWidth = 450; 
             const originalStyle = captureArea.style.cssText;
-
-            // 2. 核心修正：在保存前将元素调整为固定宽度，并确保它没有偏移
-            // 我们通过设置固定宽度和重置变换来解决右侧透明问题
+            
+            // 2. 关键：应用截图专用类 (移除阴影和margin)
+            captureArea.classList.add('is-capturing');
+            
+            // 3. 强制设为标准物理尺寸，确保排版一致
             captureArea.style.width = exportWidth + 'px';
-            captureArea.style.transform = 'none';
+            captureArea.style.flex = 'none';
 
             try {
+                // 使用 onclone 在克隆的 DOM 中进行最后的排版微调
                 const canvas = await html2canvas(captureArea, {
-                    width: exportWidth,     // 显式指定 canvas 宽度
+                    width: exportWidth,     // 强制 canvas 宽度贴合卡片
                     scale: 2,               // 2倍高清
-                    useCORS: true,
-                    backgroundColor: null,  // 背景透明
-                    // 关键参数：
-                    scrollX: -window.scrollX,
-                    scrollY: -window.scrollY,
-                    windowWidth: document.documentElement.offsetWidth,
-                    windowHeight: document.documentElement.offsetHeight,
+                    useCORS: true,          // 允许跨域图片
+                    backgroundColor: null,  // 核心：画布背景透明
+                    logging: false,
                     onclone: (clonedDoc) => {
-                        // 在克隆的文档里，确保该元素是可见且布局正确的
+                        // 在克隆出的文档中确保卡片是干净的
                         const clonedTarget = clonedDoc.getElementById('capture-area');
-                        clonedTarget.style.width = exportWidth + 'px';
                         clonedTarget.style.margin = '0';
+                        clonedTarget.style.boxShadow = 'none';
                     }
                 });
 
+                // 4. 下载
                 const link = document.createElement('a');
                 link.download = `PuddingCard_${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             } catch (err) {
-                console.error(err);
-                alert("生成失败");
+                console.error("导出失败:", err);
+                alert("导出失败，请重试");
             } finally {
-                captureArea.style.cssText = originalStyle; // 恢复预览样式
-                saveBtn.innerText = "⬇️ 保存高清图片";
+                // 5. 恢复阶段：移除截图专用类，恢复预览样式
+                captureArea.classList.remove('is-capturing');
+                captureArea.style.cssText = originalStyle;
+                
+                saveBtn.innerText = "⬇️ 保存精确裁剪图片";
                 saveBtn.disabled = false;
             }
         });
