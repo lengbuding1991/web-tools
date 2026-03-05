@@ -1,0 +1,24 @@
+name: Deploy to Alibaba Cloud
+
+on:
+  push:
+    branches:
+      - main  # 当你向 main 分支推送代码时触发
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /www/wwwroot/tools.lbuding.com  # 进入你的宝塔站点目录
+            git pull origin main               # 强制拉取最新代码
+            echo "部署成功！"
