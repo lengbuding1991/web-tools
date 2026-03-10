@@ -3,101 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 职场毒舌顾问 | 布丁的企业级项目</title>
+    <title>AI 职场生存报告 | 布丁的 AI 实验室</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        .fade-enter { opacity: 0; transform: translateY(15px); }
-        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-        /* 给 AI 建议加一个酷炫的呼吸灯效果 */
-        .ai-glow { box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .fade-enter { opacity: 0; transform: translateY(20px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .ai-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.2); }
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased selection:bg-blue-200 font-sans">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased">
 
-    <main class="max-w-md w-full bg-white rounded-3xl shadow-2xl ring-1 ring-slate-900/5 p-8 relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50 rounded-full blur-3xl opacity-50"></div>
-
+    <main class="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl ring-1 ring-slate-200 p-8 relative overflow-hidden">
+        <div class="absolute -top-20 -left-20 w-64 h-64 bg-blue-50 rounded-full blur-3xl opacity-60"></div>
+        
         <header class="text-center mb-10 relative">
-            <div class="inline-block px-3 py-1 bg-blue-100 text-blue-600 text-[10px] font-bold uppercase tracking-widest rounded-full mb-3">AI Powered System</div>
-            <h1 class="text-3xl font-black text-slate-900 tracking-tight">离职生存计算器</h1>
-            <p class="text-slate-500 text-sm mt-2">基于 DeepSeek 模型的生存概率分析</p>
+            <span class="px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full">Enterprise AI v2.0</span>
+            <h1 class="text-3xl font-black text-slate-900 mt-4 tracking-tight text-nowrap">离职生存计算器</h1>
+            <p class="text-slate-400 text-sm mt-2 font-medium">DeepSeek 实时算力分析系统</p>
         </header>
 
-        <form id="calcForm" class="space-y-5 relative">
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">所在城市 / 行业</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="city" required placeholder="城市" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                    <input type="text" id="industry" required placeholder="行业" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+        <form id="calcForm" class="space-y-4 relative">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">City</label>
+                    <input type="text" id="city" required placeholder="如：杭州" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Industry</label>
+                    <input type="text" id="industry" required placeholder="如：AI 工程师" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">可用存款</label>
-                    <input type="number" id="savings" required min="0" placeholder="¥" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Savings (¥)</label>
+                    <input type="number" id="savings" required placeholder="存款" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">月均开销</label>
-                    <input type="number" id="monthly_expense" required min="1" placeholder="¥" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Monthly Cost</label>
+                    <input type="number" id="monthly_expense" required placeholder="月开销" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">当前心态</label>
-                <select id="mood" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer">
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Mental State</label>
+                <select id="mood" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm appearance-none cursor-pointer">
                     <option value="还在苟延残喘">还在苟延残喘</option>
                     <option value="随时准备提桶跑路">随时准备提桶跑路</option>
                     <option value="已经财富自由">已经财富自由</option>
                 </select>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full flex justify-center items-center gap-3 bg-slate-900 hover:bg-black text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 shadow-xl disabled:opacity-50">
-                <span id="btnText">分析我的生存现状</span>
-                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <button type="submit" id="submitBtn" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-2xl transition-all shadow-xl active:scale-[0.98] disabled:opacity-50">
+                <span id="btnText">开始 AI 生存评估</span>
             </button>
         </form>
 
-        <div id="resultBox" class="hidden fade-enter mt-8 space-y-4">
-            <div class="p-6 bg-slate-900 rounded-2xl text-center text-white shadow-2xl">
-                <p class="text-slate-400 text-[10px] uppercase font-bold tracking-[0.2em] mb-1">Estimated Survival</p>
-                <p class="text-5xl font-black tracking-tighter"><span id="resultMonths">0</span><span class="text-xl ml-1">Months</span></p>
+        <div id="resultBox" class="hidden mt-8 space-y-4">
+            <div class="p-6 bg-slate-900 rounded-3xl text-center text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-4xl font-black italic">DATA</div>
+                <p class="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">Months to Live</p>
+                <p class="text-6xl font-black tracking-tighter" id="resultMonths">0</p>
             </div>
             
-            <div id="aiBox" class="p-5 bg-blue-50 rounded-2xl ai-glow">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">DeepSeek Advisor</span>
-                </div>
-                <p id="aiAdvice" class="text-slate-700 text-sm leading-relaxed italic font-medium">正在调取 AI 评估报告...</p>
+            <div class="p-5 bg-blue-50 rounded-3xl ai-glow">
+                <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                    DeepSeek Intelligence
+                </p>
+                <p id="aiAdvice" class="text-slate-700 text-sm leading-relaxed font-medium italic">系统正在生成的毒舌建议...</p>
             </div>
+
+            <button id="shareBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl transition-all shadow-lg flex justify-center items-center gap-2 text-sm">
+                📸 生成我的离职生存战报
+            </button>
         </div>
     </main>
 
-    <div id="toast" class="fixed bottom-10 right-10 transform transition-all duration-300 translate-y-20 opacity-0 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50">
-        <span id="toastMessage" class="text-xs font-bold"></span>
+    <div id="posterTemplate" class="fixed -left-[9999px] top-0 w-[375px] bg-slate-950 p-8 text-white">
+        <div class="border-[1px] border-slate-800 p-8 rounded-[2rem] bg-gradient-to-b from-slate-900 to-slate-950">
+            <div class="flex justify-between items-start mb-12">
+                <div>
+                    <div class="w-8 h-1 bg-blue-500 mb-2"></div>
+                    <p class="text-[10px] font-black tracking-[0.3em] text-blue-500 uppercase">Classified Report</p>
+                    <h2 class="text-2xl font-black">生存评估报告</h2>
+                </div>
+                <div class="text-right text-[10px] font-mono text-slate-600">NO. AI-{{Date.now().toString().slice(-6)}}</div>
+            </div>
+            
+            <div class="space-y-8 mb-16">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-slate-600 text-[10px] uppercase font-black tracking-widest mb-1">Location</p>
+                        <p class="text-lg font-bold" id="p-city">-</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-600 text-[10px] uppercase font-black tracking-widest mb-1">Industry</p>
+                        <p class="text-lg font-bold" id="p-industry">-</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-slate-600 text-[10px] uppercase font-black tracking-widest mb-1">Survival Runway</p>
+                    <p class="text-5xl font-black text-white italic"><span id="p-months">0</span> <span class="text-sm font-normal">Months</span></p>
+                </div>
+                <div class="pt-8 border-t border-slate-800">
+                    <p class="text-blue-500 text-[10px] uppercase font-black tracking-widest mb-3">AI Evaluation</p>
+                    <p id="p-advice" class="text-base leading-relaxed text-slate-200 font-medium italic">-</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-end pt-4">
+                <div class="space-y-1">
+                    <p class="text-[9px] font-bold text-slate-700 tracking-tighter">DATA ANALYTICS BY LBUDING.COM</p>
+                    <p class="text-[10px] font-black text-white tracking-[0.2em] uppercase opacity-40 italic">One-Person AI Corp.</p>
+                </div>
+                <div class="w-16 h-16 bg-white p-1.5 rounded-xl">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tools.lbuding.com/survive-calc/" class="w-full h-full">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="posterModal" class="fixed inset-0 bg-black/90 z-50 hidden flex-col items-center justify-center p-6 backdrop-blur-sm">
+        <div class="relative max-w-sm w-full">
+            <button id="closeModal" class="absolute -top-12 right-0 text-white text-sm font-bold flex items-center gap-1">关闭 ×</button>
+            <img id="finalPoster" class="w-full rounded-3xl shadow-2xl border border-slate-700" src="">
+            <p class="text-white text-center mt-6 text-xs font-bold animate-bounce">↑ 长按图片保存到相册分享 ↑</p>
+        </div>
     </div>
 
     <script>
+        // 现在做的是一个企业级的大型项目
         const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/survive-calc";
 
         const form = document.getElementById('calcForm');
         const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const spinner = document.getElementById('loadingSpinner');
         const resultBox = document.getElementById('resultBox');
         const aiAdvice = document.getElementById('aiAdvice');
-        const toast = document.getElementById('toast');
+        const modal = document.getElementById('posterModal');
 
-        function showToast(msg) {
-            document.getElementById('toastMessage').innerText = msg;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-        }
-
+        // 1. 核心业务流：提交表单并获取 AI 结果
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
-
+            
             const payload = {
                 city: document.getElementById('city').value.trim(),
                 industry: document.getElementById('industry').value.trim(),
@@ -106,41 +159,70 @@
                 mood: document.getElementById('mood').value
             };
 
-            // 1. UI 锁定
+            // UI 状态切换
             submitBtn.disabled = true;
-            btnText.innerText = "正在深度计算...";
-            spinner.classList.remove('hidden');
+            document.getElementById('btnText').innerText = "AI 正在分析您的现状...";
             resultBox.classList.add('hidden');
 
             try {
-                // 2. 发送请求并等待 N8n 携带 AI 结果返回
                 const response = await fetch(WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) throw new Error("API Connection Failed");
-
+                if (!response.ok) throw new Error("Connection failed");
                 const data = await response.json();
 
-                // 3. 渲染结果（使用后端返回的精准生存月数和 AI 建议）
+                // 渲染结果
                 document.getElementById('resultMonths').innerText = data.months;
-                aiAdvice.innerText = data.ai_advice || "AI 暂时陷入了沉思...";
-
-                // 4. 显示结果区并触发动画
+                aiAdvice.innerText = data.ai_advice || "AI 暂时保持沉默。";
+                
                 resultBox.classList.remove('hidden');
                 setTimeout(() => resultBox.classList.add('fade-enter-active'), 10);
-                
-                showToast("分析报告生成成功");
             } catch (error) {
-                console.error(error);
-                showToast("系统繁忙，请稍后再试");
+                alert("算力请求超时，请重试。");
             } finally {
                 submitBtn.disabled = false;
-                btnText.innerText = "重新分析";
-                spinner.classList.add('hidden');
+                document.getElementById('btnText').innerText = "重新分析现状";
             }
+        });
+
+        // 2. 海报合成流：html2canvas 离屏渲染
+        document.getElementById('shareBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('shareBtn');
+            btn.innerText = "正在合成高精度战报...";
+            btn.disabled = true;
+
+            // 填充隐藏模板
+            document.getElementById('p-city').innerText = document.getElementById('city').value;
+            document.getElementById('p-industry').innerText = document.getElementById('industry').value;
+            document.getElementById('p-months').innerText = document.getElementById('resultMonths').innerText;
+            document.getElementById('p-advice').innerText = aiAdvice.innerText;
+
+            try {
+                const canvas = await html2canvas(document.getElementById('posterTemplate'), {
+                    scale: 3, // 高清 3 倍采样
+                    useCORS: true,
+                    backgroundColor: "#020617"
+                });
+
+                const imgData = canvas.toDataURL("image/png");
+                document.getElementById('finalPoster').src = imgData;
+                modal.classList.remove('hidden'); // 弹出预览层
+                modal.classList.add('flex');
+            } catch (err) {
+                alert("海报生成失败，请刷新页面重试。");
+            } finally {
+                btn.innerText = "📸 生成我的生存战报 (发朋友圈)";
+                btn.disabled = false;
+            }
+        });
+
+        // 关闭弹窗
+        document.getElementById('closeModal').addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         });
     </script>
 </body>
