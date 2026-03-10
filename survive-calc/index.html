@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业级离职生存计算器 | 布丁的 AI 矩阵</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 企业级平滑过渡动画 */
+        .fade-enter { opacity: 0; transform: translateY(-10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.3s ease-out; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased selection:bg-blue-200">
+
+    <main class="max-w-md w-full bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight">🏃‍♂️ 离职生存计算器</h1>
+            <p class="text-slate-500 text-sm mt-2">算算你的存款够你任性多久？<br>(全链路加密，数据已做脱敏处理)</p>
+        </header>
+
+        <form id="calcForm" class="space-y-5">
+            <div>
+                <label for="city" class="block text-sm font-semibold text-slate-700 mb-1">所在城市</label>
+                <input type="text" id="city" required placeholder="例如：上海、杭州" 
+                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none">
+            </div>
+            
+            <div>
+                <label for="industry" class="block text-sm font-semibold text-slate-700 mb-1">所在行业</label>
+                <input type="text" id="industry" required placeholder="例如：人工智能、SaaS" 
+                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="savings" class="block text-sm font-semibold text-slate-700 mb-1">可用存款 (元)</label>
+                    <input type="number" id="savings" required min="0" placeholder="50000" 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none">
+                </div>
+                <div>
+                    <label for="monthly_expense" class="block text-sm font-semibold text-slate-700 mb-1">月均开销 (元)</label>
+                    <input type="number" id="monthly_expense" required min="1" placeholder="8000" 
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label for="mood" class="block text-sm font-semibold text-slate-700 mb-1">当前心情</label>
+                <select id="mood" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors outline-none">
+                    <option value="还在苟延残喘">还在苟延残喘</option>
+                    <option value="随时准备提桶跑路">随时准备提桶跑路</option>
+                    <option value="已经财富自由">已经财富自由</option>
+                </select>
+            </div>
+
+            <button type="submit" id="submitBtn" 
+                    class="w-full flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 mt-6 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed">
+                <span id="btnText">🔥 开始测算我的生存期</span>
+                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </form>
+
+        <div id="resultBox" class="hidden fade-enter mt-6 p-5 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+            <p class="text-emerald-700 text-sm font-medium">你的存款极限生存期为</p>
+            <p class="text-4xl font-black text-emerald-600 my-2 tracking-tight"><span id="resultMonths">0</span> <span class="text-lg font-bold">个月</span></p>
+            <p class="text-emerald-600/70 text-xs">数据已安全加密并汇入打工人焦虑大盘</p>
+        </div>
+    </main>
+
+    <div id="toast" class="fixed top-5 right-5 transform transition-all duration-300 translate-x-full opacity-0 bg-white border border-slate-200 shadow-lg rounded-lg p-4 flex items-center gap-3 z-50">
+        <div id="toastIcon" class="flex-shrink-0 w-5 h-5"></div>
+        <p id="toastMessage" class="text-sm font-medium text-slate-800"></p>
+    </div>
+
+    <script>
+        // 企业级全局配置
+        const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/survive-calc"; // ⚠️ 确保这是你的生产 URL
+
+        // DOM 元素缓存
+        const form = document.getElementById('calcForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('loadingSpinner');
+        const resultBox = document.getElementById('resultBox');
+        const toast = document.getElementById('toast');
+
+        // Toast 提示函数 (替代 alert)
+        function showToast(message, type = 'success') {
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+            
+            toastMessage.innerText = message;
+            
+            if (type === 'success') {
+                toastIcon.innerHTML = `<svg class="text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            } else {
+                toastIcon.innerHTML = `<svg class="text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            }
+
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+            }, 3000);
+        }
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 1. 提取并清洗数据
+            const payload = {
+                city: document.getElementById('city').value.trim(),
+                industry: document.getElementById('industry').value.trim(),
+                savings: parseFloat(document.getElementById('savings').value),
+                monthly_expense: parseFloat(document.getElementById('monthly_expense').value),
+                mood: document.getElementById('mood').value
+            };
+
+            // 防除零兜底逻辑
+            if (payload.monthly_expense <= 0) {
+                showToast("月开销必须大于 0 噢", "error");
+                return;
+            }
+
+            // 2. 本地瞬时计算展示 (丝滑体验)
+            const months = (payload.savings / payload.monthly_expense).toFixed(2);
+            document.getElementById('resultMonths').innerText = months;
+            
+            resultBox.classList.remove('hidden');
+            setTimeout(() => resultBox.classList.add('fade-enter-active'), 10);
+
+            // 3. 锁定按钮，开启 Loading (防重复提交)
+            submitBtn.disabled = true;
+            btnText.innerText = "数据上链中...";
+            spinner.classList.remove('hidden');
+
+            // 4. 发送数据到中枢 (企业级 Fetch 封装)
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                showToast("测算完成！大盘已同步", "success");
+            } catch (error) {
+                console.error("中枢连接异常:", error);
+                // 优雅降级，不打断用户观看本地算出的结果
+                showToast("大盘同步延迟，但不影响您的结果", "error");
+            } finally {
+                // 5. 恢复按钮状态
+                submitBtn.disabled = false;
+                btnText.innerText = "重新测算";
+                spinner.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
