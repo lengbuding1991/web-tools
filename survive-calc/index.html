@@ -6,6 +6,7 @@
     <title>AI 职场生存报告 | 布丁的 AI 实验室</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
@@ -93,7 +94,7 @@
                     <p class="text-[10px] font-black tracking-[0.3em] text-blue-500 uppercase">Classified Report</p>
                     <h2 class="text-2xl font-black">生存评估报告</h2>
                 </div>
-                <div class="text-right text-[10px] font-mono text-slate-600">NO. AI-{{Date.now().toString().slice(-6)}}</div>
+                <div class="text-right text-[10px] font-mono text-slate-600" id="posterSerial">NO. AI-000000</div>
             </div>
             
             <div class="space-y-8 mb-16">
@@ -138,7 +139,10 @@
     </div>
 
     <script>
-        // 现在做的是一个企业级的大型项目
+        /**
+         * 现在做的是一个企业级的大型项目
+         * 核心：异步身份识别 + 跨节点变量同步
+         */
         const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/survive-calc";
 
         const form = document.getElementById('calcForm');
@@ -147,22 +151,42 @@
         const aiAdvice = document.getElementById('aiAdvice');
         const modal = document.getElementById('posterModal');
 
+        // 🌟 初始化指纹库加载 (Promise 模式确保不阻塞)
+        const fpPromise = FingerprintJS.load();
+
+        // 🌟 获取指纹 ID 的封装函数
+        async function getVisitorId() {
+            try {
+                const fp = await fpPromise;
+                const result = await fp.get();
+                return result.visitorId;
+            } catch (e) {
+                console.error("指纹采集失败，启用随机 ID 兜底:", e);
+                return 'anon-' + Math.random().toString(36).substr(2, 9);
+            }
+        }
+
         // 1. 核心业务流：提交表单并获取 AI 结果
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // UI 状态切换
+            submitBtn.disabled = true;
+            document.getElementById('btnText').innerText = "AI 正在识别数字指纹并分析...";
+            resultBox.classList.add('hidden');
+
+            // 🌟 采集指纹 ID
+            const visitorId = await getVisitorId();
+            console.log("Visitor ID Identified:", visitorId);
+
             const payload = {
+                visitor_id: visitorId, // 👈 传给 N8n 的核心身份标识
                 city: document.getElementById('city').value.trim(),
                 industry: document.getElementById('industry').value.trim(),
                 savings: parseFloat(document.getElementById('savings').value),
                 monthly_expense: parseFloat(document.getElementById('monthly_expense').value),
                 mood: document.getElementById('mood').value
             };
-
-            // UI 状态切换
-            submitBtn.disabled = true;
-            document.getElementById('btnText').innerText = "AI 正在分析您的现状...";
-            resultBox.classList.add('hidden');
 
             try {
                 const response = await fetch(WEBHOOK_URL, {
@@ -188,7 +212,7 @@
             }
         });
 
-        // 2. 海报合成流：html2canvas 离屏渲染
+        // 2. 海报合成流
         document.getElementById('shareBtn').addEventListener('click', async () => {
             const btn = document.getElementById('shareBtn');
             btn.innerText = "正在合成高精度战报...";
@@ -199,17 +223,18 @@
             document.getElementById('p-industry').innerText = document.getElementById('industry').value;
             document.getElementById('p-months').innerText = document.getElementById('resultMonths').innerText;
             document.getElementById('p-advice').innerText = aiAdvice.innerText;
+            document.getElementById('posterSerial').innerText = "NO. AI-" + Date.now().toString().slice(-6);
 
             try {
                 const canvas = await html2canvas(document.getElementById('posterTemplate'), {
-                    scale: 3, // 高清 3 倍采样
+                    scale: 3, 
                     useCORS: true,
                     backgroundColor: "#020617"
                 });
 
                 const imgData = canvas.toDataURL("image/png");
                 document.getElementById('finalPoster').src = imgData;
-                modal.classList.remove('hidden'); // 弹出预览层
+                modal.classList.remove('hidden');
                 modal.classList.add('flex');
             } catch (err) {
                 alert("海报生成失败，请刷新页面重试。");
@@ -219,7 +244,6 @@
             }
         });
 
-        // 关闭弹窗
         document.getElementById('closeModal').addEventListener('click', () => {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
