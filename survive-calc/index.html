@@ -8,12 +8,14 @@
     <style>
         /* 企业级平滑过渡动画 */
         .fade-enter { opacity: 0; transform: translateY(-10px); }
-        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.3s ease-out; }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .iframe-container { position: relative; width: 100%; height: 400px; border-radius: 0.75rem; overflow: hidden; }
+        .iframe-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased selection:bg-blue-200">
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4 antialiased selection:bg-blue-200">
 
-    <main class="max-w-md w-full bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 p-8">
+    <main class="max-w-md w-full bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 p-8 my-8">
         <header class="text-center mb-8">
             <h1 class="text-2xl font-black text-slate-800 tracking-tight">🏃‍♂️ 离职生存计算器</h1>
             <p class="text-slate-500 text-sm mt-2">算算你的存款够你任性多久？<br>(全链路加密，数据已做脱敏处理)</p>
@@ -69,6 +71,20 @@
             <p class="text-4xl font-black text-emerald-600 my-2 tracking-tight"><span id="resultMonths">0</span> <span class="text-lg font-bold">个月</span></p>
             <p class="text-emerald-600/70 text-xs">数据已安全加密并汇入打工人焦虑大盘</p>
         </div>
+
+        <div id="dashboardBox" class="mt-8 pt-8 border-t border-slate-200/60 hidden fade-enter">
+            <div class="text-center mb-5">
+                <h3 class="text-lg font-bold text-slate-800 tracking-tight">📊 全国打工人离职焦虑实时大盘</h3>
+                <p class="text-xs text-slate-500 mt-1">数据源：PostgreSQL 金库实时渲染</p>
+            </div>
+            
+            <div class="iframe-container shadow-sm border border-slate-200 bg-slate-50">
+                <iframe
+                    src="http://app-3000-dh4300plus-hina.cn26.ugdocker.link/public/question/37b561d2-dbe9-43ae-b3e6-50216aa96e58"
+                    allowtransparency
+                ></iframe>
+            </div>
+        </div>
     </main>
 
     <div id="toast" class="fixed top-5 right-5 transform transition-all duration-300 translate-x-full opacity-0 bg-white border border-slate-200 shadow-lg rounded-lg p-4 flex items-center gap-3 z-50">
@@ -77,40 +93,33 @@
     </div>
 
     <script>
-        // 企业级全局配置
-        const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/survive-calc"; // ⚠️ 确保这是你的生产 URL
+        // 企业级中枢接口 URL
+        const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/survive-calc";
 
-        // DOM 元素缓存
         const form = document.getElementById('calcForm');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
         const spinner = document.getElementById('loadingSpinner');
         const resultBox = document.getElementById('resultBox');
+        const dashboardBox = document.getElementById('dashboardBox');
         const toast = document.getElementById('toast');
 
-        // Toast 提示函数 (替代 alert)
         function showToast(message, type = 'success') {
             const toastMessage = document.getElementById('toastMessage');
             const toastIcon = document.getElementById('toastIcon');
-            
             toastMessage.innerText = message;
-            
             if (type === 'success') {
                 toastIcon.innerHTML = `<svg class="text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
             } else {
                 toastIcon.innerHTML = `<svg class="text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
             }
-
             toast.classList.remove('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-            }, 3000);
+            setTimeout(() => toast.classList.add('translate-x-full', 'opacity-0'), 3000);
         }
 
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // 1. 提取并清洗数据
             const payload = {
                 city: document.getElementById('city').value.trim(),
                 industry: document.getElementById('industry').value.trim(),
@@ -119,41 +128,41 @@
                 mood: document.getElementById('mood').value
             };
 
-            // 防除零兜底逻辑
             if (payload.monthly_expense <= 0) {
                 showToast("月开销必须大于 0 噢", "error");
                 return;
             }
 
-            // 2. 本地瞬时计算展示 (丝滑体验)
+            // 本地展示结果与大盘容器
             const months = (payload.savings / payload.monthly_expense).toFixed(2);
             document.getElementById('resultMonths').innerText = months;
             
             resultBox.classList.remove('hidden');
-            setTimeout(() => resultBox.classList.add('fade-enter-active'), 10);
+            dashboardBox.classList.remove('hidden');
+            
+            // 触发动画
+            setTimeout(() => {
+                resultBox.classList.add('fade-enter-active');
+                dashboardBox.classList.add('fade-enter-active');
+            }, 10);
 
-            // 3. 锁定按钮，开启 Loading (防重复提交)
+            // 锁定按钮请求中枢
             submitBtn.disabled = true;
-            btnText.innerText = "数据上链中...";
+            btnText.innerText = "大盘同步中...";
             spinner.classList.remove('hidden');
 
-            // 4. 发送数据到中枢 (企业级 Fetch 封装)
             try {
                 const response = await fetch(WEBHOOK_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                showToast("测算完成！大盘已同步", "success");
+                showToast("测算完成！全国大盘已同步", "success");
             } catch (error) {
                 console.error("中枢连接异常:", error);
-                // 优雅降级，不打断用户观看本地算出的结果
-                showToast("大盘同步延迟，但不影响您的结果", "error");
+                showToast("同步延迟，但不影响您的结果查看", "error");
             } finally {
-                // 5. 恢复按钮状态
                 submitBtn.disabled = false;
                 btnText.innerText = "重新测算";
                 spinner.classList.add('hidden');
