@@ -178,7 +178,12 @@
                 const res = await fetch(ENGINE_API, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, 
-                    body: JSON.stringify({ skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value }) 
+                    body: JSON.stringify({ 
+						username: localStorage.getItem('pudding_user'), // 🚀 核心新增：把名字传给引擎
+						skills: document.getElementById('skills').value, 
+						commitment: document.getElementById('commitment').value, 
+						sector: document.getElementById('sector').value 
+					}) 
                 });
                 
                 if (res.status === 401) {

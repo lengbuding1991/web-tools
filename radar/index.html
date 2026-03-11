@@ -180,7 +180,12 @@
                 const res = await fetch(ENGINE_API, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, 
-                    body: JSON.stringify({ location: document.getElementById('location').value, assets: document.getElementById('assets').value, niche: document.getElementById('niche').value }) 
+                    body: JSON.stringify({ 
+						username: localStorage.getItem('pudding_user'), // 🚀 核心新增：把名字传给引擎
+						location: document.getElementById('location').value, 
+						assets: document.getElementById('assets').value, 
+						niche: document.getElementById('niche').value 
+					}) 
                 });
                 
                 if (res.status === 401) {
