@@ -10,9 +10,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
+        
+        /* 🚀 核心骨架修复：锁死全屏高度，禁用外部滚动 */
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, background-color 0.3s ease; }
@@ -27,13 +30,17 @@
 
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #050a15; z-index: -1; }
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        ::-webkit-scrollbar { width: 6px; }
+        
+        /* 右侧内容区滚动条美化 */
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.5); }
+        
         .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
     </style>
 </head>
-<body class="tech-grid flex flex-col md:flex-row w-full h-full">
+<body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
 
     <div id="notify-container"></div>
 
@@ -42,8 +49,8 @@
         <div id="lockSub" class="mt-4 text-[10px] text-slate-600 mono transition-colors">正在核验物理架构师权限</div>
     </div>
 
-    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel md:h-full z-20 border-r border-white/5">
-        <div class="flex items-center gap-3">
+    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5 shadow-2xl">
+        <div class="flex items-center gap-3 shrink-0">
             <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_20px_rgba(59,130,246,0.4)]">布</div>
             <div>
                 <h2 class="font-black text-white text-xl tracking-wide">价值工厂</h2>
@@ -56,7 +63,8 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel sticky top-0 z-10">
+        
+        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel z-10 shadow-sm">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
                 <span class="text-[11px] font-bold text-slate-400 mono tracking-widest" id="userTag">LOADING_STATION</span>
@@ -64,8 +72,9 @@
             <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">返回基地</a>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16">
-            <div class="max-w-4xl mx-auto space-y-12 pb-20">
+        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 scroll-smooth" id="scrollArea">
+            <div class="max-w-4xl mx-auto space-y-12 pb-32">
+                
                 <div class="glass-panel p-8 md:p-12 rounded-[2.5rem] shadow-xl">
                     <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-3">
@@ -106,7 +115,7 @@
 
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
-        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile"; // 需要用到静默审计
+        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
 
         function showNotify(msg, type = 'info') {
             const container = document.getElementById('notify-container');
@@ -132,12 +141,10 @@
                 lockSub.innerText = "未检测到有效身份凭证";
                 lockscreen.style.backgroundColor = 'rgba(10,0,0,0.95)';
                 showNotify("非法闯入，正在遣返大本营...", "error");
-                
                 setTimeout(() => { window.location.href = "/"; }, 1500);
                 return; 
             }
 
-            // 🚀 静默审计：先瞬间开门渲染，后台慢慢查岗
             setTimeout(() => {
                 lockscreen.style.opacity = '0';
                 lockscreen.style.pointerEvents = 'none'; 
@@ -146,7 +153,6 @@
                 document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
                 showNotify("算力链路连接成功，欢迎入驻。", "success");
 
-                // 发起验证，不对立刻踢
                 fetch(PROFILE_API, { 
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
@@ -158,8 +164,7 @@
                     showNotify("凭据已过期，强制断开引擎", "error");
                     setTimeout(() => window.location.href = "/", 1500);
                 });
-
-            }, 1000);
+            }, 800);
         });
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
@@ -188,7 +193,11 @@
                     document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
                     showNotify("蓝图生成完毕", "success");
-                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                    
+                    // 🚀 精准让右侧内容区向下滚动
+                    setTimeout(() => { 
+                        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+                    }, 100);
                 }
             } catch (err) { 
                 showNotify("引擎连接中断，请检查网络或 NAS 状态", "error");

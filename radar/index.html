@@ -10,7 +10,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --radar-green: #10b981; --bg-dark: #020617; }
+        
+        /* 🚀 核心骨架修复：锁死全屏高度，禁用外部滚动 */
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        
         .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(16, 185, 129, 0.2); }
         .mono { font-family: 'JetBrains Mono', monospace; }
@@ -29,13 +32,17 @@
 
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #020617; z-index: -1; }
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        ::-webkit-scrollbar { width: 6px; }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
+        
         .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
     </style>
 </head>
-<body class="tech-grid flex flex-col lg:flex-row w-full h-full">
+<body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
     
     <div id="notify-container"></div>
 
@@ -45,8 +52,8 @@
     </div>
     <div id="scanBeam" class="scanning-beam"></div>
 
-    <aside class="w-full lg:w-80 p-6 md:p-8 flex flex-col gap-8 shrink-0 glass h-full z-20 border-r border-emerald-500/20">
-        <div class="flex items-center gap-4">
+    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-8 shrink-0 glass h-auto md:h-full z-20 border-r border-emerald-500/20 shadow-2xl">
+        <div class="flex items-center gap-4 shrink-0">
             <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)]">R</div>
             <div>
                 <h2 class="text-white font-black text-xl tracking-wide">套利雷达</h2>
@@ -54,29 +61,32 @@
             </div>
         </div>
         
-        <form id="radarForm" class="space-y-8 mt-4">
-            <div class="space-y-3">
-                <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">探测地理位置</label>
-                <input type="text" id="location" required placeholder="如: 曼谷, 大理" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
-            </div>
-            <div class="space-y-3">
-                <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">可调配资产预算</label>
-                <input type="text" id="assets" required placeholder="如: 5w 人民币" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
-            </div>
-            <div class="space-y-3">
-                <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">套利赛道波段</label>
-                <select id="niche" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all cursor-pointer">
-                    <option value="居住套利">🌴 居住套利 (Digital Nomad)</option>
-                    <option value="汇率套利">💱 汇率/消费差额套利</option>
-                    <option value="数字技能出海">💻 数字技能出海</option>
-                </select>
-            </div>
-            <button type="submit" id="submitBtn" class="w-full py-5 mt-4 bg-emerald-600 text-white font-black rounded-xl text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:bg-emerald-500 active:scale-95 transition-all">激活全域扫描</button>
-        </form>
+        <div class="flex-1 overflow-y-auto pr-2">
+            <form id="radarForm" class="space-y-8 mt-2">
+                <div class="space-y-3">
+                    <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">探测地理位置</label>
+                    <input type="text" id="location" required placeholder="如: 曼谷, 大理" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
+                </div>
+                <div class="space-y-3">
+                    <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">可调配资产预算</label>
+                    <input type="text" id="assets" required placeholder="如: 5w 人民币" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
+                </div>
+                <div class="space-y-3">
+                    <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">套利赛道波段</label>
+                    <select id="niche" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all cursor-pointer">
+                        <option value="居住套利">🌴 居住套利 (Digital Nomad)</option>
+                        <option value="汇率套利">💱 汇率/消费差额套利</option>
+                        <option value="数字技能出海">💻 数字技能出海</option>
+                    </select>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full py-5 mt-4 bg-emerald-600 text-white font-black rounded-xl text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:bg-emerald-500 active:scale-95 transition-all">激活全域扫描</button>
+            </form>
+        </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-emerald-500/10 glass sticky top-0 z-10">
+        
+        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-emerald-500/10 glass z-10 shadow-sm">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
                 <span class="mono text-[11px] font-bold text-emerald-400 uppercase tracking-widest" id="radarUser">SCANNING_SATELLITE</span>
@@ -84,10 +94,12 @@
             <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors">← 返回基地</a>
         </header>
         
-        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16">
-            <div class="max-w-4xl mx-auto space-y-8 pb-20">
+        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 scroll-smooth" id="scrollArea">
+            <div class="max-w-4xl mx-auto space-y-8 pb-32">
+                
                 <div id="resultArea" class="hidden glass p-8 md:p-14 rounded-[3rem] shadow-2xl shadow-emerald-900/10 border border-emerald-500/20">
                     <div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300 leading-relaxed"></div>
+                    
                     <div class="mt-16 pt-8 border-t border-emerald-500/20 flex justify-end">
                         <button onclick="exportRadar()" id="exportBtn" class="px-8 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">↓ 导出雷达探测报告</button>
                     </div>
@@ -117,7 +129,6 @@
             setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
         }
 
-        // 🚀 DOMContentLoaded + 静默审计机制
         document.addEventListener('DOMContentLoaded', () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
@@ -133,7 +144,6 @@
                 lockscreen.style.backgroundColor = 'rgba(10,0,0,0.95)';
                 scanBeam.style.display = 'none';
                 showNotify("雷达拦截：未检测到特工凭证，强制遣返...", "error");
-                
                 setTimeout(() => { window.location.href = "/"; }, 1500);
                 return; 
             }
@@ -146,7 +156,6 @@
                 document.getElementById('radarUser').innerText = "OPERATOR: " + u.toUpperCase();
                 showNotify("卫星信号已锁定，雷达面板已解锁", "success");
 
-                // 发起验证
                 fetch(PROFILE_API, { 
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
@@ -158,8 +167,7 @@
                     showNotify("凭据已过期，强制切断雷达", "error");
                     setTimeout(() => window.location.href = "/", 1500);
                 });
-
-            }, 1000);
+            }, 800);
         });
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
@@ -189,7 +197,11 @@
                     document.getElementById('posterContent').innerHTML = html;
                     document.getElementById('resultArea').classList.remove('hidden'); 
                     showNotify("雷达扫描完成，报告已解密", "success");
-                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                    
+                    // 🚀 滚动
+                    setTimeout(() => {
+                        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
                 }
             } catch (err) { 
                 showNotify("雷达信号丢失，请检查通讯链路", "error");
