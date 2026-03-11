@@ -15,7 +15,6 @@
         .glow-text { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         
-        /* 极客通知系统样式 */
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
         .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
@@ -94,9 +93,9 @@
 
     <script>
         const AUTH_API = "https://nas-n8n.lbuding.com/webhook/auth";
+        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         let isRegisterMode = false;
 
-        // 🛡️ 核心：极客风格通知系统
         function showNotify(msg, type = 'info') {
             const container = document.getElementById('notify-container');
             const card = document.createElement('div');
@@ -118,14 +117,32 @@
             }, 3000);
         }
 
-        function localFastCheck() {
+        // 🚀 静默审计逻辑：先光速渲染本地数据，后台再慢条斯理地查岗
+        function localFastCheckAndAudit() {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
+            
             if (t && u) {
+                // 1. 瞬间秒开渲染
                 document.getElementById('authStatusArea').classList.add('hidden');
                 document.getElementById('userProfileArea').classList.remove('hidden');
                 document.getElementById('userName').innerText = u.toUpperCase();
                 document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${u}</span>架构师。`;
+
+                // 2. 发起无感后台请求核对
+                fetch(PROFILE_API, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
+                }).then(res => res.json()).then(data => {
+                    if (data.status !== 'authorized') throw new Error("Token Invalid");
+                }).catch(err => {
+                    // 如果被抓包发现伪造或过期，悄悄清理并踢出
+                    console.warn(">> [审计] 令牌已失效，清理环境...");
+                    localStorage.removeItem('pudding_token');
+                    localStorage.removeItem('pudding_user');
+                    showNotify("凭据已过期，请重新接入网络", "error");
+                    setTimeout(() => location.reload(), 1500);
+                });
             }
         }
 
@@ -169,7 +186,7 @@
             setTimeout(() => location.reload(), 800);
         }
         
-        window.addEventListener('DOMContentLoaded', localFastCheck); 
+        window.addEventListener('DOMContentLoaded', localFastCheckAndAudit); 
     </script>
 </body>
 </html>
