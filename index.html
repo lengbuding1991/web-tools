@@ -14,19 +14,28 @@
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glow-text { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        #authModal.hidden { display: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 3px; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col">
     <nav class="h-20 flex items-center justify-between px-8 glass border-b border-white/5 sticky top-0 z-50">
         <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg text-xl">B</div>
-            <div><h1 class="text-sm font-black text-white tracking-widest uppercase">Pudding Lab</h1><p class="text-[9px] text-blue-500 font-bold tracking-[0.3em]">数字化资产实验基地</p></div>
+            <div>
+                <h1 class="text-sm font-black text-white tracking-widest uppercase">Pudding Lab</h1>
+                <p class="text-[9px] text-blue-500 font-bold tracking-[0.3em]">数字化资产实验基地</p>
+            </div>
         </div>
         <div class="flex items-center gap-6">
-            <div id="authStatusArea"><button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase hover:bg-blue-600/20 transition-all">接入实验室 / CONNECT</button></div>
+            <div id="authStatusArea">
+                <button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600/20 transition-all">接入实验室 / CONNECT</button>
+            </div>
             <div id="userProfileArea" class="hidden flex items-center gap-4">
-                <div class="glass px-4 py-1.5 rounded-full border border-blue-500/20"><span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span></div>
+                <div class="glass px-4 py-1.5 rounded-full border border-blue-500/20">
+                    <span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span>
+                </div>
                 <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
             </div>
         </div>
@@ -67,30 +76,18 @@
 
     <script>
         const AUTH_API = "https://nas-n8n.lbuding.com/webhook/auth";
-        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         let isRegisterMode = false;
 
-        function updateUI(username) {
-            document.getElementById('authStatusArea').classList.add('hidden');
-            document.getElementById('userProfileArea').classList.remove('hidden');
-            document.getElementById('userName').innerText = username.toUpperCase();
-            document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${username}</span>架构师。`;
-        }
-
-        async function silentRecall() {
+        // 🚩 零网络请求验证，直接读取本地缓存
+        function localFastCheck() {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
-            if (!t) return;
-            if (u) updateUI(u);
-
-            try {
-                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} });
-                const data = await res.json();
-                if (data.status === 'authorized') {
-                    localStorage.setItem('pudding_user', data.username);
-                    updateUI(data.username);
-                }
-            } catch (e) { console.warn("后台审计未通过，维持现状或待失效驱逐"); }
+            if (t && u) {
+                document.getElementById('authStatusArea').classList.add('hidden');
+                document.getElementById('userProfileArea').classList.remove('hidden');
+                document.getElementById('userName').innerText = u.toUpperCase();
+                document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${u}</span>架构师。`;
+            }
         }
 
         function toggleAuthModal() { document.getElementById('authModal').classList.toggle('hidden'); }
@@ -111,7 +108,7 @@
         });
 
         function handleLogout() { localStorage.clear(); location.reload(); }
-        window.onload = silentRecall;
+        window.onload = localFastCheck; // 不再调用 n8n
     </script>
 </body>
 </html>

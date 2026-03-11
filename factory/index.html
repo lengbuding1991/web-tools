@@ -8,91 +8,148 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
+        /* 🚩 核心修复：锁死视口高度，内部区域独立滚动 */
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .mono { font-family: 'JetBrains Mono', monospace; }
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        #lockscreen.hidden { display: none; }
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
+        #posterWrapper { width: 500px; background: #050a15; display: none; position: absolute; z-index: -100; }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 3px; }
     </style>
 </head>
-<body class="tech-grid min-h-screen flex flex-col md:flex-row">
-    <div id="lockscreen"><div class="text-blue-500 mono animate-pulse tracking-[0.5em]">AUTH_VERIFYING...</div></div>
+<body class="tech-grid flex flex-col md:flex-row w-full h-full">
 
-    <aside class="w-full md:w-72 p-6 flex flex-col gap-6 glass-panel">
-        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl">布</div><h2 class="font-black text-white text-lg">价值工厂</h2></div>
-        <p class="text-[10px] mono text-slate-600">> 核心算法：DEEPSEEK_V3</p>
+    <div id="lockscreen"><div class="text-blue-500 font-bold mono animate-pulse tracking-[0.5em]">FACTORY_VERIFYING...</div></div>
+
+    <aside class="w-full md:w-72 p-6 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl">布</div>
+            <h2 class="font-black text-white text-lg">价值工厂</h2>
+        </div>
+        <div class="p-4 bg-black/40 rounded-lg border border-white/5 mono text-[9px] text-slate-500 flex-1 overflow-y-auto hidden md:block" id="logs">
+            > 初始化工厂终端...<br>> DEEPSEEK V3 算力链接中...<br>> 准备接收灵感投料。
+        </div>
     </aside>
 
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-16 flex items-center justify-between px-8 border-b border-white/5">
-            <span class="text-[10px] font-bold text-slate-500 mono" id="userTag">LOADING_STATION</span>
-            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-[10px] font-bold uppercase hover:bg-blue-600 transition-all">返回基地</a>
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative z-10">
+        <header class="h-16 shrink-0 flex items-center justify-between px-8 border-b border-white/5">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span class="text-[10px] font-bold text-blue-500 mono" id="userTag">LOADING_STATION</span>
+            </div>
+            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-[10px] font-bold uppercase hover:bg-blue-600 hover:text-white transition-all">返回基地</a>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8">
-            <div class="max-w-4xl mx-auto space-y-8">
-                <div class="glass-panel p-8 rounded-[2rem]">
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="max-w-4xl mx-auto space-y-8 pb-20">
+                
+                <div class="glass-panel p-6 md:p-8 rounded-[2rem]">
                     <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input type="text" id="skills" required placeholder="核心技能" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
-                        <input type="text" id="commitment" required placeholder="投入精力" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
-                        <select id="sector" class="md:col-span-2 px-6 py-4 rounded-xl text-sm outline-none">
-                            <option value="AI 自动化">AI 自动化工具链</option><option value="内容工厂">高产内容流水线</option>
-                        </select>
-                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest">生成价值蓝图</button>
+                        <div class="space-y-2">
+                            <label class="text-[10px] uppercase font-black text-blue-500 ml-2">核心技能输入</label>
+                            <input type="text" id="skills" required placeholder="如: Python, 英语" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] uppercase font-black text-blue-500 ml-2">时间精力投料</label>
+                            <input type="text" id="commitment" required placeholder="如: 每天2小时" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                        </div>
+                        <div class="md:col-span-2 space-y-2">
+                            <label class="text-[10px] uppercase font-black text-blue-500 ml-2">生产线选择</label>
+                            <select id="sector" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                                <option value="AI 自动化">AI 自动化工具链</option>
+                                <option value="内容工厂">高产内容流水线</option>
+                                <option value="数字化套利">地理价值套利</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest hover:bg-blue-500 active:scale-95 transition-all shadow-xl shadow-blue-900/20">生成价值蓝图</button>
                     </form>
                 </div>
-                <div id="resultArea" class="hidden glass-panel p-10 rounded-[2rem]">
+
+                <div id="resultArea" class="hidden glass-panel p-8 md:p-12 rounded-[2rem] shadow-2xl">
                     <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300"></div>
-                    <button onclick="generatePoster()" class="mt-8 px-8 py-3 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-bold uppercase">导出高清蓝图</button>
+                    <div class="mt-12 pt-8 border-t border-white/5 flex justify-end">
+                        <button onclick="generatePoster()" id="posterBtn" class="px-8 py-4 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-bold uppercase hover:bg-blue-600 hover:text-white transition-all">导出高清蓝图海报</button>
+                    </div>
                 </div>
+
             </div>
         </div>
     </main>
 
+    <div id="posterWrapper" class="p-16 bg-[#050a15] border-2 border-blue-500/20">
+        <h2 class="text-white text-3xl font-black mb-2 uppercase italic">Pudding Lab</h2>
+        <p class="text-blue-500 text-[10px] mono mb-10 tracking-[0.3em] uppercase">Value_Blueprint_Output</p>
+        <div id="posterContent" class="prose prose-invert prose-blue"></div>
+    </div>
+
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
-        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
 
-        async function init() {
+        // 🚩 零网络请求进门
+        window.onload = () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
-            if (!t) { window.location.href = "/"; return; }
-            
-            // 🚩 暴力开门：只要本地有名字，瞬间撤除遮罩
-            if (u) {
-                document.getElementById('lockscreen').classList.add('hidden');
-                document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
+            if (!t || !u) { 
+                window.location.href = "/"; 
+                return; 
             }
-
-            try {
-                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} });
-                const data = await res.json();
-                if (data.status === 'authorized') {
-                    document.getElementById('lockscreen').classList.add('hidden');
-                    document.getElementById('userTag').innerText = data.username.toUpperCase() + "_STATION";
-                    localStorage.setItem('pudding_user', data.username);
-                } else { throw new Error(); }
-            } catch (e) { 
-                console.warn("审计未过，若是网络问题将保留访问权限");
-                if (!u) window.location.href = "/"; // 只有完全没缓存才踢出去
-            }
-        }
-        window.onload = init;
+            document.getElementById('lockscreen').classList.add('hidden');
+            document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
+        };
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); btn.innerText = "算力同步中..."; btn.disabled = true;
             try {
-                const res = await fetch(ENGINE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value }) });
+                const res = await fetch(ENGINE_API, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, 
+                    body: JSON.stringify({ skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value }) 
+                });
+                
+                // 🚩 在这里拦截失效 Token
+                if (res.status === 401) {
+                    alert("身份凭证已过期，请重新登录基地。");
+                    localStorage.clear(); window.location.href = "/"; return;
+                }
+
                 const data = await res.json();
                 if (data.blueprint) {
-                    document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
+                    const html = marked.parse(data.blueprint);
+                    document.getElementById('blueprintContent').innerHTML = html;
+                    document.getElementById('posterContent').innerHTML = html;
                     document.getElementById('resultArea').classList.remove('hidden');
+                    // 生成完成后自动滚动到结果区
+                    document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
                 }
-            } catch (err) { alert("引擎连接中断"); } finally { btn.innerText = "生成价值蓝图"; btn.disabled = false; }
+            } catch (err) { alert("引擎连接中断，请检查网络或 NAS 状态。"); } 
+            finally { btn.innerText = "生成价值蓝图"; btn.disabled = false; }
         });
+
+        async function generatePoster() {
+            const btn = document.getElementById('posterBtn');
+            const wrap = document.getElementById('posterWrapper'); 
+            btn.innerText = "正在固化像素...";
+            wrap.style.display = 'block';
+            try {
+                const canvas = await html2canvas(wrap, { backgroundColor: "#050a15", scale: 2 });
+                const link = document.createElement('a'); 
+                link.download = `Factory_Blueprint_${Date.now()}.png`; 
+                link.href = canvas.toDataURL(); 
+                link.click();
+            } finally {
+                wrap.style.display = 'none';
+                btn.innerText = "导出高清蓝图海报";
+            }
+        }
     </script>
 </body>
 </html>
