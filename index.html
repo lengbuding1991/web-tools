@@ -19,6 +19,9 @@
         input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         .tool-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .tool-card:hover { transform: translateY(-5px); border-color: var(--main-blue); box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.3); }
+        
+        /* 移动端菜单优化 */
+        .auth-modal-active { overflow: hidden; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col">
@@ -30,16 +33,17 @@
                 <p class="text-[9px] text-blue-500 font-bold tracking-[0.3em]">数字化资产实验基地</p>
             </div>
         </div>
+        
         <div class="flex items-center gap-6">
             <div id="authStatusArea">
-                <button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest transition-all hover:bg-blue-600/20">接入实验室 / CONNECT</button>
+                <button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest transition-all hover:bg-blue-600/20 active:scale-95">接入实验室 / CONNECT</button>
             </div>
             <div id="userProfileArea" class="hidden flex items-center gap-4">
                 <div class="flex items-center gap-2 glass px-4 py-1.5 rounded-full border border-blue-500/20">
                     <div class="status-pulse"></div>
                     <span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span>
                 </div>
-                <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
+                <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono transition-colors">Logout</button>
             </div>
         </div>
     </nav>
@@ -72,26 +76,45 @@
 
     <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
         <div class="w-full max-w-md glass p-10 rounded-[3.5rem] border-blue-500/30 relative">
-            <button onclick="toggleAuthModal()" class="absolute top-8 right-10 text-slate-500 hover:text-white">✕</button>
-            <h3 id="modalTitle" class="text-3xl font-black text-white mb-2 italic">实验室身份接入</h3>
+            <button onclick="toggleAuthModal()" class="absolute top-8 right-10 text-slate-500 hover:text-white transition-colors">✕</button>
+            <h3 id="modalTitle" class="text-3xl font-black text-white mb-2 italic tracking-tighter">实验室身份接入</h3>
             <p class="text-[10px] text-blue-500 uppercase tracking-[0.3em] mb-8 font-bold">Pudding-Auth / Protocol 0.1</p>
+            
             <form id="authForm" class="space-y-4">
                 <input type="email" id="authEmail" placeholder="实验室邮箱 / Email" required class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all">
                 <input type="password" id="authPassword" placeholder="访问密钥 / Password" required class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all">
-                <div id="registerFields" class="hidden space-y-4"><input type="text" id="authUsername" placeholder="特工代号 / Username" class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5"></div>
-                <button type="submit" id="authSubmit" class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all">执行身份确认</button>
+                
+                <div id="registerFields" class="hidden space-y-4">
+                    <input type="text" id="authUsername" placeholder="特工代号 / Username" class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all">
+                </div>
+                
+                <button type="submit" id="authSubmit" class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all shadow-lg shadow-blue-900/40 active:scale-95">
+                    执行身份确认
+                </button>
             </form>
-            <button onclick="toggleRegMode()" id="regToggleBtn" class="mt-8 w-full text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-widest">申请加入实验室 / APPLY ACCESS</button>
+            
+            <button onclick="toggleRegMode()" id="regToggleBtn" class="mt-8 w-full text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-widest transition-colors">申请加入实验室 / APPLY ACCESS</button>
         </div>
     </div>
 
     <script>
-        const AUTH_API = "https://nas-n8n.lbuding.com/webhook/pudding-auth";
+        // 🛠️ 根据你的需求更新为 /webhook/auth
+        const AUTH_API = "https://nas-n8n.lbuding.com/webhook/auth";
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         let isRegisterMode = false;
+
+        // 召回个人资料
         async function recallProfile(token) {
             try {
-                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`} });
+                const res = await fetch(PROFILE_API, { 
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${token}`
+                    } 
+                });
+                if (!res.ok) throw new Error('Token Expired');
+                
                 const data = await res.json();
                 if (data.username) {
                     document.getElementById('authStatusArea').classList.add('hidden');
@@ -99,23 +122,82 @@
                     document.getElementById('userName').innerText = data.username.toUpperCase();
                     document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${data.username}</span>架构师。`;
                 }
-            } catch (e) { localStorage.removeItem('pudding_token'); }
+            } catch (e) { 
+                console.warn("Session expired or invalid token.");
+                localStorage.removeItem('pudding_token'); 
+            }
         }
-        function toggleAuthModal() { document.getElementById('authModal').classList.toggle('hidden'); }
+
+        function toggleAuthModal() {
+            const modal = document.getElementById('authModal');
+            modal.classList.toggle('hidden');
+            document.body.classList.toggle('auth-modal-active');
+        }
+
         function toggleRegMode() {
             isRegisterMode = !isRegisterMode;
-            document.getElementById('modalTitle').innerText = isRegisterMode ? "申请特工代号" : "实验室身份接入";
-            document.getElementById('registerFields').classList.toggle('hidden');
+            const title = document.getElementById('modalTitle');
+            const regFields = document.getElementById('registerFields');
+            const toggleBtn = document.getElementById('regToggleBtn');
+            const userInp = document.getElementById('authUsername');
+
+            title.innerText = isRegisterMode ? "申请特工代号" : "实验室身份接入";
+            regFields.classList.toggle('hidden');
+            toggleBtn.innerText = isRegisterMode ? "已有代号？直接接入" : "申请加入实验室 / APPLY ACCESS";
+            
+            // 动态设置必填
+            userInp.required = isRegisterMode;
         }
+
+        // 提交表单
         document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const payload = { action: isRegisterMode ? 'register' : 'login', email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value, username: document.getElementById('authUsername').value };
-            const res = await fetch(AUTH_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-            const data = await res.json();
-            if (data.token) { localStorage.setItem('pudding_token', data.token); location.reload(); } else { alert(data.message || "失败"); }
+            const btn = document.getElementById('authSubmit');
+            const originalText = btn.innerText;
+            btn.innerText = "正在校验身份串...";
+            btn.disabled = true;
+
+            const payload = { 
+                action: isRegisterMode ? 'register' : 'login', 
+                email: document.getElementById('authEmail').value, 
+                password: document.getElementById('authPassword').value, 
+                username: document.getElementById('authUsername').value 
+            };
+
+            try {
+                const res = await fetch(AUTH_API, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                const data = await res.json();
+
+                if (res.ok && data.token) {
+                    localStorage.setItem('pudding_token', data.token);
+                    toggleAuthModal();
+                    location.reload(); // 刷新以应用身份
+                } else {
+                    alert(data.message || "接入失败，请检查凭证。");
+                }
+            } catch (err) {
+                alert("实验室核心通讯中断，请检查 n8n 节点。");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         });
-        function handleLogout() { localStorage.removeItem('pudding_token'); location.reload(); }
-        window.onload = () => { const t = localStorage.getItem('pudding_token'); if(t) recallProfile(t); };
+
+        function handleLogout() {
+            localStorage.removeItem('pudding_token');
+            location.reload();
+        }
+
+        // 初始化检查
+        window.onload = () => {
+            const t = localStorage.getItem('pudding_token');
+            if(t) recallProfile(t);
+        };
     </script>
 </body>
 </html>
