@@ -3,187 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>布丁的数字百宝箱 🚀</title>
-	<link rel="icon" type="image/png" href="/favicon.png?v=20260305">
+    <title>LBUDING AI Lab | 一人 AI 公司的算力矩阵</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #60a5fa;
-        }
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-        header {
-            text-align: center;
-            margin-bottom: 60px;
-            margin-top: 8vh;
-        }
-        h1 {
-            font-size: 42px;
-            margin: 0 0 15px 0;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-        p.slogan {
-            color: var(--text-muted);
-            font-size: 16px;
-            margin: 0;
-            letter-spacing: 0.5px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
-            width: 100%;
-            max-width: 1000px;
-        }
-        .card {
-            background: var(--card-bg);
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 28px;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-        /* 鼠标悬停的发光特效 */
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-            border-color: var(--accent);
-        }
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .card:hover::before {
-            opacity: 1;
-        }
-        .card-icon {
-            font-size: 36px;
-            margin-bottom: 16px;
-        }
-        .card-title {
-            font-size: 22px;
-            font-weight: 600;
-            margin: 0 0 12px 0;
-        }
-        .card-desc {
-            color: var(--text-muted);
-            font-size: 14px;
-            line-height: 1.6;
-            margin: 0 0 24px 0;
-            flex-grow: 1;
-        }
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            color: var(--accent);
-            font-weight: 600;
-        }
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #10b981;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #10b981;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #10b981;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        footer {
-            margin-top: auto;
-            padding-top: 80px;
-            padding-bottom: 20px;
-            color: #475569;
-            font-size: 14px;
-            text-align: center;
-        }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .hover-glow:hover { box-shadow: 0 0 30px rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.5); transform: translateY(-5px); }
+        .shimmer { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body>
+<body class="bg-[#020617] text-slate-300 min-h-screen font-sans selection:bg-blue-500/30">
 
-    <header>
-        <h1>布丁的数字百宝箱</h1>
-        <p class="slogan">探索个人商业闭环的独立黑客</p>
-    </header>
-
-    <div class="grid">
-        <a href="/lizhi/" class="card">
-            <div class="card-icon">🏕️</div>
-            <h2 class="card-title">离职生存计算器 Pro Max</h2>
-            <p class="card-desc">直击打工人焦虑，精准盘点资产与消耗，一键生成专属图表，算算你的“裸辞底气”和破产倒计时。</p>
-            <div class="card-footer">
-                <div class="status"><div class="status-dot"></div> 稳定运行中</div>
-                <span>立即测算 →</span>
-            </div>
-        </a>
-		<a href="/moyu/" class="card">
-            <div class="card-icon">☕</div>
-            <h2 class="card-title">带薪摸鱼秒表</h2>
-            <p class="card-desc">输入薪资，一键计时。看着数字疯狂跳动，精准计算你在发呆的这5分钟里从老板那里薅了多少羊毛。</p>
-            <div class="card-footer">
-                <div class="status"><div class="status-dot"></div> 爽感拉满中</div>
-                <span>开始搞钱 →</span>
-            </div>
-        </a>
-		<a href="/mdcard/" class="card">
-            <div class="card-icon">☕</div>
-            <h2 class="card-title">极客风 Markdown 社交卡片生成器</h2>
-            <p class="card-desc">把你平时写的那些带有高亮、列表、引用的 Markdown 文本，一键渲染成极具极客美学、适合发在小红书或朋友圈的高清长图卡片</p>
-            <div class="card-footer">
-                <div class="status"><div class="status-dot"></div> 稳定运行中</div>
-                <span>立即测试 →</span>
-            </div>
-        </a>
-        <div class="card" style="border-style: dashed; border-color: #334155; opacity: 0.6; cursor: not-allowed; pointer-events: none;">
-            <div class="card-icon">🛠️</div>
-            <h2 class="card-title">下一个效率神器</h2>
-            <p class="card-desc">正在布丁的本地环境里疯狂报错并努力开发中... 敬请期待！</p>
-            <div class="card-footer">
-                <span style="color: #64748b;">正在开发中...</span>
-            </div>
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto border-b border-slate-900/50">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-xl flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-blue-500/20">L</div>
+            <span class="text-white font-bold tracking-tighter text-xl">LBUDING <span class="text-blue-500">AI</span></span>
         </div>
-    </div>
+        <div id="userStatus" class="hidden md:flex items-center gap-2 px-4 py-2 glass rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            System Online
+        </div>
+    </nav>
 
-    <footer>
-        <p>© 2026 布丁. All rights reserved. | Build in Public</p>
+    <section class="max-w-4xl mx-auto pt-24 pb-20 px-6 text-center">
+        <div id="personalBadge" class="hidden inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
+            <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest" id="welcomeCity">Welcome Back</span>
+        </div>
+        
+        <h1 id="mainTitle" class="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-[1.1]">
+            让 AI 成为你的<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400">第二大脑</span>
+        </h1>
+        
+        <p id="mainDesc" class="text-slate-500 max-w-xl mx-auto leading-relaxed text-sm md:text-lg font-medium">
+            基于分布式算力与 DeepSeek 模型构建的职场、效率与生活辅助工具箱。
+        </p>
+    </section>
+
+    <section class="max-w-6xl mx-auto px-6 pb-32">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <a href="/survive-calc/" class="group glass p-8 rounded-[2.5rem] hover-glow transition-all duration-500">
+                <div class="flex justify-between items-start mb-16">
+                    <div class="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-500">🏃‍♂️</div>
+                    <div class="px-3 py-1 rounded-full bg-blue-500/10 text-[10px] font-black text-blue-500 uppercase tracking-widest">Active</div>
+                </div>
+                <h3 class="text-white text-2xl font-bold mb-3">离职生存计算器</h3>
+                <p class="text-slate-500 text-sm leading-relaxed mb-8">评估您的财务韧性，获取 AI 深度生存策略建议。</p>
+                <div class="flex items-center gap-2 text-blue-500 text-xs font-black uppercase tracking-[0.2em]">
+                    Initialize Protocol →
+                </div>
+            </a>
+
+            <div class="glass p-8 rounded-[2.5rem] border-dashed border-slate-800 opacity-60">
+                <div class="flex justify-between items-start mb-16">
+                    <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-3xl">📄</div>
+                    <div class="px-3 py-1 rounded-full bg-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-widest">In Dev</div>
+                </div>
+                <h3 class="text-slate-400 text-2xl font-bold mb-3">AI 简历优化</h3>
+                <p class="text-slate-600 text-sm leading-relaxed mb-8">针对 AI 时代岗位进行精准简历润色与关键词对齐。</p>
+            </div>
+
+            <div class="glass p-8 rounded-[2.5rem] border-dashed border-slate-800 opacity-60">
+                <div class="flex justify-between items-start mb-16">
+                    <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-3xl">⚡</div>
+                    <div class="px-3 py-1 rounded-full bg-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-widest">Queue</div>
+                </div>
+                <h3 class="text-slate-400 text-2xl font-bold mb-3">算力分析仪</h3>
+                <p class="text-slate-600 text-sm leading-relaxed mb-8">实时监控多模型调用成本，优化您的 API 支出效率。</p>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="text-center py-12 border-t border-slate-900/50">
+        <p class="text-[10px] font-black text-slate-700 tracking-[0.5em] uppercase">© 2026 LBUDING AI Lab • Distributed Intelligence Network</p>
     </footer>
 
+    <script>
+        /**
+         * 现在做的是一个企业级的大型项目
+         * 核心逻辑：跨工具身份召回 (Ecosystem Memory Recall)
+         */
+        const IDENTITY_API = "你的N8n查询接口地址";
+        const fpPromise = FingerprintJS.load();
+
+        async function recallIdentity() {
+            try {
+                const fp = await fpPromise;
+                const result = await fp.get();
+                const visitorId = result.visitorId;
+
+                // 向中枢请求用户画像
+                const response = await fetch(IDENTITY_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ visitor_id: visitorId })
+                });
+
+                if (!response.ok) return;
+                const userData = await response.json();
+
+                // 🌟 企业级动态注入：如果发现是老用户
+                if (userData && userData.total_interactions > 0) {
+                    console.log("Identity Recalled:", userData);
+                    
+                    // 1. 更新顶部状态
+                    const status = document.getElementById('userStatus');
+                    status.innerHTML = `<span class="w-2 h-2 bg-blue-500 rounded-full"></span> Recognized: ${userData.last_city}`;
+                    status.classList.remove('hidden');
+
+                    // 2. 更新英雄区文字
+                    document.getElementById('personalBadge').classList.remove('hidden');
+                    document.getElementById('welcomeCity').innerText = `已识别：${userData.last_city} 战友`;
+                    
+                    document.getElementById('mainTitle').innerHTML = `欢迎回来，<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-400">${userData.last_city}的实干家</span>`;
+                    
+                    document.getElementById('mainDesc').innerHTML = `系统记录显示您已进行过 <b>${userData.total_interactions}</b> 次 AI 深度测算。<br>
+                        <span class="text-blue-400 italic">“${userData.ai_summary || '算力正在分析您的最新动态...'}”</span>`;
+                }
+            } catch (err) {
+                console.error("Identity recall failed:", err);
+            }
+        }
+
+        // 初始化页面逻辑
+        window.addEventListener('DOMContentLoaded', recallIdentity);
+    </script>
 </body>
 </html>
