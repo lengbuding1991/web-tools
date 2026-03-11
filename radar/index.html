@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>套利雷达 - 布丁实验室</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        :root { --radar-green: #10b981; --bg-dark: #020617; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .radar-scan { position: relative; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--radar-green), transparent); animation: scan 4s linear infinite; z-index: 20; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
+        .prose h2 { color: var(--radar-green) !important; border-left: 4px solid var(--radar-green); padding-left: 1rem; }
+        /* 海报宽度限制 */
+        #posterWrapper { width: 450px; background: #050a15; margin: 0 auto; display: none; }
+    </style>
+</head>
+<body class="tech-grid min-h-screen flex flex-col">
+
+    <nav class="h-16 flex items-center justify-between px-8 glass border-b border-emerald-500/20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center font-black text-white">02</div>
+            <span class="text-xs font-bold tracking-[0.2em] text-white uppercase text-emerald-500">Global Radar // 全球套利雷达</span>
+        </div>
+        <a href="/" class="text-[10px] font-bold border border-emerald-500/20 px-4 py-1.5 rounded-full text-emerald-500 hover:bg-emerald-500/10 transition-all">返回基地</a>
+    </nav>
+
+    <main class="flex-1 overflow-hidden flex flex-col md:flex-row">
+        <aside class="w-full md:w-80 p-6 border-r border-emerald-500/10 flex flex-col gap-6 glass">
+            <div class="space-y-4">
+                <h3 class="text-emerald-500 text-xs font-black uppercase tracking-widest">探测参数设置</h3>
+                <form id="radarForm" class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase">当前所在地</label>
+                        <input type="text" id="location" required placeholder="如：杭州" class="w-full px-4 py-3 rounded-xl text-xs">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase">目标资产/本金</label>
+                        <input type="text" id="assets" required placeholder="如：10w RMB" class="w-full px-4 py-3 rounded-xl text-xs">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-bold text-slate-500 uppercase">核心赛道</label>
+                        <select id="niche" class="w-full px-4 py-3 rounded-xl text-xs outline-none cursor-pointer">
+                            <option value="数字游民居住套利">数字游民居住套利</option>
+                            <option value="跨国算力转售">跨国算力转售</option>
+                            <option value="内容出海套利">内容出海套利</option>
+                            <option value="汇率/利差套利">汇率/利差套利</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-900/40">
+                        开启雷达扫描
+                    </button>
+                </form>
+            </div>
+            
+            <div class="flex-1 flex flex-col min-h-0 border-t border-emerald-500/10 pt-4">
+                <p class="text-[9px] font-bold text-slate-500 uppercase mb-2 tracking-widest">探测日志</p>
+                <div id="logs" class="flex-1 bg-black/40 p-4 rounded-lg text-[9px] mono text-emerald-700 space-y-1 overflow-y-auto">
+                    <div>> 雷达自检完成...</div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="flex-1 relative overflow-y-auto p-8 md:p-12">
+            <div id="radarScanLine" class="hidden radar-scan"></div>
+            
+            <div id="placeholder" class="h-full flex flex-col items-center justify-center opacity-20">
+                <div class="w-24 h-24 border-2 border-dashed border-emerald-500 rounded-full animate-pulse flex items-center justify-center">
+                    <span class="text-4xl text-emerald-500">📡</span>
+                </div>
+                <p class="text-[10px] uppercase tracking-[0.5em] mt-6">等待扫描指令注入...</p>
+            </div>
+
+            <div id="resultArea" class="hidden max-w-3xl mx-auto">
+                <div id="captureArea" class="p-10 md:p-16 rounded-[3rem] border border-emerald-500/30 bg-[#050a15] shadow-2xl relative">
+                    <div class="absolute top-10 right-10 text-[9px] text-emerald-900 font-bold mono">RADAR_SEQ: <span id="resID">---</span></div>
+                    <div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div>
+                    <div class="mt-12 pt-8 border-t border-white/5 flex justify-between items-center no-print">
+                        <p class="text-[8px] text-slate-600 uppercase">Pudding Lab // 车间 02 认证报告</p>
+                        <button onclick="exportRadarPoster()" id="exportBtn" class="px-6 py-2 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 rounded-full text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all">生成套利海报</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="posterWrapper" class="p-10">
+                <div class="border-b border-emerald-500/30 pb-6 mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-white text-2xl font-black italic">布丁雷达报告</h1>
+                        <p class="text-emerald-500 text-[9px] font-bold tracking-widest">GLOBAL ARBITRAGE REPORT</p>
+                    </div>
+                    <div class="text-right text-[8px] text-slate-600 mono">DATE: 2026.03.11</div>
+                </div>
+                <div id="posterContent" class="prose prose-invert prose-emerald max-w-none"></div>
+                <div class="mt-12 pt-6 border-t border-white/5 text-[9px] text-slate-600 mono flex justify-between">
+                    <span>LBUDING.RADAR.V3</span>
+                    <span id="posterHash">---</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = "https://nas-n8n.lbuding.com/webhook/radar-engine";
+        const logs = document.getElementById('logs');
+        const fpPromise = FingerprintJS.load();
+
+        function addLog(msg, color = 'emerald-700') {
+            const div = document.createElement('div');
+            div.className = `text-${color}`;
+            div.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
+            logs.prepend(div);
+        }
+
+        async function exportRadarPoster() {
+            const btn = document.getElementById('exportBtn');
+            const wrapper = document.getElementById('posterWrapper');
+            btn.innerText = "正在固化扫描图像...";
+            wrapper.style.display = 'block';
+            try {
+                const canvas = await html2canvas(wrapper, { backgroundColor: "#050a15", scale: 3, windowWidth: 450 });
+                const link = document.createElement('a');
+                link.download = `布丁套利雷达-${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            } finally {
+                wrapper.style.display = 'none';
+                btn.innerText = "生成套利海报";
+            }
+        }
+
+        document.getElementById('radarForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const placeholder = document.getElementById('placeholder');
+            const resultArea = document.getElementById('resultArea');
+            const content = document.getElementById('radarContent');
+            const posterContent = document.getElementById('posterContent');
+            const scanLine = document.getElementById('radarScanLine');
+
+            btn.disabled = true; btn.innerText = "正在进行全球同步扫描...";
+            placeholder.classList.add('hidden');
+            resultArea.classList.add('hidden');
+            scanLine.classList.remove('hidden');
+            addLog("正在向中枢同步地理坐标...", "info");
+
+            try {
+                const fp = await fpPromise;
+                const vid = (await fp.get()).visitorId;
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        visitor_id: vid,
+                        location: document.getElementById('location').value,
+                        assets: document.getElementById('assets').value,
+                        niche: document.getElementById('niche').value
+                    })
+                });
+                const data = await res.json();
+                if (data && data.blueprint) {
+                    const html = marked.parse(data.blueprint);
+                    content.innerHTML = html;
+                    posterContent.innerHTML = html;
+                    document.getElementById('resID').innerText = vid.substring(0,10).toUpperCase();
+                    document.getElementById('posterHash').innerText = `ID:${vid.substring(0,12).toUpperCase()}`;
+                    scanLine.classList.add('hidden');
+                    resultArea.classList.remove('hidden');
+                    resultArea.scrollIntoView({ behavior: 'smooth' });
+                    addLog("全球套利路径计算完成。", "success");
+                }
+            } catch (err) {
+                addLog("扫描失败：中枢连接超时。", "red-500");
+            } finally {
+                btn.disabled = false; btn.innerText = "开启雷达扫描";
+            }
+        });
+    </script>
+</body>
+</html>
