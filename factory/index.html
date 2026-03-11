@@ -8,12 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        /* 🚩 初始锁屏：默认不加 hidden，直到 JS 确认身份后再撤去 */
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .glitch-blue { color: #3b82f6; font-weight: 800; animation: pulse 2s infinite; text-transform: uppercase; letter-spacing: 0.5em; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -23,73 +23,94 @@
 </head>
 <body class="tech-grid min-h-screen flex flex-col md:flex-row">
     <div id="lockscreen">
-        <div class="glitch-blue text-xs mb-4 mono">Factory_Auth_Verifying...</div>
-        <div class="w-32 h-1 bg-white/5 rounded-full overflow-hidden">
-            <div class="w-1/2 h-full bg-blue-600 animate-[move_2s_infinite]"></div>
+        <div class="glitch-blue text-[10px] mb-4 mono">Factory_Security_Checking...</div>
+        <div class="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+            <div id="progressBar" class="w-0 h-full bg-blue-600 transition-all duration-500"></div>
         </div>
+        <p id="lockMsg" class="mt-4 text-[8px] text-slate-600 mono uppercase">Verifying_Digital_Signature</p>
     </div>
-    <style> @keyframes move { from { transform: translateX(-100%); } to { transform: translateX(200%); } } </style>
 
     <aside class="w-full md:w-72 p-6 flex flex-col gap-6 shrink-0 glass-panel">
-        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl">布</div><h2 class="font-black text-white text-lg">价值工厂</h2></div>
-        <div class="p-4 bg-black/40 rounded-lg border border-white/5 mono text-[9px] text-slate-500 flex-1 overflow-y-auto" id="logs">> 生产线就绪...</div>
+        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-900/20">布</div><h2 class="font-black text-white text-lg">价值工厂</h2></div>
+        <div class="p-4 bg-black/40 rounded-lg border border-white/5 mono text-[9px] text-slate-500 flex-1 overflow-y-auto" id="logs">> 初始化生产协议...</div>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="h-16 flex items-center justify-between px-8 border-b border-white/5">
             <div class="flex items-center gap-2">
-                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span class="text-[10px] font-bold text-slate-500 mono uppercase" id="userTag">LOADING...</span>
+                <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span class="text-[10px] font-bold text-slate-500 mono" id="userTag">AUTHORIZING...</span>
             </div>
-            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-[10px] font-bold uppercase hover:text-white transition-all">返回基地</a>
+            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-[10px] font-bold uppercase hover:bg-blue-600 transition-all">返回基地</a>
         </header>
 
         <div class="flex-1 overflow-y-auto p-8">
             <div class="max-w-4xl mx-auto space-y-8">
-                <div class="glass-panel p-8 rounded-[2rem]">
+                <div class="glass-panel p-8 rounded-[2.5rem]">
                     <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input type="text" id="skills" required placeholder="核心技能 (如 Python, 英语)" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
-                        <input type="text" id="commitment" required placeholder="投入精力 (如 每天1小时)" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                        <input type="text" id="skills" required placeholder="核心技能 (如 Python, AI)" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                        <input type="text" id="commitment" required placeholder="投入精力 (如 每天2小时)" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
                         <select id="sector" class="md:col-span-2 px-6 py-4 rounded-xl text-sm outline-none">
-                            <option value="AI 自动化">AI 自动化工具链</option><option value="内容工厂">高产内容流水线</option>
+                            <option value="AI 自动化">AI 自动化工具链</option>
+                            <option value="内容工厂">高产内容流水线</option>
+                            <option value="数字化套利">地理价值套利</option>
                         </select>
-                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest">生成价值蓝图</button>
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-xl shadow-blue-900/40 active:scale-95 transition-all">生成价值蓝图</button>
                     </form>
                 </div>
-                <div id="resultArea" class="hidden glass-panel p-10 rounded-[2rem]">
+                <div id="resultArea" class="hidden glass-panel p-10 rounded-[2.5rem]">
                     <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300"></div>
-                    <button onclick="generatePoster()" id="posterBtn" class="mt-8 px-8 py-3 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase">导出高清蓝图</button>
+                    <button onclick="generatePoster()" id="posterBtn" class="mt-8 px-10 py-4 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">导出高清蓝图</button>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="posterWrapper" class="p-12 bg-[#050a15] border-2 border-blue-500/20"><h2 class="text-white text-2xl font-black mb-10 uppercase">Factory Blueprint Output</h2><div id="posterContent" class="prose prose-invert prose-blue"></div></div>
+    <div id="posterWrapper" class="p-16 bg-[#050a15] border-2 border-blue-500/20"><h2 class="text-white text-3xl font-black mb-10 uppercase italic">Pudding Lab // Factory Output</h2><div id="posterContent" class="prose prose-invert prose-blue"></div></div>
 
     <script>
-        const API_URL = "https://nas-n8n.lbuding.com/webhook/factory-engine";
+        const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
 
-        async function verifyAndOpen() {
-            const token = localStorage.getItem('pudding_token');
-            if (!token) { window.location.href = "/"; return; }
-            try {
-                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`} });
-                const data = await res.json();
-                if (data.status === 'authorized') {
-                    document.getElementById('lockscreen').classList.add('hidden'); // 🚩 身份确认，撤去锁屏
-                    document.getElementById('userTag').innerText = data.username.toUpperCase() + "_STATION";
-                } else { throw new Error(); }
-            } catch (e) { localStorage.removeItem('pudding_token'); window.location.href = "/"; }
-        }
+        async function verifyAccess() {
+            const t = localStorage.getItem('pudding_token');
+            const bar = document.getElementById('progressBar');
+            if (!t) { window.location.href = "/"; return; }
+            bar.style.width = "40%";
 
-        window.onload = verifyAndOpen;
+            try {
+                const res = await fetch(PROFILE_API, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
+                });
+                bar.style.width = "80%";
+                const data = await res.json();
+                
+                if (data.status === 'authorized' || data.username) {
+                    bar.style.width = "100%";
+                    setTimeout(() => {
+                        document.getElementById('lockscreen').classList.add('hidden');
+                        document.getElementById('userTag').innerText = (data.username || "ARCHITECT").toUpperCase() + "_STATION";
+                    }, 500);
+                } else { throw new Error("Sentinel Denied"); }
+            } catch (e) {
+                console.error("Auth Fail:", e);
+                document.getElementById('lockMsg').innerText = "Auth_Link_Broken";
+                setTimeout(() => { localStorage.removeItem('pudding_token'); window.location.href = "/"; }, 2000);
+            }
+        }
+        window.onload = verifyAccess;
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "算力调配中...";
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true; btn.innerText = "算力调配中...";
             try {
-                const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value }) });
+                const res = await fetch(ENGINE_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` },
+                    body: JSON.stringify({ skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value })
+                });
                 const data = await res.json();
                 if (data.blueprint) {
                     document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
@@ -97,14 +118,16 @@
                     document.getElementById('resultArea').classList.remove('hidden');
                     document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
                 }
-            } catch (err) { alert("信号异常"); } finally { btn.disabled = false; btn.innerText = "生成价值蓝图"; }
+            } catch (err) { alert("信号丢失，请检查算力中心状态"); }
+            finally { btn.disabled = false; btn.innerText = "生成价值蓝图"; }
         });
 
         async function generatePoster() {
-            const wrapper = document.getElementById('posterWrapper'); wrapper.style.display = 'block';
-            const canvas = await html2canvas(wrapper, { backgroundColor: "#050a15", scale: 2 });
-            const link = document.createElement('a'); link.download = `Factory_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click();
-            wrapper.style.display = 'none';
+            const wrap = document.getElementById('posterWrapper'); wrap.style.display = 'block';
+            const canvas = await html2canvas(wrap, { backgroundColor: "#050a15", scale: 2 });
+            const link = document.createElement('a');
+            link.download = `Factory_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click();
+            wrap.style.display = 'none';
         }
     </script>
 </body>
