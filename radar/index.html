@@ -12,7 +12,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --radar-green: #10b981; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         
         .tech-grid { 
             background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); 
@@ -43,15 +43,13 @@
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; border-radius: 8px !important; }
         input:focus { border-color: var(--radar-green) !important; outline: none; }
 
-        /* Markdown 内容排版 */
         .prose h2 { color: #fff !important; margin-top: 2em !important; border-left: 4px solid var(--radar-green); padding-left: 1rem; }
         .prose strong { color: var(--radar-green) !important; font-weight: 800; }
         
-        /* 海报容器 */
         #posterWrapper { width: 450px; background: #050a15; margin: 0 auto; display: none; }
     </style>
 </head>
-<body class="tech-grid flex flex-col">
+<body class="tech-grid flex flex-col min-h-screen">
 
     <div class="scanning-beam"></div>
 
@@ -98,7 +96,7 @@
             <div id="computeStatusPanel" class="hidden w-full max-w-4xl mb-8 p-4 border border-emerald-500/20 rounded-xl bg-emerald-500/5 mono text-[10px] flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
-                    <span id="computeSourceText" class="glitch-text uppercase tracking-widest text-emerald-500">Connecting to Compute Center...</span>
+                    <span id="computeSourceText" class="glitch-text uppercase tracking-widest text-emerald-500">STANDBY...</span>
                 </div>
                 <div class="text-slate-500">NODE: DEEPSEEK_V3 // PRIORITY_01</div>
             </div>
@@ -135,18 +133,14 @@
                         TOP SECRET<br>PUDDING_ARSENAL<br>POWERED BY DEEPSEEK
                     </div>
                 </div>
-                
                 <div id="posterContent" class="prose prose-invert prose-emerald max-w-none mb-16"></div>
-
                 <div class="mt-auto pt-10 border-t border-emerald-500/30 flex justify-between items-end">
                     <div class="space-y-4">
                         <div>
                             <p class="text-[12px] text-white font-black tracking-tighter uppercase mb-1">布丁实验室 // 大本营基地</p>
                             <p class="text-[16px] text-emerald-500 font-black mono tracking-tight">tools.lbuding.com</p>
                         </div>
-                        <p class="text-[9px] text-slate-600 uppercase tracking-widest">
-                            数字化套利情报 · 灵感价值引擎 · 极客武器库
-                        </p>
+                        <p class="text-[9px] text-slate-600 uppercase tracking-widest">数字化套利情报 · 灵感价值引擎 · 极客武器库</p>
                     </div>
                     <div class="text-right flex flex-col items-end">
                         <div class="w-12 h-1.5 bg-emerald-500 mb-2"></div>
@@ -161,7 +155,20 @@
         const API_URL = "https://nas-n8n.lbuding.com/webhook/radar-engine";
         const fpPromise = FingerprintJS.load();
 
-        // 保持海报生成功能
+        // 🛠️ 核心补丁：确保 ID 万无一失
+        async function getReliableID() {
+            let vid = "RADAR_TEMP_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
+            try {
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800));
+                const fp = await Promise.race([fpPromise, timeout]);
+                const result = await fp.get();
+                vid = result.visitorId;
+            } catch (e) {
+                console.warn("Using Fallback ID due to tracking blocker or timeout.");
+            }
+            return vid;
+        }
+
         async function exportRadarPoster() {
             const btn = document.getElementById('exportBtn');
             const wrapper = document.getElementById('posterWrapper');
@@ -191,24 +198,22 @@
             const resultArea = document.getElementById('resultArea');
             const content = document.getElementById('radarContent');
             const posterContent = document.getElementById('posterContent');
-            
-            // 算力面板元素
             const computePanel = document.getElementById('computeStatusPanel');
             const computeText = document.getElementById('computeSourceText');
 
-            // 1. 初始化 UI
+            // 1. UI 锁定与算力初始化
             btn.disabled = true; 
-            btn.innerText = "正在提取全球情报...";
+            btn.innerText = "正在锁定信号...";
             placeholder.classList.add('hidden');
             resultArea.classList.add('hidden');
-            
-            // 2. 显示算力加载状态 (新增)
             computePanel.classList.remove('hidden');
             computeText.innerText = "CONNECTING TO DEEPSEEK (PRIORITY 01)...";
 
             try {
-                const fp = await fpPromise;
-                const vid = (await fp.get()).visitorId;
+                // 2. 异步获取可靠 ID (不再卡死)
+                const vid = await getReliableID();
+                
+                // 3. 发射 Webhook
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -220,10 +225,11 @@
                     })
                 });
 
+                if (!res.ok) throw new Error("COMPUTE_OFFLINE");
+
                 const data = await res.json();
 
                 if (data && (data.blueprint || data.output)) {
-                    // 3. 算力锁定效果 (新增)
                     computeText.innerText = "DEEPSEEK V3 LOGIC LOCKED. ANALYZING ASYMMETRY...";
                     
                     const rawContent = data.blueprint || data.output;
@@ -235,16 +241,15 @@
                     document.getElementById('resID').innerText = vid.substring(0,12).toUpperCase();
                     document.getElementById('posterHash').innerText = `ID:${vid.substring(0,16).toUpperCase()}`;
                     
-                    // 模拟一秒分析完成感
                     setTimeout(() => {
                         resultArea.classList.remove('hidden');
                         resultArea.scrollIntoView({ behavior: 'smooth' });
                         computeText.innerText = "SCAN COMPLETE. REPORT GENERATED.";
-                    }, 1000);
+                    }, 800);
                 }
             } catch (err) {
                 computeText.innerText = "CRITICAL ERROR: COMPUTE LINK SEVERED.";
-                alert("雷达掉线，请检查 n8n 状态。");
+                alert("雷达掉线，请检查 n8n 后端状态。");
             } finally {
                 btn.disabled = false; btn.innerText = "激活雷达扫描指令";
             }
