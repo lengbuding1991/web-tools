@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>布丁「瞎折腾」武器库 | Pudding's Tech Lab</title>
+    <title>布丁「瞎折腾」武器库 | Pudding's Tech Arsenal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
@@ -12,9 +12,8 @@
         .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .tool-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .tool-card:hover { transform: translateY(-8px); border-color: #3b82f6; box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.3); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-        .active-dot { background-color: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .active-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body class="min-h-screen selection:bg-blue-500/30">
@@ -22,111 +21,79 @@
     <nav class="sticky top-0 z-50 p-6 glass border-b border-white/5">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg">B</div>
+                <div class="w-10 h-10 bg-white text-slate-950 rounded-xl flex items-center justify-center font-black text-2xl shadow-lg">P</div>
                 <div>
                     <h1 class="font-black text-lg tracking-tighter uppercase leading-none">Pudding Lab</h1>
-                    <p class="text-[8px] text-blue-500 font-bold uppercase tracking-[0.4em]">布丁「瞎折腾」工作室</p>
+                    <p class="text-[8px] text-blue-500 font-bold uppercase tracking-[0.4em]">布丁「瞎折腾」实验室</p>
                 </div>
             </div>
-            
-            <div id="idTracker" class="hidden md:flex items-center gap-4">
-                <div class="px-4 py-2 glass rounded-full border border-blue-500/20 text-[10px] font-bold text-slate-400">
-                    <span class="status-dot active-dot"></span>
-                    已识别画像: <span id="userBio" class="text-blue-400">GUEST_MODE</span>
-                </div>
+            <div id="idBadge" class="hidden px-4 py-2 glass rounded-full border border-blue-500/20 text-[10px] font-bold">
+                <span class="active-dot inline-block mr-2"></span>
+                SYSTEM RECALLED: <span id="userId" class="text-blue-400">---</span>
             </div>
         </div>
     </nav>
 
-    <header class="max-w-7xl mx-auto pt-24 pb-16 px-8 text-center md:text-left">
-        <h2 id="welcomeMsg" class="text-5xl md:text-8xl font-black tracking-tighter mb-6 leading-[0.9]">
-            折腾不息，<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-400 italic">价值不止。</span>
+    <header class="max-w-7xl mx-auto pt-24 pb-16 px-8">
+        <h2 id="heroTitle" class="text-5xl md:text-8xl font-black tracking-tighter mb-6 leading-[0.9]">
+            折腾，是为了<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-400 italic font-serif">更有价值。</span>
         </h2>
         <p class="text-slate-500 max-w-2xl text-sm md:text-base font-medium leading-relaxed">
-            这里是布丁的所有实验成果存放地。每个工具都诞生于一个“瞎折腾”的念头，最终进化为可变现、可规模化的自动化方案。
+            这里是布丁的所有实验成果存放地。每一个“瞎折腾”出的工具都经过 DeepSeek 算力对齐，旨在通过自动化挖掘 2026 年的数字化不对称收益。
         </p>
     </header>
 
     <main class="max-w-7xl mx-auto px-8 pb-32">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             
-            <a href="/survive-calc/" class="tool-card glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-between h-[320px]">
-                <div>
-                    <div class="flex justify-between items-start mb-12">
-                        <span class="text-3xl">🏃‍♂️</span>
-                        <span class="text-[10px] font-black text-emerald-500 border border-emerald-500/20 px-2 py-1 rounded">ACTIVE</span>
-                    </div>
-                    <h3 class="text-2xl font-black text-white mb-2">离职生存计算器</h3>
-                    <p class="text-slate-500 text-xs">通过财务压力模型，获取 DeepSeek 的毒舌生存建议与避坑指南。</p>
-                </div>
-                <div class="text-blue-500 text-[10px] font-black uppercase tracking-widest">进入模块 →</div>
-            </a>
-
             <a href="/factory/" class="tool-card glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-between h-[320px]">
                 <div>
-                    <div class="flex justify-between items-start mb-12">
-                        <span class="text-3xl">⚡</span>
-                        <span class="text-[10px] font-black text-blue-500 border border-blue-500/20 px-2 py-1 rounded">NEW</span>
-                    </div>
-                    <h3 class="text-2xl font-black text-white mb-2">灵感价值工厂</h3>
-                    <p class="text-slate-500 text-xs">输入你的技能与念头，AI 自动为你生成可落地的自动化套利蓝图。</p>
+                    <div class="flex justify-between items-start mb-12 text-3xl">⚡</div>
+                    <h3 class="text-2xl font-black text-white mb-2">灵感变现工厂</h3>
+                    <p class="text-slate-500 text-xs">输入你的技能与时间，AI 自动为你生成可落地的自动化套利方案。</p>
                 </div>
-                <div class="text-blue-500 text-[10px] font-black uppercase tracking-widest">开始折腾 →</div>
+                <div class="text-blue-500 text-[10px] font-black uppercase tracking-widest">初始化生产线 →</div>
             </a>
 
             <div class="glass p-8 rounded-[2.5rem] border border-white/5 opacity-40 flex flex-col justify-between h-[320px]">
                 <div>
-                    <div class="flex justify-between items-start mb-12">
-                        <span class="text-3xl">🌍</span>
-                        <span class="text-[10px] font-black text-slate-500 border border-white/10 px-2 py-1 rounded">PLANNED</span>
-                    </div>
-                    <h3 class="text-2xl font-black text-slate-300 mb-2">城市套利指南</h3>
-                    <p class="text-slate-600 text-xs">根据你的资产现状，寻找全球范围内性价比最高的数字化居住地。</p>
+                    <div class="flex justify-between items-start mb-12 text-3xl">🌍</div>
+                    <h3 class="text-2xl font-black text-slate-300 mb-2">城市对冲指南</h3>
+                    <p class="text-slate-600 text-xs">根据你的资产现状，计算全球性价比最高的数字化居住地与套利路径。</p>
                 </div>
-                <div class="text-slate-600 text-[10px] font-black uppercase tracking-widest italic">算力加载中...</div>
+                <div class="text-slate-600 text-[10px] font-black uppercase tracking-widest">算力对齐中...</div>
             </div>
 
             <div class="glass p-8 rounded-[2.5rem] border-dashed border-white/10 flex items-center justify-center h-[320px] group">
                 <div class="text-center">
                     <div class="text-4xl text-slate-700 group-hover:scale-110 transition-all">+</div>
-                    <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-4">更多“瞎折腾”筹备中</p>
+                    <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-4">更多模块正在折腾中</p>
                 </div>
             </div>
 
         </div>
     </main>
 
-    <footer class="max-w-7xl mx-auto px-8 py-12 border-t border-white/5 text-center">
-        <p class="text-[9px] font-black text-slate-700 uppercase tracking-[0.5em]">LBUDING LAB © 2026 • 专注于生产有用的废话与有价值的代码</p>
-    </footer>
-
     <script>
         const IDENTITY_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         const fpPromise = FingerprintJS.load();
 
-        async function initIdentity() {
-            try {
-                const fp = await fpPromise;
-                const vid = (await fp.get()).visitorId;
-                
-                const response = await fetch(IDENTITY_API, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ visitor_id: vid })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.last_city) {
-                        document.getElementById('idTracker').classList.remove('hidden');
-                        document.getElementById('userBio').innerText = `${data.last_city} · ${data.last_industry}`;
-                        document.getElementById('welcomeMsg').innerHTML = `欢迎回来，<br><span class="text-blue-500">${data.last_city}的</span>折腾家。`;
-                    }
-                }
-            } catch (e) { console.warn("Visitor ID not found in database."); }
+        async function init() {
+            const fp = await fpPromise;
+            const vid = (await fp.get()).visitorId;
+            const res = await fetch(IDENTITY_API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ visitor_id: vid })
+            });
+            const data = await res.json();
+            if (data.last_city) {
+                document.getElementById('idBadge').classList.remove('hidden');
+                document.getElementById('userId').innerText = vid.substring(0, 8).toUpperCase();
+                document.getElementById('heroTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500">${data.last_city}的</span>折腾家。`;
+            }
         }
-
-        window.onload = initIdentity;
+        window.onload = init;
     </script>
 </body>
 </html>
