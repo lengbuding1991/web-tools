@@ -3,186 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>价值工厂 | 布丁实验室</title>
+    <title>FACTORY-v3 | 布丁实验室</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap');
-        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .grid-bg { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .blueprint { background: #070e1e; border: 2px solid #1e3a8a; box-shadow: inset 0 0 50px rgba(59, 130, 246, 0.1); position: relative; overflow: hidden; }
-        .scan-line { width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #3b82f6, transparent); position: absolute; top: 0; left: 0; animation: scan 3s linear infinite; z-index: 20; }
-        @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
-        /* 针对输入框的工业风样式优化 */
-        input, select { background: rgba(255, 255, 255, 0.03) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: white !important; font-family: 'JetBrains Mono', monospace; }
-        input:focus { border-color: #3b82f6 !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        /* 打字机效果装饰 */
-        .typewriter::after { content: "|"; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body { background-color: #020617; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .active-border { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .sidebar { border-right: 1px solid rgba(255, 255, 255, 0.05); }
+        .terminal-text { font-size: 11px; line-height: 1.6; }
+        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
+        input:focus { border-color: #3b82f6 !important; outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+        .shimmer { animation: shimmer 2s infinite; background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent); background-size: 200% 100%; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body class="grid-bg min-h-screen p-4 md:p-12 selection:bg-blue-500/30">
+<body class="min-h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8">
-            <div>
-                <a href="/" class="text-blue-500 text-xs font-black tracking-widest uppercase hover:underline">← RETURN TO BASE</a>
-                <h1 class="text-4xl md:text-6xl font-black tracking-tighter mt-4 uppercase">Value <span class="text-blue-500 italic">Factory</span></h1>
-                <p class="text-slate-500 text-xs mt-2 font-bold uppercase tracking-[0.3em]">AI-Driven Profit Architect / 车间 01</p>
+    <aside class="w-full md:w-64 sidebar p-6 hidden md:flex flex-col gap-6 shrink-0">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">P</div>
+            <span class="text-white font-bold tracking-tighter">PUDDING-V3</span>
+        </div>
+        
+        <div class="space-y-4">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SYSTEM_LOGS</p>
+            <div id="logs" class="terminal-text text-slate-600 h-64 overflow-hidden">
+                <div class="mb-1 text-emerald-500">> SYSTEM_READY</div>
+                <div class="mb-1">> FINGERPRINT_INIT...</div>
             </div>
-            <div class="glass px-6 py-4 rounded-2xl border-l-4 border-blue-500 shadow-xl shadow-blue-500/10">
-                <p class="text-[10px] text-slate-500 uppercase font-black">System Status</p>
-                <p class="text-xs font-bold text-emerald-500 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> DEEPSEEK CORE: Nominal</p>
-            </div>
-        </header>
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div class="lg:col-span-4 space-y-6">
-                <div class="glass p-8 rounded-[2rem] border border-white/5 relative">
-                    <div class="absolute -top-3 -left-3 px-3 py-1 bg-blue-600 text-white font-black text-[9px] uppercase rounded-full">RAW DATA</div>
-                    
-                    <h3 class="text-lg font-black mb-8 border-b border-white/10 pb-4">灵感价值提取器</h3>
-                    
-                    <form id="factoryForm" class="space-y-6">
+        <div class="mt-auto glass-panel p-4 rounded-xl">
+            <p class="text-[9px] font-bold text-blue-500 uppercase mb-2">Network Status</p>
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                <span class="text-xs text-slate-400">Node-n8n: Connected</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-6 md:p-12">
+        <div class="max-w-4xl mx-auto">
+            <header class="flex justify-between items-end mb-12">
+                <div>
+                    <h2 class="text-xs font-bold text-blue-500 mb-2 tracking-[0.3em] uppercase">Blueprint Extraction Facility</h2>
+                    <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic">价值工厂车间</h1>
+                </div>
+                <a href="/" class="px-4 py-2 glass-panel rounded-lg text-[10px] hover:text-white transition-colors">BACK_TO_BASE</a>
+            </header>
+
+            <div class="grid grid-cols-1 gap-8">
+                <div class="glass-panel p-8 rounded-3xl relative overflow-hidden">
+                    <div class="shimmer absolute inset-0 opacity-20 pointer-events-none"></div>
+                    <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Your Skills / 核心技能</label>
-                            <input type="text" id="skills" required placeholder="Python, 文案, 运营, 视频剪辑..." class="w-full px-4 py-3.5 rounded-xl outline-none transition-all text-sm">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">核心技能</label>
+                            <input type="text" id="skills" required placeholder="如：Python" class="w-full px-4 py-3 rounded-xl text-sm transition-all">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Commitment / 投入精力</label>
-                            <input type="text" id="commitment" required placeholder="如：每天2小时, 周末全职" class="w-full px-4 py-3.5 rounded-xl outline-none transition-all text-sm">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">投入精力</label>
+                            <input type="text" id="commitment" required placeholder="如：2h/天" class="w-full px-4 py-3 rounded-xl text-sm transition-all">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sector / 关注赛道</label>
-                            <select id="sector" class="w-full px-4 py-3.5 rounded-xl outline-none transition-all text-sm cursor-pointer appearance-none">
-                                <option value="AI 自动化">AI 自动化 (No-code/LLM)</option>
-                                <option value="数字化套利">数字化套利 (Arbitrage)</option>
-                                <option value="内容工厂">自动化内容生产 (Content Gen)</option>
-                                <option value="Micro-SaaS">微型 SaaS 产品 (Product)</option>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">关注方向</label>
+                            <select id="sector" class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all">
+                                <option value="AI 自动化">AI 自动化</option>
+                                <option value="数字化套利">数字化套利</option>
+                                <option value="内容工厂">内容工厂</option>
+                                <option value="Micro-SaaS">Micro-SaaS</option>
                             </select>
                         </div>
-                        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-xl transition-all shadow-xl shadow-blue-900/40 uppercase tracking-widest text-xs active:scale-[0.98]">
-                            EXECUTE EXTRACTION / 开始提取
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="lg:col-span-8">
-                <div id="outputContainer" class="blueprint min-h-[550px] rounded-[3rem] p-8 md:p-16 relative shadow-2xl shadow-blue-500/5">
-                    <div id="scanLine" class="hidden scan-line"></div>
-                    
-                    <div class="absolute top-10 right-10 opacity-5 text-9xl font-black italic select-none mono">P-LAB</div>
-                    
-                    <div id="placeholder" class="h-full flex flex-col items-center justify-center text-center space-y-4 pt-20 opacity-30">
-                        <div class="w-16 h-16 border-2 border-dashed border-blue-500 rounded-full flex items-center justify-center animate-spin-slow">
-                            <span class="text-2xl">⚙️</span>
-                        </div>
-                        <p class="text-xs uppercase tracking-[0.5em] font-medium">Waiting for raw data input...</p>
-                    </div>
-
-                    <div id="resultArea" class="hidden relative z-10">
-                        <div class="flex items-center gap-3 mb-12 pb-8 border-b border-blue-900/50">
-                            <div class="w-3.5 h-3.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_15px_#3b82f6]"></div>
-                            <h2 class="text-2xl font-black uppercase tracking-tighter">Verified Profit Blueprint / 变现蓝图</h2>
-                        </div>
-                        
-                        <div id="blueprintContent" class="mono text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium prose prose-invert prose-blue max-w-none">
-                            </div>
-
-                        <div class="mt-20 pt-8 border-t border-blue-900/30 flex justify-between items-end">
-                            <div class="text-[9px] text-slate-600 font-bold uppercase space-y-1.5 mono">
-                                <p>Blueprint Hash: <span id="resHash" class="text-slate-400">---</span></p>
-                                <p>Process Date: <span id="resDate">---</span></p>
-                                <p>Pipeline: Pudding.Arbitrage.v1</p>
-                            </div>
-                            <button onclick="window.print()" class="px-6 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-slate-400 hover:text-white transition-all uppercase tracking-widest active:scale-95">
-                                DOWNLOAD PDF
+                        <div class="md:col-span-3">
+                            <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-[11px] uppercase tracking-[0.3em] transition-all shadow-xl shadow-blue-900/40">
+                                立即执行价值提取指令
                             </button>
                         </div>
+                    </form>
+                </div>
+
+                <div id="resultContainer" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="h-px flex-1 bg-white/5"></div>
+                        <span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Blueprint Output</span>
+                        <div class="h-px flex-1 bg-white/5"></div>
+                    </div>
+                    
+                    <div class="bg-[#0f172a] p-10 md:p-16 rounded-[2.5rem] border border-blue-500/20 shadow-2xl relative">
+                        <div class="absolute top-8 right-8 text-[10px] text-slate-700 font-bold mono uppercase">ID: <span id="resHash">---</span></div>
+                        <div id="blueprintContent" class="text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium">
+                            </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
-        // 配置你的后端 Webhook 地址 (确保是 Production URL 且已 Activate)
-        const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/factory-logic"; 
+        const API_URL = "https://nas-n8n.lbuding.com/webhook/factory-engine"; // 确保这是生产 URL
+        const logs = document.getElementById('logs');
         const fpPromise = FingerprintJS.load();
+
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.className = "mb-1";
+            div.innerText = `> ${msg}`;
+            logs.prepend(div);
+        }
 
         document.getElementById('factoryForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            const placeholder = document.getElementById('placeholder');
-            const resultArea = document.getElementById('resultArea');
-            const scanLine = document.getElementById('scanLine');
+            const resultArea = document.getElementById('resultContainer');
             const content = document.getElementById('blueprintContent');
 
-            // 1. 锁住 UI，开始扫描动画
-            btn.disabled = true;
-            btn.innerText = "MACHINERY RUNNING...";
-            placeholder.classList.add('hidden');
-            resultArea.classList.add('hidden');
-            scanLine.classList.remove('hidden');
-            content.innerText = ""; // 清空旧内容
-
-            // 2. 获取指纹
-            const fp = await fpPromise;
-            const result = await fp.get();
-            const vid = result.visitorId;
-
-            // 3. 构造原材料
-            const payload = {
-                visitor_id: vid,
-                skills: document.getElementById('skills').value,
-                commitment: document.getElementById('commitment').value,
-                sector: document.getElementById('sector').value
-            };
+            btn.disabled = true; btn.innerText = "EXECUTING...";
+            addLog("REQUEST_SENT_TO_N8N");
 
             try {
-                // 4. 调用 n8n 中枢神经
-                const res = await fetch(WEBHOOK_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
+                const fp = await fpPromise;
+                const vid = (await fp.get()).visitorId;
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        visitor_id: vid,
+                        skills: document.getElementById('skills').value,
+                        commitment: document.getElementById('commitment').value,
+                        sector: document.getElementById('sector').value
+                    })
                 });
-                
-                if (!res.ok) throw new Error("Factory Connection Failed");
-                const data = await res.json();
-                
-                // 🛡️ 5. 核心修复点：
-                // 如果你的 n8n 最后的 Respond 节点返回的数据格式是 { "blueprint": "..." }
-                // 这里要用 data.blueprint，如果是直接返回纯文本，要用 res.text()，但最好包装成 JSON。
-                // 我在这里假设你按照之前的建议，在 n8n 最后的 Respond 节点里写的是：{{ JSON.stringify({ "blueprint": $json.cleaned_content }) }}
+
+                if (!response.ok) throw new Error("HTTP_ERROR_" + response.status);
+
+                const data = await response.json();
                 
                 if (data && data.blueprint) {
-                    // 注入纯文本，避免 Markdown 的井号导致 HTML 报错
-                    content.innerText = data.blueprint; 
-                    
-                    // 更新元数据
-                    document.getElementById('resHash').innerText = vid.substring(0,12).toUpperCase();
-                    document.getElementById('resDate').innerText = new Date().toLocaleDateString();
-                    
-                    // 停止扫描，显示蓝图
-                    scanLine.classList.add('hidden');
+                    content.innerText = data.blueprint;
+                    document.getElementById('resHash').innerText = vid.substring(0,8).toUpperCase();
                     resultArea.classList.remove('hidden');
+                    addLog("BLUEPRINT_RENDERED_SUCCESS");
                     resultArea.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    throw new Error("Invalid Output Format from AI");
+                    throw new Error("EMPTY_DATA");
                 }
-                
             } catch (err) {
-                alert("工厂停电 (Factory Error): Check n8n workflow and table relations.");
-                console.error(err);
-                scanLine.classList.add('hidden');
-                placeholder.classList.remove('hidden');
+                addLog(`ERROR: ${err.message}`);
+                alert(`工厂停电: [${err.message}] 
+1. 请确认 N8n 工作流已点击右上角 Save
+2. 请确认工作流右上角 Active 开关已打开
+3. 请确认 Webhook 节点里使用的是 Production URL`);
             } finally {
-                // 6. 解锁按钮
-                btn.disabled = false;
-                btn.innerText = "投入新灵感";
+                btn.disabled = false; btn.innerText = "投入新灵感";
             }
         });
     </script>
