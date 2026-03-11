@@ -10,14 +10,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --radar-green: #10b981; --bg-dark: #020617; }
-        /* 🚩 核心修复：独立滚动 */
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(16, 185, 129, 0.2); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         
-        /* 雷达扫描线动画 */
         .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); box-shadow: 0 0 15px var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; pointer-events: none; }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
         
@@ -91,13 +89,13 @@
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/radar-engine";
 
-        // 🚩 零网络请求进门
+        // 🚀 核心修复：物理强杀遮罩层
         window.onload = () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
             if (!t || !u) { window.location.href = "/"; return; }
             
-            document.getElementById('lockscreen').classList.add('hidden');
+            document.getElementById('lockscreen').style.display = 'none';
             document.getElementById('radarUser').innerText = "OPERATOR: " + u.toUpperCase();
         };
 
@@ -111,7 +109,6 @@
                     body: JSON.stringify({ location: document.getElementById('location').value, assets: document.getElementById('assets').value, niche: document.getElementById('niche').value }) 
                 });
                 
-                // 🚩 在这里拦截失效 Token
                 if (res.status === 401) {
                     alert("雷达访问权限已被撤销，请重新接入基地。");
                     localStorage.clear(); window.location.href = "/"; return;
