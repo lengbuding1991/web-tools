@@ -28,15 +28,20 @@
         .scanline { width: 100%; height: 100px; background: linear-gradient(0deg, transparent, rgba(59, 130, 246, 0.05), transparent); position: absolute; animation: scan 8s linear infinite; pointer-events: none; }
         @keyframes scan { 0% { top: -100px; } 100% { top: 100%; } }
 
-        /* 呼吸灯 */
+        /* 状态灯 */
         .status-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
+        .status-offline { background: #64748b; box-shadow: none; animation: none; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* 弹窗样式 */
+        #authModal { transition: opacity 0.3s ease; }
+        input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col">
     <div class="scanline"></div>
 
-    <nav class="h-16 flex items-center justify-between px-8 glass border-b border-white/5 shrink-0 z-50">
+    <nav class="h-16 flex items-center justify-between px-8 glass border-b border-white/5 shrink-0 z-50 sticky top-0">
         <div class="flex items-center gap-4">
             <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg">B</div>
             <div>
@@ -44,14 +49,14 @@
                 <p class="text-[9px] text-blue-500 font-bold tracking-[0.3em]">布丁实验室 // 大本营</p>
             </div>
         </div>
-        <div class="flex items-center gap-8">
-            <div id="userBadge" class="hidden md:flex items-center gap-2 glass px-4 py-1.5 rounded-full border border-blue-500/20">
-                <div class="status-pulse"></div>
-                <span class="text-[10px] font-bold text-blue-400 mono" id="userName">识别中...</span>
+        
+        <div class="flex items-center gap-6">
+            <div id="userBadge" class="flex items-center gap-2 glass px-4 py-1.5 rounded-full border border-blue-500/20 cursor-pointer hover:bg-blue-500/10 transition-all" onclick="toggleAuthModal()">
+                <div id="statusDot" class="status-pulse status-offline"></div>
+                <span class="text-[10px] font-bold text-blue-400 mono" id="userName">未连接</span>
             </div>
-            <div class="text-[10px] font-bold text-slate-500 mono uppercase hidden lg:block">
-                Nodes: <span class="text-white">Active</span> // Latency: <span class="text-emerald-500">24ms</span>
-            </div>
+            
+            <button id="logoutBtn" onclick="handleLogout()" class="hidden text-[10px] font-bold text-slate-500 hover:text-red-400 uppercase mono">Logout</button>
         </div>
     </nav>
 
@@ -67,17 +72,9 @@
     </header>
 
     <main class="max-w-7xl mx-auto w-full px-8 pb-32 relative z-10">
-        <div class="flex items-center gap-4 mb-10">
-            <span class="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">武器库列表 / Arsenal</span>
-            <div class="h-px flex-1 bg-white/5"></div>
-        </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
             <a href="/factory/" class="tool-card glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] relative group overflow-hidden">
-                <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <span class="text-8xl mono italic">01</span>
-                </div>
+                <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><span class="text-8xl mono italic">01</span></div>
                 <div>
                     <div class="mb-8 w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
                     <h3 class="text-2xl font-black text-white mb-3">灵感价值工厂</h3>
@@ -90,67 +87,145 @@
             </a>
 
             <a href="/radar/" class="tool-card glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] relative group overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><span class="text-8xl mono italic">02</span></div>
                 <div>
-                    <div class="mb-8 w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-2xl">🌍</div>
+                    <div class="mb-8 w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🌍</div>
                     <h3 class="text-2xl font-black text-slate-300 mb-3">城市套利雷达</h3>
                     <p class="text-slate-600 text-xs leading-relaxed">根据你的资产现状，计算全球范围内性价比最高的数字化居住地与远程办公套利路径。</p>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-600 text-[10px] font-black uppercase tracking-widest italic">开发中...</span>
+                    <span class="text-emerald-500 text-[10px] font-black uppercase tracking-widest">启动扫描仪 →</span>
+                    <span class="text-[9px] px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-400 font-bold uppercase">Priority 01</span>
                 </div>
             </a>
-
-            <div class="glass p-10 rounded-[2.5rem] border-dashed border-white/10 flex flex-col items-center justify-center text-center h-[360px] group cursor-help">
-                <div class="w-16 h-16 rounded-full border border-white/5 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-all text-slate-700">+</div>
-                <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest">更多“瞎折腾”筹备中</p>
-                <p class="text-[9px] text-slate-800 mt-2">你有想法？欢迎在飞书留言</p>
+            
             </div>
-
-        </div>
     </main>
+
+    <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="w-full max-w-md glass p-10 rounded-[2.5rem] border-blue-500/30 relative">
+            <button onclick="toggleAuthModal()" class="absolute top-6 right-8 text-slate-500 hover:text-white">✕</button>
+            <h3 id="modalTitle" class="text-2xl font-black text-white mb-2 italic">实验室身份接入</h3>
+            <p id="modalSub" class="text-[10px] text-blue-500 uppercase tracking-widest mb-8">Accessing Arsenal via Pudding-Auth</p>
+            
+            <form id="authForm" class="space-y-4">
+                <input type="email" id="authEmail" placeholder="实验室邮箱 / Email" required class="w-full px-5 py-4 rounded-2xl text-sm outline-none">
+                <input type="password" id="authPassword" placeholder="访问密钥 / Password" required class="w-full px-5 py-4 rounded-2xl text-sm outline-none">
+                <div id="registerFields" class="hidden animate-in fade-in space-y-4">
+                    <input type="text" id="authUsername" placeholder="特工代号 / Username" class="w-full px-5 py-4 rounded-2xl text-sm outline-none">
+                </div>
+                <button type="submit" id="authSubmit" class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all">
+                    确认接入
+                </button>
+            </form>
+            
+            <div class="mt-8 text-center">
+                <button onclick="toggleRegMode()" id="regToggleBtn" class="text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-widest">
+                    还没有代号？申请加入实验室
+                </button>
+            </div>
+        </div>
+    </div>
 
     <footer class="mt-auto border-t border-white/5 p-8 glass text-center">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <p class="text-[9px] font-bold text-slate-700 uppercase tracking-[0.5em]">LBUDING LAB © 2026 // 数字化资产实验基地</p>
             <div class="flex gap-6 text-[9px] font-bold text-slate-500 mono">
                 <span>FP_ID: <span id="footerFP" class="text-slate-700">SCANNING...</span></span>
-                <span>STATUS: STABLE</span>
             </div>
         </div>
     </footer>
 
     <script>
-        // 配置你的后端接口
+        const AUTH_API = "https://nas-n8n.lbuding.com/webhook/pudding-auth"; // 统一认证接口
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
-        const fpPromise = FingerprintJS.load();
+        
+        let isRegisterMode = false;
 
         async function initBase() {
-            try {
-                const fp = await fpPromise;
-                const vid = (await fp.get()).visitorId;
-                
-                // 更新页脚指纹显示
-                document.getElementById('footerFP').innerText = vid.substring(0,16).toUpperCase();
+            const fpPromise = FingerprintJS.load();
+            const fp = await fpPromise;
+            const vid = (await fp.get()).visitorId;
+            document.getElementById('footerFP').innerText = vid.substring(0,16).toUpperCase();
 
-                // 尝试从后端召回用户信息
-                const response = await fetch(PROFILE_API, {
+            // 1. 检查本地是否有 Token
+            const token = localStorage.getItem('pudding_token');
+            if (token) {
+                // 已登录逻辑
+                await recallProfile(token, vid);
+            } else {
+                // 仅指纹逻辑
+                document.getElementById('userName').innerText = `匿名识别：${vid.substring(0,8).toUpperCase()}`;
+                document.getElementById('statusDot').classList.remove('status-offline');
+            }
+        }
+
+        async function recallProfile(token, vid) {
+            try {
+                const res = await fetch(PROFILE_API, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify({ visitor_id: vid })
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.last_city) {
-                        // 如果是老熟人，改写欢迎词
-                        document.getElementById('userName').innerText = `已识别：${vid.substring(0,8).toUpperCase()}`;
-                        document.getElementById('userBadge').classList.remove('hidden');
-                        document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500">${data.last_city}的</span>折腾家。`;
-                    }
+                const data = await res.json();
+                if (data.username) {
+                    document.getElementById('userName').innerText = `架构师：${data.username}`;
+                    document.getElementById('statusDot').classList.remove('status-offline');
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500">${data.username}</span>架构师。`;
                 }
             } catch (e) {
-                console.log("新访客身份已匿名标记。");
+                localStorage.removeItem('pudding_token');
             }
+        }
+
+        // --- Auth 交互逻辑 ---
+        function toggleAuthModal() {
+            document.getElementById('authModal').classList.toggle('hidden');
+        }
+
+        function toggleRegMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('modalTitle').innerText = isRegisterMode ? "申请特工代号" : "实验室身份接入";
+            document.getElementById('registerFields').classList.toggle('hidden');
+            document.getElementById('regToggleBtn').innerText = isRegisterMode ? "已有代号？直接接入" : "还没有代号？申请加入实验室";
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('authSubmit');
+            btn.innerText = "信号同步中...";
+            
+            const payload = {
+                action: isRegisterMode ? 'register' : 'login',
+                email: document.getElementById('authEmail').value,
+                password: document.getElementById('authPassword').value,
+                username: document.getElementById('authUsername').value
+            };
+
+            try {
+                const res = await fetch(AUTH_API, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.token) {
+                    localStorage.setItem('pudding_token', data.token);
+                    location.reload();
+                } else {
+                    alert(data.message || "接入失败，校验密钥。");
+                }
+            } catch (err) {
+                alert("认证服务器通讯中断。");
+            } finally {
+                btn.innerText = "确认接入";
+            }
+        });
+
+        function handleLogout() {
+            localStorage.removeItem('pudding_token');
+            location.reload();
         }
 
         window.onload = initBase;
