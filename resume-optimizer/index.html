@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 简历强力润色 | 布丁的 AI 实验室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <style>
+        .ai-border { border: 1px solid rgba(59, 130, 246, 0.2); transition: all 0.3s; }
+        .ai-border:focus-within { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 flex items-center justify-center font-sans">
+
+    <main class="max-w-2xl w-full bg-white rounded-[2.5rem] shadow-2xl p-8 relative overflow-hidden border border-slate-100">
+        <div id="recallTag" class="hidden absolute top-6 right-8 flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            已同步您的职场画像
+        </div>
+
+        <header class="mb-10">
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight">AI 简历润色专家</h1>
+            <p class="text-slate-400 text-sm mt-2">基于 DeepSeek 的企业级简历优化引擎</p>
+        </header>
+
+        <form id="resumeForm" class="space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Current City</label>
+                    <input type="text" id="city" required placeholder="加载中..." class="w-full px-4 py-3 bg-slate-50 rounded-2xl outline-none text-sm ai-border">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Target Industry</label>
+                    <input type="text" id="industry" required placeholder="加载中..." class="w-full px-4 py-3 bg-slate-50 rounded-2xl outline-none text-sm ai-border">
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Current Resume Content (Paste Here)</label>
+                <textarea id="resumeContent" rows="8" required placeholder="请粘贴您的简历内容或核心经历..." class="w-full px-4 py-3 bg-slate-50 rounded-2xl outline-none text-sm ai-border resize-none"></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-blue-500/20 active:scale-95">
+                <span id="btnText">开始 AI 深度润色</span>
+            </button>
+        </form>
+
+        <div id="resultBox" class="hidden mt-8 space-y-4">
+            <div class="p-6 bg-slate-900 rounded-3xl text-white">
+                <p class="text-blue-400 text-[10px] font-black uppercase mb-3 tracking-widest">Optimized Version</p>
+                <div id="optimizedText" class="text-sm leading-relaxed whitespace-pre-wrap font-medium"></div>
+            </div>
+            <button onclick="window.print()" class="w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl text-xs">🖨️ 导出/打印 PDF</button>
+        </div>
+    </main>
+
+    <script>
+        const IDENTITY_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile"; // 复用主页那个查询接口
+        const OPTIMIZE_API = "https://nas-n8n.lbuding.com/webhook/resume-optimize"; // 新的润色接口
+        const fpPromise = FingerprintJS.load();
+
+        // 🌟 初始化：自动回填逻辑
+        async function autoFill() {
+            const fp = await fpPromise;
+            const visitorId = (await fp.get()).visitorId;
+
+            const response = await fetch(IDENTITY_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ visitor_id: visitorId })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.last_city) {
+                    document.getElementById('city').value = data.last_city;
+                    document.getElementById('industry').value = data.last_industry;
+                    document.getElementById('recallTag').classList.remove('hidden');
+                }
+            }
+        }
+
+        // 🌟 提交优化
+        document.getElementById('resumeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            document.getElementById('btnText').innerText = "AI 正在对齐岗位需求...";
+
+            const fp = await fpPromise;
+            const visitorId = (await fp.get()).visitorId;
+
+            const payload = {
+                visitor_id: visitorId,
+                city: document.getElementById('city').value,
+                industry: document.getElementById('industry').value,
+                content: document.getElementById('resumeContent').value
+            };
+
+            const res = await fetch(OPTIMIZE_API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+            document.getElementById('optimizedText').innerText = result.optimized_content;
+            document.getElementById('resultBox').classList.remove('hidden');
+            btn.disabled = false;
+            document.getElementById('btnText').innerText = "重新润色";
+        });
+
+        window.onload = autoFill;
+    </script>
+</body>
+</html>
