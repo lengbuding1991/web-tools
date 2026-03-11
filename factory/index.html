@@ -9,111 +9,131 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=JetBrains+Mono:wght@400;700&display=swap');
         
-        :root { --main-blue: #3b82f6; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        :root { --main-blue: #3b82f6; --bg-color: #050a15; }
+        body { background-color: var(--bg-color); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
         
-        /* 科技感网格 - 保持老板喜欢的样式 */
+        /* 科技感网格背景 */
         .tech-grid { 
-            background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); 
-            background-size: 30px 30px; 
+            background-image: linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px); 
+            background-size: 25px 25px; 
         }
 
-        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .factory-card { border: 1px solid rgba(59, 130, 246, 0.2); box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); }
-        .glow-blue { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .sidebar { border-right: 1px solid rgba(255, 255, 255, 0.05); }
+        .log-text { font-size: 11px; font-family: 'JetBrains Mono'; line-height: 1.6; }
 
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         input:focus { border-color: var(--main-blue) !important; outline: none; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
         
-        .loader-line { height: 2px; width: 0%; background: var(--main-blue); transition: width 0.4s; box-shadow: 0 0 10px var(--main-blue); }
-        .mono { font-family: 'JetBrains Mono', monospace; }
+        .loading-line { height: 2px; width: 0%; background: var(--main-blue); transition: width 0.4s; box-shadow: 0 0 10px var(--main-blue); }
         
-        .result-glow { animation: breath 3s ease-in-out infinite; }
-        @keyframes breath { 0%, 100% { border-color: rgba(59, 130, 246, 0.2); } 50% { border-color: rgba(59, 130, 246, 0.5); } }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
 
-        /* 🚩 3. 针对蓝图内容的 Markdown 美化样式 */
-        .prose h2 { color: #fff !important; margin-top: 1.5em !important; border-left: 3px solid var(--main-blue); padding-left: 10px; }
+        /* 🚩 2. 定制 Markdown 内部样式，确保在深色背景下好看 */
+        .prose h2 { color: #fff !important; margin-top: 1.5em !important; border-left: 4px solid var(--main-blue); padding-left: 1rem; }
         .prose strong { color: #60a5fa !important; }
         .prose li { color: #cbd5e1 !important; }
         .prose code { color: #fbbf24 !important; background: rgba(251, 191, 36, 0.1) !important; padding: 2px 4px !important; border-radius: 4px; }
     </style>
 </head>
-<body class="tech-grid min-h-screen flex flex-col">
+<body class="tech-grid min-h-screen h-screen flex flex-col md:flex-row">
 
-    <div id="loader" class="loader-line fixed top-0 left-0 z-50"></div>
-
-    <nav class="h-16 flex items-center justify-between px-8 glass border-b border-white/5 shrink-0">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-white">布</div>
-            <span class="text-xs font-bold tracking-[0.2em] text-white uppercase">Pudding Factory // 01车间</span>
-        </div>
-        <div class="flex items-center gap-6">
-            <div class="hidden md:flex items-center gap-2">
-                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span class="text-[10px] font-bold text-slate-500 uppercase">算力：DeepSeek-V3 已就绪</span>
+    <aside class="w-full md:w-72 sidebar p-6 hidden md:flex flex-col gap-6 shrink-0 glass-panel">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl shadow-lg">布</div>
+            <div>
+                <h2 class="font-black text-white tracking-tighter text-lg">价值工厂</h2>
+                <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Pudding Lab v3.0</p>
             </div>
-            <a href="/" class="text-[10px] font-bold border border-white/10 px-4 py-1.5 rounded-full hover:bg-white/5 transition-all text-slate-400">返回基地</a>
         </div>
-    </nav>
+        
+        <div class="flex-1 flex flex-col min-h-0">
+            <p class="text-[10px] font-bold text-slate-500 mb-2 tracking-widest">系统实时日志</p>
+            <div id="logs" class="flex-1 bg-black/40 p-4 rounded-lg border border-white/5 overflow-y-auto log-text text-slate-500 space-y-1">
+                <div>> 系统已就绪</div>
+                <div>> 等待指令输入...</div>
+            </div>
+        </div>
 
-    <main class="flex-1 overflow-y-auto p-6 md:p-12">
-        <div class="max-w-5xl mx-auto space-y-12">
-            
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div class="glass-panel p-4 rounded-xl border-l-4 border-emerald-500">
+            <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">后端节点状态</p>
+            <div class="flex items-center gap-2 text-xs text-emerald-500 font-bold">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                算力中心：已连接
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        <div id="loader" class="loading-line absolute top-0 left-0 z-50"></div>
+
+        <header class="h-16 flex items-center justify-between px-8 border-b border-white/5 shrink-0">
+            <div class="flex items-center gap-4">
+                <span class="text-xs font-bold text-slate-400">当前车间：灵感变现提取处</span>
+            </div>
+            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-xs hover:text-white transition-colors">返回基地主页</a>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 md:p-12">
+            <div class="max-w-4xl mx-auto space-y-12">
                 
-                <div class="lg:col-span-5">
-                    <div class="glass p-8 rounded-[2rem] factory-card">
-                        <h3 class="text-lg font-black text-white mb-8 flex items-center gap-3">
-                            <span class="w-1 h-5 bg-blue-600 rounded-full"></span>
-                            灵感原材料输入
-                        </h3>
-                        
-                        <form id="factoryForm" class="space-y-6">
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">核心技能</label>
-                                <input type="text" id="skills" required placeholder="如：Python, 视频剪辑, 写作" class="w-full px-5 py-3.5 rounded-2xl text-sm">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">投入精力</label>
-                                <input type="text" id="commitment" required placeholder="如：每天2小时, 或仅周末" class="w-full px-5 py-3.5 rounded-2xl text-sm">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">变现赛道</label>
-                                <select id="sector" class="w-full px-5 py-3.5 rounded-2xl text-sm outline-none cursor-pointer">
-                                    <option value="AI 自动化">AI 自动化 (No-code / Agent)</option>
-                                    <option value="数字化套利">数字化套利 (Global Arbitrage)</option>
-                                    <option value="内容工厂">内容工厂 (Content Automation)</option>
-                                    <option value="Micro-SaaS">微型 SaaS (Niche Products)</option>
-                                </select>
-                            </div>
-                            <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-[11px] uppercase tracking-[0.3em] transition-all glow-blue active:scale-[0.98]">
-                                启动变现蓝图提取指令
+                <div class="glass-panel p-8 md:p-10 rounded-[2.5rem] shadow-2xl">
+                    <h3 class="text-xl font-black text-white mb-8 flex items-center gap-3">
+                        <span class="w-1 h-6 bg-blue-600 rounded-full"></span>
+                        输入你的“瞎折腾”原材料
+                    </h3>
+                    
+                    <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">你擅长的技能</label>
+                            <input type="text" id="skills" required placeholder="如：Python、视频剪辑、写文章" class="w-full px-5 py-3.5 rounded-xl text-sm transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">你能投入的精力</label>
+                            <input type="text" id="commitment" required placeholder="如：每天2小时，或仅周末" class="w-full px-5 py-3.5 rounded-xl text-sm transition-all">
+                        </div>
+                        <div class="md:col-span-2 space-y-2">
+                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">你感兴趣的变现赛道</label>
+                            <select id="sector" class="w-full px-5 py-3.5 rounded-xl text-sm outline-none transition-all cursor-pointer">
+                                <option value="AI 自动化">AI 自动化 (解放双手，构建数字工人)</option>
+                                <option value="数字化套利">数字化套利 (利用信息差，在全球市场获利)</option>
+                                <option value="内容工厂">内容工厂 (自动化内容生产与分发)</option>
+                                <option value="Micro-SaaS">微型 SaaS (开发小而美的工具产品)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 pt-4">
+                            <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-sm uppercase tracking-[0.3em] transition-all shadow-xl shadow-blue-900/40 active:scale-[0.98]">
+                                立即运行变现逻辑提取
                             </button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
 
-                <div class="lg:col-span-7 flex flex-col gap-6">
-                    <div id="logPanel" class="glass h-40 p-4 rounded-3xl overflow-hidden flex flex-col border border-white/5">
-                        <p class="text-[9px] font-bold text-slate-600 uppercase mb-2">System_Logs // 系统日志</p>
-                        <div id="logs" class="flex-1 overflow-y-auto text-[10px] mono text-slate-500 space-y-1">
-                            <div>> 初始化完毕，等待输入...</div>
-                        </div>
+                <div id="resultArea" class="hidden space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <div class="flex items-center gap-4">
+                        <div class="h-px flex-1 bg-blue-500/20"></div>
+                        <span class="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">AI 商业蓝图已生成</span>
+                        <div class="h-px flex-1 bg-blue-500/20"></div>
                     </div>
-
-                    <div id="resultArea" class="hidden flex-1 glass p-10 md:p-14 rounded-[2.5rem] result-glow border-2 transition-all overflow-y-auto">
-                        <div class="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
-                            <h2 class="text-white font-black italic text-xl uppercase tracking-tighter">Verified_Blueprint</h2>
-                            <span class="text-[9px] mono text-slate-600" id="resHash">ID: ---</span>
+                    
+                    <div class="bg-[#0f172a] p-10 md:p-16 rounded-[3rem] border border-blue-500/30 shadow-[0_0_50px_rgba(59,130,246,0.1)] relative">
+                        <div class="absolute top-10 right-10 text-[10px] text-slate-800 font-bold mono select-none">
+                            HASH_ID: <span id="resHash">---</span>
                         </div>
-                        <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300">
+                        
+                        <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-200">
                             </div>
-                    </div>
 
-                    <div id="placeholder" class="flex-1 glass rounded-[2.5rem] flex items-center justify-center opacity-20 border-dashed border-white/10">
-                        <p class="text-[10px] uppercase tracking-[0.4em]">等待原材料注入以渲染蓝图</p>
+                        <div class="mt-16 pt-8 border-t border-white/5 flex justify-between items-center">
+                            <p class="text-[10px] text-slate-600 font-bold mono uppercase">LBUDING Factory Processed // 2026</p>
+                            <button onclick="window.print()" class="text-[10px] font-black text-blue-500 hover:text-white transition-colors">导出为 PDF 存档</button>
+                        </div>
                     </div>
                 </div>
 
@@ -122,15 +142,14 @@
     </main>
 
     <script>
-        const YOUR_N8N_URL = "https://nas-n8n.lbuding.com/webhook/factory-engine"; 
-
+        // 🚩 4. 更新为你指定的 Webhook 地址
+        const API_URL = "https://nas-n8n.lbuding.com/webhook/factory-engine"; 
         const logs = document.getElementById('logs');
         const fpPromise = FingerprintJS.load();
 
-        function addLog(msg, type = 'default') {
+        function addLog(msg, color = 'slate-500') {
             const div = document.createElement('div');
-            const colors = { 'default': 'text-slate-500', 'info': 'text-blue-500', 'success': 'text-emerald-500', 'error': 'text-red-500' };
-            div.className = colors[type];
+            div.className = `text-${color}`;
             div.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
             logs.prepend(div);
         }
@@ -139,19 +158,19 @@
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             const resultArea = document.getElementById('resultArea');
-            const placeholder = document.getElementById('placeholder');
             const content = document.getElementById('blueprintContent');
             const loader = document.getElementById('loader');
 
-            btn.disabled = true; btn.innerText = "正在提取中...";
+            btn.disabled = true;
+            btn.innerText = "机器正在高速运转中...";
             loader.style.width = "40%";
-            addLog("正在向后端发送加密载荷...", "info");
+            addLog("正在向 n8n 节点发送提取指令...", "blue-400");
 
             try {
                 const fp = await fpPromise;
                 const vid = (await fp.get()).visitorId;
                 
-                const response = await fetch(YOUR_N8N_URL, {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -163,28 +182,28 @@
                 });
 
                 loader.style.width = "80%";
-                if (!response.ok) throw new Error("连接响应异常");
+                if (!response.ok) throw new Error("连接故障");
 
                 const data = await response.json();
                 
                 if (data && data.blueprint) {
-                    // 🚩 5. 核心逻辑改动：使用 marked 解析 Markdown 并填充 HTML
+                    // 🚩 5. 核心逻辑：使用 marked 解析 Markdown 并注入 HTML
                     content.innerHTML = marked.parse(data.blueprint);
                     
-                    document.getElementById('resHash').innerText = `ID: ${vid.substring(0,10).toUpperCase()}`;
+                    document.getElementById('resHash').innerText = vid.substring(0,10).toUpperCase();
                     
-                    placeholder.classList.add('hidden');
                     resultArea.classList.remove('hidden');
                     loader.style.width = "100%";
-                    addLog("成功提取商业蓝图，渲染就绪。", "success");
+                    addLog("变现蓝图解析完成，已渲染至界面。", "emerald-500");
                     setTimeout(() => loader.style.width = "0%", 1000);
                     resultArea.scrollIntoView({ behavior: 'smooth' });
                 }
             } catch (err) {
-                addLog(`系统故障: ${err.message}`, "error");
-                alert("工厂临时停电！\n请确认 n8n 是否开启。");
+                addLog(`错误：${err.message}`, "red-500");
+                alert("工厂临时停电！请确认 n8n 地址正确且 Active 开关已开启。");
             } finally {
-                btn.disabled = false; btn.innerText = "投入新灵感";
+                btn.disabled = false;
+                btn.innerText = "投入新灵感";
             }
         });
     </script>
