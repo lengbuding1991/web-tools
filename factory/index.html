@@ -9,131 +9,92 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        /* 保留你之前的样式代码 */
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', 'PingFang SC', sans-serif; overflow-x: hidden; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .glitch-text { animation: pulse 1.5s infinite; font-weight: bold; }
-        @keyframes pulse { 0% { opacity: 1; text-shadow: 0 0 8px var(--main-blue); } 50% { opacity: 0.4; } 100% { opacity: 1; text-shadow: 0 0 8px var(--main-blue); } }
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 999; display: flex; flex-direction: column; items-center; justify-center; }
+        .glitch-red { color: #ef4444; font-weight: 800; animation: glitch 0.3s infinite; text-transform: uppercase; letter-spacing: 0.5em; }
+        @keyframes glitch { 0% { transform: translate(2px, 0); } 50% { transform: translate(-2px, 0); } 100% { transform: translate(0, 0); } }
+        .prose h2 { color: #fff !important; border-left: 4px solid var(--main-blue); padding-left: 1rem; }
         #posterWrapper { width: 450px; background: #050a15; margin: 0 auto; display: none; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col md:flex-row">
+    <div id="lockscreen" class="hidden">
+        <div class="mono text-[10px] text-blue-500 mb-4 tracking-[1em]">SECURITY_CHECK</div>
+        <div class="glitch-red text-2xl mb-8">Unauthorized Access</div>
+        <div class="w-64 h-1 bg-white/5 rounded-full overflow-hidden"><div id="lock-progress" class="h-full bg-blue-600 transition-all duration-1000" style="width: 0%"></div></div>
+    </div>
     <script>
-        if (!localStorage.getItem('pudding_token')) {
-            alert("身份权限不足，请先在实验室首页进行身份接入。");
-            window.location.href = "/"; 
-        }
+        (function() { if (!localStorage.getItem('pudding_token')) { document.getElementById('lockscreen').classList.remove('hidden'); setTimeout(() => { document.getElementById('lock-progress').style.width = "100%"; }, 100); setTimeout(() => { window.location.href = "/"; }, 2500); } })();
     </script>
 
-    <div id="loader" class="loading-line fixed top-0 left-0 z-50"></div>
-
-    <aside class="w-full md:w-72 sidebar p-6 hidden md:flex flex-col gap-6 shrink-0 glass-panel">
+    <aside class="w-full md:w-72 p-6 hidden md:flex flex-col gap-6 shrink-0 glass-panel">
         <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl shadow-lg">布</div>
-            <div>
-                <h2 class="font-black text-white tracking-tighter text-lg">价值工厂</h2>
-                <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Authorized Access</p>
-            </div>
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl">布</div>
+            <h2 class="font-black text-white text-lg">价值工厂</h2>
         </div>
-        <div id="compute-status-box" class="p-3 mb-4 border border-blue-500/20 rounded bg-blue-500/5">
-            <div class="text-[9px] text-blue-400 font-bold uppercase mb-1">Compute Link</div>
-            <div id="compute-text" class="text-[10px] text-white glitch-text">DeepSeek_V3 [ACTIVE]</div>
+        <div class="p-3 border border-blue-500/20 rounded bg-blue-500/5 mono text-[9px]">
+            <div class="text-blue-400 font-bold uppercase mb-1">Compute Center</div>
+            <div id="compute-text" class="text-white">AUTHORIZED_ACCESS</div>
         </div>
-        <div id="logs" class="flex-1 bg-black/40 p-4 rounded-lg border border-white/5 overflow-y-auto font-mono text-[10px] text-slate-500 space-y-1">
-            <div>> 架构师身份已校验</div>
-        </div>
+        <div id="logs" class="flex-1 bg-black/40 p-4 rounded-lg border border-white/5 font-mono text-[10px] text-slate-500 overflow-y-auto"><div>> 身份验证成功</div></div>
     </aside>
 
-    <main class="flex-1 flex flex-col relative overflow-hidden">
+    <main class="flex-1 flex flex-col overflow-hidden">
         <header class="h-16 flex items-center justify-between px-8 border-b border-white/5 shrink-0">
-            <span class="text-xs font-bold text-slate-400">当前车间：灵感变现提取处</span>
-            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-xs hover:text-white transition-colors">退出车间</a>
+            <span class="text-xs font-bold text-slate-400">灵感变现提取处</span>
+            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-xs hover:text-white transition-colors">返回基地</a>
         </header>
-
         <div class="flex-1 overflow-y-auto p-8 md:p-12">
             <div class="max-w-4xl mx-auto space-y-12">
-                <div class="glass-panel p-8 rounded-[2.5rem] shadow-2xl">
-                    <h3 class="text-xl font-black text-white mb-8 flex items-center gap-3"><span class="w-1 h-6 bg-blue-600 rounded-full"></span>输入原材料</h3>
+                <div class="glass-panel p-8 rounded-[3rem] shadow-2xl">
+                    <h3 class="text-xl font-black text-white mb-8 italic">架构师，请注入原材料</h3>
                     <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-2">
-                            <label class="text-[11px] font-bold text-slate-500 uppercase">核心技能</label>
-                            <input type="text" id="skills" required placeholder="Python, 剪辑, 写作" class="w-full px-5 py-3.5 rounded-xl text-sm transition-all">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[11px] font-bold text-slate-500 uppercase">投入精力</label>
-                            <input type="text" id="commitment" required placeholder="每天2小时" class="w-full px-5 py-3.5 rounded-xl text-sm transition-all">
-                        </div>
-                        <div class="md:col-span-2 space-y-2">
-                            <label class="text-[11px] font-bold text-slate-500 uppercase">变现赛道</label>
-                            <select id="sector" class="w-full px-5 py-3.5 rounded-xl text-sm outline-none transition-all cursor-pointer">
-                                <option value="AI 自动化">AI 自动化</option>
-                                <option value="数字化套利">数字化套利</option>
-                            </select>
-                        </div>
-                        <div class="md:col-span-2 pt-4">
-                            <button type="submit" id="submitBtn" class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-sm uppercase tracking-[0.3em] transition-all">生成变现蓝图</button>
-                        </div>
+                        <input type="text" id="skills" required placeholder="核心技能" class="w-full px-5 py-4 rounded-xl text-sm bg-slate-900 border-white/10 text-white outline-none">
+                        <input type="text" id="commitment" required placeholder="投入精力" class="w-full px-5 py-4 rounded-xl text-sm bg-slate-900 border-white/10 text-white outline-none">
+                        <select id="sector" class="md:col-span-2 w-full px-5 py-4 rounded-xl text-sm bg-slate-900 border-white/10 text-white outline-none">
+                            <option value="AI 自动化">AI 自动化</option><option value="数字化套利">数字化套利</option>
+                        </select>
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all">生成变现蓝图</button>
                     </form>
                 </div>
-                <div id="resultArea" class="hidden space-y-6">
-                    <div class="glass-panel p-10 md:p-16 rounded-[3rem] relative">
-                        <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-200"></div>
-                        <div class="mt-12 flex justify-end">
-                            <button onclick="generatePoster()" id="posterBtn" class="px-8 py-3 bg-blue-600 text-white rounded-full font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/40">导出海报</button>
-                        </div>
-                    </div>
+                <div id="resultArea" class="hidden glass-panel p-10 md:p-16 rounded-[3rem] relative">
+                    <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-200"></div>
+                    <button onclick="generatePoster()" id="posterBtn" class="mt-8 px-8 py-3 bg-blue-600 text-white rounded-full text-xs font-black uppercase tracking-widest">导出海报</button>
                 </div>
             </div>
         </div>
     </main>
 
+    <div id="posterWrapper" class="p-10 bg-[#050a15] border-2 border-blue-500/20">
+        <div class="border-b border-blue-500/30 pb-6 mb-8 flex justify-between items-center">
+            <h1 class="text-white text-2xl font-black">布丁实验室 // 价值工厂</h1>
+            <p class="text-[8px] text-slate-600 mono">B-SERIES 2026</p>
+        </div>
+        <div id="posterContent" class="prose prose-invert prose-blue"></div>
+        <div class="mt-10 pt-6 border-t border-white/10 flex justify-between items-end">
+            <p class="text-blue-500 font-bold italic text-[10px]">tools.lbuding.com</p>
+            <p class="text-[8px] text-slate-500 mono" id="posterID">ID:---</p>
+        </div>
+    </div>
+
     <script>
         const API_URL = "https://nas-n8n.lbuding.com/webhook/factory-engine";
-        const fpPromise = FingerprintJS.load();
-
-        document.getElementById('factoryForm').addEventListener('submit', async function(e) {
+        document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const token = localStorage.getItem('pudding_token');
-            const btn = document.getElementById('submitBtn');
-            const statusText = document.getElementById('compute-text');
-
-            btn.disabled = true; btn.innerText = "正在投料...";
-            statusText.innerText = "CONNECTING TO DEEPSEEK...";
-
-            try {
-                const fp = await fpPromise;
-                const vid = (await fp.get()).visitorId;
-
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // 🚩 携带 Token
-                    },
-                    body: JSON.stringify({
-                        visitor_id: vid,
-                        skills: document.getElementById('skills').value,
-                        commitment: document.getElementById('commitment').value,
-                        sector: document.getElementById('sector').value
-                    })
-                });
-
-                const data = await response.json();
-                if (data.blueprint) {
-                    document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
-                    document.getElementById('resultArea').classList.remove('hidden');
-                    statusText.innerText = "DEEPSEEK V3 LOCKED.";
-                }
-            } catch (err) {
-                alert("车间链路异常！");
-            } finally {
-                btn.disabled = false; btn.innerText = "生成变现蓝图";
-            }
+            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "信号同步中...";
+            const vid = (await (await FingerprintJS.load()).get()).visitorId;
+            const res = await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}`}, body: JSON.stringify({ visitor_id: vid, skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value })});
+            if(res.status === 401) { location.reload(); return; }
+            const data = await res.json();
+            if(data.blueprint) { document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint); document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint); document.getElementById('resultArea').classList.remove('hidden'); document.getElementById('posterID').innerText = vid.substring(0,12).toUpperCase(); }
+            btn.disabled = false; btn.innerText = "生成变现蓝图";
         });
+        async function generatePoster() { const canvas = await html2canvas(document.getElementById('posterWrapper'), { backgroundColor: "#050a15", scale: 2 }); const link = document.createElement('a'); link.download = 'Blueprint.png'; link.href = canvas.toDataURL(); link.click(); }
     </script>
 </body>
 </html>

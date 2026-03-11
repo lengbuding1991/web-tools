@@ -8,269 +8,64 @@
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --radar-green: #10b981; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        
-        /* 门禁遮罩：防止未登录时页面内容闪现 */
-        #auth-guard { position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; display: flex; items-center; justify-center; }
-
-        .tech-grid { 
-            background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); 
-            background-size: 30px 30px; 
-            background-attachment: fixed;
-        }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* 动态背景扫描波束 */
-        .scanning-beam {
-            position: fixed; top: 0; left: 0; width: 100%; height: 4px;
-            background: linear-gradient(90deg, transparent, var(--radar-green), transparent);
-            box-shadow: 0 0 20px var(--radar-green);
-            animation: radar-move 6s infinite linear;
-            z-index: 100; opacity: 0.15; pointer-events: none;
-        }
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 999; display: flex; flex-direction: column; items-center; justify-center; }
+        .glitch-red { color: #ef4444; font-weight: 800; animation: glitch 0.3s infinite; text-transform: uppercase; letter-spacing: 0.5em; }
+        @keyframes glitch { 0% { transform: translate(2px, 0); } 50% { transform: translate(-2px, 0); } 100% { transform: translate(0, 0); } }
+        .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, transparent, var(--radar-green), transparent); box-shadow: 0 0 20px var(--radar-green); animation: radar-move 6s infinite linear; z-index: 100; opacity: 0.15; pointer-events: none; }
         @keyframes radar-move { 0% { top: -5%; } 100% { top: 105%; } }
-
-        /* 算力呼吸灯动画 */
-        .glitch-text { animation: pulse 1.5s infinite; font-weight: bold; }
-        @keyframes pulse {
-            0% { opacity: 1; text-shadow: 0 0 8px var(--radar-green); }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; text-shadow: 0 0 8px var(--radar-green); }
-        }
-
-        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; border-radius: 8px !important; }
-        input:focus { border-color: var(--radar-green) !important; outline: none; }
-
-        /* Markdown 内容排版 */
-        .prose h2 { color: #fff !important; margin-top: 2em !important; border-left: 4px solid var(--radar-green); padding-left: 1rem; }
-        .prose strong { color: var(--radar-green) !important; font-weight: 800; }
-        
-        /* 海报容器 */
-        #posterWrapper { width: 450px; background: #050a15; margin: 0 auto; display: none; }
+        .prose h2 { color: #fff !important; border-left: 4px solid var(--radar-green); padding-left: 1rem; }
     </style>
 </head>
-<body class="tech-grid flex flex-col min-h-screen">
-
-    <div id="auth-guard">
-        <div class="mono text-xs text-emerald-500 animate-pulse">AUTH_VERIFYING...</div>
+<body class="tech-grid min-h-screen flex flex-col md:flex-row">
+    <div id="lockscreen" class="hidden">
+        <div class="mono text-[10px] text-emerald-500 mb-4 tracking-[1em]">RADAR_AUTH_GUARD</div>
+        <div class="glitch-red text-2xl mb-8">Unauthorized Access</div>
+        <div class="w-64 h-1 bg-white/5 rounded-full overflow-hidden"><div id="lock-progress" class="h-full bg-emerald-600 transition-all duration-1000" style="width: 0%"></div></div>
     </div>
     <script>
-        (function() {
-            const token = localStorage.getItem('pudding_token');
-            if (!token) {
-                window.location.href = "/";
-            } else {
-                document.addEventListener('DOMContentLoaded', () => {
-                    document.getElementById('auth-guard').style.display = 'none';
-                });
-            }
-        })();
+        (function() { if (!localStorage.getItem('pudding_token')) { document.getElementById('lockscreen').classList.remove('hidden'); setTimeout(() => { document.getElementById('lock-progress').style.width = "100%"; }, 100); setTimeout(() => { window.location.href = "/"; }, 2500); } })();
     </script>
-
     <div class="scanning-beam"></div>
 
-    <nav class="h-16 flex items-center justify-between px-8 glass border-b border-emerald-500/20 sticky top-0 z-[100]">
+    <aside class="w-full md:w-80 p-6 flex flex-col gap-6 shrink-0 glass border-r border-emerald-500/20">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center font-black text-white shadow-lg">02</div>
-            <span class="text-xs font-bold tracking-widest text-emerald-500 uppercase">Global Radar // 套利雷达</span>
+            <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center font-bold text-white text-xl">02</div>
+            <h2 class="font-black text-white text-lg">套利雷达</h2>
         </div>
-        <a href="/" class="text-[10px] font-bold border border-emerald-500/20 px-4 py-2 rounded-full text-emerald-500 hover:bg-emerald-500/10 transition-all uppercase">← 基地主页</a>
-    </nav>
+        <form id="radarForm" class="space-y-5">
+            <input type="text" id="location" required placeholder="当前坐标" class="w-full px-5 py-4 rounded-xl text-sm bg-slate-900 border border-emerald-500/20 text-white outline-none">
+            <input type="text" id="assets" required placeholder="可用资产" class="w-full px-5 py-4 rounded-xl text-sm bg-slate-900 border border-emerald-500/20 text-white outline-none">
+            <button type="submit" id="submitBtn" class="w-full py-5 bg-emerald-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em]">激活扫描指令</button>
+        </form>
+    </aside>
 
-    <div class="flex-1 flex flex-col lg:flex-row">
-        <aside class="w-full lg:w-80 p-6 border-r border-emerald-500/10 shrink-0 bg-black/20">
-            <div class="sticky top-24 space-y-8">
-                <div class="glass p-6 rounded-2xl border-emerald-500/10 shadow-2xl">
-                    <h3 class="text-emerald-500 text-[10px] font-black uppercase mb-6 tracking-[0.3em]">探测指令注入</h3>
-                    <form id="radarForm" class="space-y-5">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">物理坐标</label>
-                            <input type="text" id="location" required placeholder="如：杭州, 鹤岗" class="w-full px-4 py-3 text-sm transition-all">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">可用本金</label>
-                            <input type="text" id="assets" required placeholder="如：5w, 10w" class="w-full px-4 py-3 text-sm transition-all">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">扫描频段</label>
-                            <select id="niche" class="w-full px-4 py-3 text-sm outline-none cursor-pointer">
-                                <option value="数字游民居住套利">数字游民居住套利</option>
-                                <option value="跨国算力转售">跨国算力转售</option>
-                                <option value="内容出海套利">内容出海套利</option>
-                                <option value="跨境电商差价">跨境电商差价</option>
-                            </select>
-                        </div>
-                        <button type="submit" id="submitBtn" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-xs uppercase tracking-[0.3em] transition-all shadow-lg shadow-emerald-900/40">
-                            激活雷达扫描指令
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </aside>
-
-        <section class="flex-1 p-6 md:p-12 lg:p-20 flex flex-col items-center overflow-y-auto">
-            <div id="computeStatusPanel" class="hidden w-full max-w-4xl mb-8 p-4 border border-emerald-500/20 rounded-xl bg-emerald-500/5 mono text-[10px] flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
-                    <span id="computeSourceText" class="glitch-text uppercase tracking-widest text-emerald-500">Connecting to Compute Center...</span>
-                </div>
-                <div class="text-slate-500 uppercase">NODE: DEEPSEEK_V3 // AUTHORIZED</div>
-            </div>
-
-            <div id="placeholder" class="py-32 flex flex-col items-center opacity-30 text-center">
-                <div class="w-20 h-20 border-2 border-dashed border-emerald-500 rounded-full animate-spin-slow flex items-center justify-center mb-8 text-2xl">📡</div>
-                <p class="text-[10px] uppercase tracking-[0.6em]">等待指令注入以激活扫描仪</p>
-            </div>
-
-            <div id="resultArea" class="hidden w-full max-w-4xl animate-in fade-in slide-in-from-bottom-10 duration-700">
-                <div id="captureArea" class="p-8 md:p-16 rounded-[3rem] border border-emerald-500/30 bg-[#050a15] relative mb-12 shadow-2xl">
-                    <div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300 leading-relaxed mb-10"></div>
-                    
-                    <div class="mt-16 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div class="text-[9px] text-slate-600 mono uppercase">
-                            <p>Verify ID: <span id="resID" class="text-emerald-900">---</span></p>
-                            <p>Source: Pudding Lab Arsenal 02 // DeepSeek V3</p>
-                        </div>
-                        <button onclick="exportRadarPoster()" id="exportBtn" class="px-10 py-4 bg-emerald-600 text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-xl shadow-emerald-900/40">
-                            生成高清海报分享
-                        </button>
-                    </div>
-                </div>
-                <div class="h-24"></div>
-            </div>
-
-            <div id="posterWrapper" class="p-12 border-2 border-emerald-500/10">
-                <div class="border-b-2 border-emerald-500/30 pb-8 mb-10 flex justify-between items-end">
-                    <div>
-                        <h1 class="text-white text-3xl font-black tracking-tighter italic">布丁雷达报告</h1>
-                        <p class="text-emerald-500 text-[10px] font-bold uppercase tracking-[0.4em]">Global Arbitrage Report // 2026</p>
-                    </div>
-                    <div class="text-right text-[8px] text-slate-600 mono leading-tight uppercase">
-                        Confidential // Authorized<br>Power: DeepSeek-V3
-                    </div>
-                </div>
-                <div id="posterContent" class="prose prose-invert prose-emerald max-w-none mb-16"></div>
-                <div class="mt-auto pt-10 border-t border-emerald-500/30 flex justify-between items-end">
-                    <div class="space-y-4">
-                        <div>
-                            <p class="text-[12px] text-white font-black tracking-tighter uppercase mb-1">布丁实验室 // 大本营基地</p>
-                            <p class="text-[16px] text-emerald-500 font-black mono tracking-tight">tools.lbuding.com</p>
-                        </div>
-                        <p class="text-[9px] text-slate-600 uppercase tracking-widest">数字化套利情报 · 灵感价值引擎 · 极客武器库</p>
-                    </div>
-                    <div class="text-right flex flex-col items-end">
-                        <div class="w-12 h-1.5 bg-emerald-500 mb-2"></div>
-                        <p class="text-[9px] text-slate-500 mono" id="posterHash">ID:---</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 flex items-center justify-between px-8 border-b border-white/5">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Arbitrage Scan</span>
+            <a href="/" class="px-4 py-1.5 glass rounded-full text-xs hover:text-white transition-colors">退出终端</a>
+        </header>
+        <div id="resultArea" class="hidden flex-1 overflow-y-auto p-12">
+            <div id="radarContent" class="prose prose-invert prose-emerald max-w-4xl mx-auto text-slate-300"></div>
+        </div>
+    </main>
 
     <script>
         const API_URL = "https://nas-n8n.lbuding.com/webhook/radar-engine";
-        const fpPromise = FingerprintJS.load();
-
-        async function exportRadarPoster() {
-            const btn = document.getElementById('exportBtn');
-            const wrapper = document.getElementById('posterWrapper');
-            btn.innerText = "正在固化高清像素...";
-            wrapper.style.display = 'block';
-            try {
-                const canvas = await html2canvas(wrapper, { 
-                    backgroundColor: "#050a15", 
-                    scale: 3, 
-                    windowWidth: 450,
-                    useCORS: true 
-                });
-                const link = document.createElement('a');
-                link.download = `Pudding_Radar_${new Date().getTime()}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            } finally {
-                wrapper.style.display = 'none';
-                btn.innerText = "生成高清海报分享";
-            }
-        }
-
-        document.getElementById('radarForm').addEventListener('submit', async function(e) {
+        document.getElementById('radarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const placeholder = document.getElementById('placeholder');
-            const resultArea = document.getElementById('resultArea');
-            const content = document.getElementById('radarContent');
-            const posterContent = document.getElementById('posterContent');
-            const computePanel = document.getElementById('computeStatusPanel');
-            const computeText = document.getElementById('computeSourceText');
-            
-            // 获取 Token
-            const token = localStorage.getItem('pudding_token');
-
-            // 1. 初始化 UI
-            btn.disabled = true; 
-            btn.innerText = "正在锁定信号...";
-            placeholder.classList.add('hidden');
-            resultArea.classList.add('hidden');
-            computePanel.classList.remove('hidden');
-            computeText.innerText = "INITIALIZING DEEPSEEK (PRIORITY 01)...";
-
-            try {
-                // 2. 获取 ID
-                const fp = await fpPromise;
-                const vid = (await fp.get()).visitorId;
-                
-                // 3. 发射 Webhook (带 Token)
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
-                    body: JSON.stringify({
-                        visitor_id: vid,
-                        location: document.getElementById('location').value,
-                        assets: document.getElementById('assets').value,
-                        niche: document.getElementById('niche').value
-                    })
-                });
-
-                if (res.status === 401) {
-                    alert("会话已过期，请重新登录。");
-                    window.location.href = "/";
-                    return;
-                }
-
-                const data = await res.json();
-
-                if (data && (data.blueprint || data.output)) {
-                    computeText.innerText = "LOGIC PATH LOCKED. ANALYZING ASYMMETRY...";
-                    
-                    const rawContent = data.blueprint || data.output;
-                    const html = marked.parse(rawContent);
-                    
-                    content.innerHTML = html;
-                    posterContent.innerHTML = html;
-                    
-                    document.getElementById('resID').innerText = vid.substring(0,12).toUpperCase();
-                    document.getElementById('posterHash').innerText = `ID:${vid.substring(0,16).toUpperCase()}`;
-                    
-                    setTimeout(() => {
-                        resultArea.classList.remove('hidden');
-                        resultArea.scrollIntoView({ behavior: 'smooth' });
-                        computeText.innerText = "SCAN COMPLETE. REPORT DECODED.";
-                    }, 800);
-                }
-            } catch (err) {
-                computeText.innerText = "CRITICAL ERROR: LINK SEVERED.";
-                alert("雷达掉线，请检查链路。");
-            } finally {
-                btn.disabled = false; btn.innerText = "激活雷达扫描指令";
-            }
+            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "波束锁定中...";
+            const vid = (await (await FingerprintJS.load()).get()).visitorId;
+            const res = await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}`}, body: JSON.stringify({ visitor_id: vid, location: document.getElementById('location').value, assets: document.getElementById('assets').value, niche: "Radar Scan" })});
+            if(res.status === 401) { location.reload(); return; }
+            const data = await res.json();
+            if(data.blueprint || data.output) { document.getElementById('radarContent').innerHTML = marked.parse(data.blueprint || data.output); document.getElementById('resultArea').classList.remove('hidden'); }
+            btn.disabled = false; btn.innerText = "激活扫描指令";
         });
     </script>
 </body>
