@@ -7,72 +7,68 @@
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --radar-green: #10b981; --bg-dark: #020617; }
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .mono { font-family: 'JetBrains Mono', monospace; }
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); box-shadow: 0 0 15px var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; pointer-events: none; }
+        #lockscreen.hidden { display: none; }
+        .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col lg:flex-row">
-    <div id="lockscreen"><div class="text-emerald-500 mono animate-pulse tracking-[0.5em] text-xs">Radar_Satellite_Locking...</div></div>
+    <div id="lockscreen"><div class="text-emerald-500 mono animate-pulse">RADAR_ESTABLISHING...</div></div>
     <div class="scanning-beam"></div>
 
     <aside class="w-full lg:w-80 p-8 glass flex flex-col gap-8 shrink-0">
-        <div class="flex items-center gap-4"><div class="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black shadow-lg shadow-emerald-900/40">R</div><h2 class="text-white font-black text-xl">套利雷达</h2></div>
+        <div class="flex items-center gap-4"><div class="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black shadow-lg">R</div><h2 class="text-white font-black text-xl">套利雷达</h2></div>
         <form id="radarForm" class="space-y-6">
-            <input type="text" id="location" required placeholder="探测地理位置 (如 曼谷)" class="w-full px-5 py-4 rounded-xl text-sm outline-none">
-            <input type="text" id="assets" required placeholder="可调配资产" class="w-full px-5 py-4 rounded-xl text-sm outline-none">
-            <select id="niche" class="w-full px-5 py-4 rounded-xl text-sm"><option value="居住套利">居住套利 (Nomad)</option><option value="内容出海">数字化内容出海</option></select>
-            <button type="submit" id="submitBtn" class="w-full py-5 bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/40 active:scale-95 transition-all">激活雷达扫描</button>
+            <input type="text" id="location" required placeholder="探测地理位置" class="w-full px-5 py-4 rounded-xl text-sm outline-none bg-slate-900 border border-white/5">
+            <input type="text" id="assets" required placeholder="资产配置" class="w-full px-5 py-4 rounded-xl text-sm outline-none bg-slate-900 border border-white/5">
+            <button type="submit" id="submitBtn" class="w-full py-5 bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-widest transition-all">激活扫描</button>
         </form>
     </aside>
 
     <main class="flex-1 p-8 lg:p-12 overflow-y-auto">
-        <header class="flex justify-between items-center mb-12">
-            <div class="flex items-center gap-2"><div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div><span class="mono text-[10px] text-emerald-500 uppercase tracking-widest" id="radarUser">SCANNING_SATELLITE...</span></div>
-            <a href="/" class="text-[10px] mono text-slate-500 hover:text-emerald-500 transition-colors uppercase">← 返回大本营</a>
-        </header>
-        <div id="resultArea" class="hidden max-w-4xl mx-auto w-full glass p-12 rounded-[3rem] shadow-2xl shadow-emerald-900/10">
-            <div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div>
-        </div>
+        <header class="flex justify-between items-center mb-12"><span class="mono text-[10px] text-emerald-500 uppercase tracking-widest" id="radarUser">SCANNING</span><a href="/" class="text-[10px] mono text-slate-500 hover:text-emerald-500 transition-colors uppercase">← 返回基地</a></header>
+        <div id="resultArea" class="hidden glass p-12 rounded-[3rem]"><div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div></div>
     </main>
 
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/radar-engine";
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
 
-        async function verifyRadar() {
+        async function init() {
             const t = localStorage.getItem('pudding_token');
+            const u = localStorage.getItem('pudding_user');
             if (!t) { window.location.href = "/"; return; }
+            if (u) { 
+                document.getElementById('lockscreen').classList.add('hidden');
+                document.getElementById('radarUser').innerText = "OPERATOR: " + u.toUpperCase();
+            }
+
             try {
                 const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} });
                 const data = await res.json();
-                if (data.status === 'authorized' || data.username) {
+                if (data.status === 'authorized') {
                     document.getElementById('lockscreen').classList.add('hidden');
-                    document.getElementById('radarUser').innerText = "OPERATOR: " + (data.username || "UNKNOWN").toUpperCase();
-                } else { throw new Error(); }
-            } catch (e) { localStorage.removeItem('pudding_token'); window.location.href = "/"; }
+                    document.getElementById('radarUser').innerText = "OPERATOR: " + data.username.toUpperCase();
+                    localStorage.setItem('pudding_user', data.username);
+                }
+            } catch (e) { if (!u) window.location.href = "/"; }
         }
-        window.onload = verifyRadar;
+        window.onload = init;
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "数据解密中...";
+            const btn = document.getElementById('submitBtn'); btn.innerText = "数据同步中..."; btn.disabled = true;
             try {
-                const res = await fetch(ENGINE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ location: document.getElementById('location').value, assets: document.getElementById('assets').value, niche: document.getElementById('niche').value }) });
+                const res = await fetch(ENGINE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ location: document.getElementById('location').value, assets: document.getElementById('assets').value }) });
                 const data = await res.json();
-                if (data.blueprint || data.output) {
-                    document.getElementById('radarContent').innerHTML = marked.parse(data.blueprint || data.output);
-                    document.getElementById('resultArea').classList.remove('hidden');
-                }
-            } catch (err) { alert("雷达信号受阻，请稍后重试"); } 
-            finally { btn.disabled = false; btn.innerText = "激活雷达扫描"; }
+                const content = data.blueprint || data.output;
+                if (content) { document.getElementById('radarContent').innerHTML = marked.parse(content); document.getElementById('resultArea').classList.remove('hidden'); }
+            } catch (err) { alert("扫描中断"); } finally { btn.innerText = "激活扫描"; btn.disabled = false; }
         });
     </script>
 </body>

@@ -12,65 +12,56 @@
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 0); background-size: 40px 40px; }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .glow-text { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
-        .status-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .glow-text { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
-        .notify-error { border-color: #ef4444; color: #fca5a5; }
-        .notify-success { border-color: #10b981; color: #a7f3d0; }
-        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
+        #authModal.hidden { display: none; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col">
-    <div id="notify-container"></div> 
-
-    <nav class="h-20 flex items-center justify-between px-8 glass border-b border-white/5 shrink-0 z-50 sticky top-0">
+    <nav class="h-20 flex items-center justify-between px-8 glass border-b border-white/5 sticky top-0 z-50">
         <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg text-xl">B</div>
-            <div>
-                <h1 class="text-sm font-black text-white tracking-widest uppercase">Pudding Lab</h1>
-                <p class="text-[9px] text-blue-500 font-bold tracking-[0.3em]">数字化资产实验基地</p>
-            </div>
+            <div><h1 class="text-sm font-black text-white tracking-widest uppercase">Pudding Lab</h1><p class="text-[9px] text-blue-500 font-bold tracking-[0.3em]">数字化资产实验基地</p></div>
         </div>
         <div class="flex items-center gap-6">
-            <div id="authStatusArea"><button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600/20">接入实验室 / CONNECT</button></div>
+            <div id="authStatusArea"><button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase hover:bg-blue-600/20 transition-all">接入实验室 / CONNECT</button></div>
             <div id="userProfileArea" class="hidden flex items-center gap-4">
-                <div class="flex items-center gap-2 glass px-4 py-1.5 rounded-full border border-blue-500/20"><div class="status-pulse"></div><span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span></div>
+                <div class="glass px-4 py-1.5 rounded-full border border-blue-500/20"><span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span></div>
                 <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
             </div>
         </div>
     </nav>
 
-    <header class="max-w-7xl mx-auto w-full pt-32 pb-16 px-8 relative z-10">
-        <h2 id="welcomeTitle" class="text-5xl md:text-8xl font-black tracking-tighter text-white leading-[0.9] mb-8">折腾出<br><span class="text-blue-500 italic glow-text">真实价值。</span></h2>
-        <p class="text-slate-500 text-sm md:text-base font-medium leading-relaxed max-w-xl">基于 DeepSeek V3 算力与 n8n 自动化逻辑，将灵感转化为硬核资产的极客试验场。</p>
+    <header class="max-w-7xl mx-auto w-full pt-32 px-8">
+        <h2 id="welcomeTitle" class="text-5xl md:text-8xl font-black tracking-tighter text-white leading-[0.9]">折腾出<br><span class="text-blue-500 italic glow-text">真实价值。</span></h2>
     </header>
 
-    <main class="max-w-7xl mx-auto w-full px-8 pb-32 z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <a href="/factory/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] border border-white/5 relative group hover:border-blue-500/50 transition-all">
-            <div><div class="mb-8 w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div><h3 class="text-2xl font-black text-white mb-3">灵感价值工厂</h3></div>
+    <main class="max-w-7xl mx-auto w-full px-8 py-20 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <a href="/factory/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-blue-500/50 transition-all">
+            <div class="w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
+            <h3 class="text-2xl font-black text-white">灵感价值工厂</h3>
             <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform">进入车间 →</span>
         </a>
-        <a href="/radar/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] border border-white/5 relative group hover:border-emerald-500/50 transition-all">
-            <div><div class="mb-8 w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🌍</div><h3 class="text-2xl font-black text-white mb-3">全球套利雷达</h3></div>
+        <a href="/radar/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-emerald-500/50 transition-all">
+            <div class="w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🌍</div>
+            <h3 class="text-2xl font-black text-white">全球套利雷达</h3>
             <span class="text-emerald-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform">启动扫描 →</span>
         </a>
     </main>
 
     <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
-        <div class="w-full max-w-md glass p-10 rounded-[3.5rem] border-blue-500/30 relative">
-            <button onclick="toggleAuthModal()" class="absolute top-8 right-10 text-slate-500 hover:text-white">✕</button>
-            <h3 id="modalTitle" class="text-3xl font-black text-white mb-2 italic tracking-tighter">实验室身份接入</h3>
+        <div class="w-full max-w-md glass p-10 rounded-[3rem] border-blue-500/30">
+            <h3 id="modalTitle" class="text-3xl font-black text-white mb-8 italic">实验室身份接入</h3>
             <form id="authForm" class="space-y-4">
-                <input type="email" id="authEmail" placeholder="邮箱 / Email" required class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all">
-                <input type="password" id="authPassword" placeholder="密钥 / Password" required class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all">
-                <div id="registerFields" class="hidden space-y-4"><input type="text" id="authUsername" placeholder="代号 / Username" class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5"></div>
-                <button type="submit" id="authSubmit" class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all">确认接入</button>
+                <input type="email" id="authEmail" placeholder="邮箱" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                <input type="password" id="authPassword" placeholder="密钥" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                <div id="registerFields" class="hidden"><input type="text" id="authUsername" placeholder="代号" class="w-full px-6 py-4 rounded-xl text-sm outline-none mt-4"></div>
+                <button type="submit" id="authSubmit" class="w-full py-5 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest">确认接入</button>
             </form>
-            <button onclick="toggleRegMode()" id="regToggleBtn" class="mt-8 w-full text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-widest">申请加入 / APPLY</button>
+            <div class="flex justify-between mt-8">
+                <button onclick="toggleRegMode()" class="text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase">申请加入 / APPLY</button>
+                <button onclick="toggleAuthModal()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase">取消</button>
+            </div>
         </div>
     </div>
 
@@ -79,43 +70,48 @@
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         let isRegisterMode = false;
 
-        function showNotify(msg, type = 'error') {
-            const container = document.getElementById('notify-container');
-            const card = document.createElement('div');
-            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
-            card.innerHTML = `<div class="flex items-center gap-3"><span>${type === 'error' ? '⚠️' : '✅'}</span><div>${msg}</div></div>`;
-            container.appendChild(card);
-            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 4000);
+        function updateUI(username) {
+            document.getElementById('authStatusArea').classList.add('hidden');
+            document.getElementById('userProfileArea').classList.remove('hidden');
+            document.getElementById('userName').innerText = username.toUpperCase();
+            document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${username}</span>架构师。`;
         }
 
-        async function recallProfile(token) {
+        async function silentRecall() {
+            const t = localStorage.getItem('pudding_token');
+            const u = localStorage.getItem('pudding_user');
+            if (!t) return;
+            if (u) updateUI(u);
+
             try {
-                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`} });
+                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} });
                 const data = await res.json();
-                if (data.status === 'authorized' && data.username) {
-                    document.getElementById('authStatusArea').classList.add('hidden');
-                    document.getElementById('userProfileArea').classList.remove('hidden');
-                    document.getElementById('userName').innerText = data.username.toUpperCase();
-                    document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${data.username}</span>架构师。`;
-                } else { throw new Error(); }
-            } catch (e) { localStorage.removeItem('pudding_token'); }
+                if (data.status === 'authorized') {
+                    localStorage.setItem('pudding_user', data.username);
+                    updateUI(data.username);
+                }
+            } catch (e) { console.warn("后台审计未通过，维持现状或待失效驱逐"); }
         }
 
         function toggleAuthModal() { document.getElementById('authModal').classList.toggle('hidden'); }
-        function toggleRegMode() { isRegisterMode = !isRegisterMode; document.getElementById('registerFields').classList.toggle('hidden'); document.getElementById('authUsername').required = isRegisterMode; }
+        function toggleRegMode() { isRegisterMode = !isRegisterMode; document.getElementById('registerFields').classList.toggle('hidden'); document.getElementById('modalTitle').innerText = isRegisterMode ? "申请特工代号" : "实验室身份接入"; }
 
         document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('authSubmit'); btn.innerText = "信号同步中..."; btn.disabled = true;
+            const btn = document.getElementById('authSubmit'); btn.innerText = "信号同步中...";
             try {
                 const res = await fetch(AUTH_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: isRegisterMode ? 'register' : 'login', email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value, username: document.getElementById('authUsername').value }) });
                 const data = await res.json();
-                if (res.ok && data.token) { localStorage.setItem('pudding_token', data.token); location.reload(); } else { showNotify(data.message || "验证失败", "error"); }
-            } catch (err) { showNotify("链路中断", "error"); } finally { btn.innerText = "确认接入"; btn.disabled = false; }
+                if (data.token) {
+                    localStorage.setItem('pudding_token', data.token);
+                    localStorage.setItem('pudding_user', data.username || "Architect");
+                    location.reload();
+                } else { alert(data.message || "接入被拒绝"); }
+            } catch (err) { alert("通讯中心无响应"); } finally { btn.innerText = "确认接入"; }
         });
 
-        function handleLogout() { localStorage.removeItem('pudding_token'); location.reload(); }
-        window.onload = () => { const t = localStorage.getItem('pudding_token'); if(t) recallProfile(t); };
+        function handleLogout() { localStorage.clear(); location.reload(); }
+        window.onload = silentRecall;
     </script>
 </body>
 </html>
