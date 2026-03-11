@@ -3,146 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LBUDING AI Lab | 一人 AI 公司的算力矩阵</title>
+    <title>LBUDING AI Lab | 数字资产驾驶舱</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .hover-glow:hover { box-shadow: 0 0 30px rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.5); transform: translateY(-5px); }
-        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .animate-soft { animation: pulse-soft 2s infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .dashboard-card { background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(2, 6, 23, 0.8) 100%); }
+        .progress-fill { transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
     </style>
 </head>
-<body class="bg-[#020617] text-slate-300 min-h-screen font-sans selection:bg-blue-500/30">
+<body class="antialiased selection:bg-blue-500/30">
 
-    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto border-b border-slate-900/50">
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto border-b border-white/5">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-xl flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-blue-500/20">L</div>
-            <span class="text-white font-bold tracking-tighter text-xl">LBUDING <span class="text-blue-500">AI</span></span>
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center font-black text-white shadow-lg">L</div>
+            <span class="font-bold tracking-tighter text-xl">LBUDING <span class="text-blue-500">AI</span></span>
         </div>
-        <div id="userStatus" class="hidden md:flex items-center gap-2 px-4 py-2 glass rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">
-            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-soft"></span>
-            System Online
+        <div id="statusIndicator" class="flex items-center gap-2 px-3 py-1 glass rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            <span class="w-1.5 h-1.5 bg-slate-700 rounded-full" id="statusDot"></span>
+            <span id="statusText">Guest Mode</span>
         </div>
     </nav>
 
-    <section class="max-w-4xl mx-auto pt-20 pb-16 px-6 text-center">
-        <div id="personalBadge" class="hidden inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
-            <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest" id="welcomeCity">Recognized User</span>
+    <header class="max-w-6xl mx-auto pt-16 pb-12 px-6">
+        <div id="greeting" class="mb-4">
+            <p class="text-blue-500 text-xs font-black uppercase tracking-[0.3em] mb-2">Intelligence Ecosystem</p>
+            <h1 id="heroTitle" class="text-4xl md:text-6xl font-black tracking-tighter leading-none mb-4">
+                探索 AI 的<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">无限可能</span>
+            </h1>
         </div>
-        
-        <h1 id="mainTitle" class="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-[1.1]">
-            让 AI 成为你的<br>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400">第二大脑</span>
-        </h1>
-        
-        <p id="mainDesc" class="text-slate-500 max-w-xl mx-auto leading-relaxed text-sm md:text-lg font-medium">
-            基于分布式算力与 DeepSeek 模型构建的职场、效率与生活辅助工具箱。
-        </p>
-    </section>
 
-    <section id="recommendationBar" class="hidden max-w-6xl mx-auto px-6 mb-12">
-        <div class="p-6 rounded-[2rem] bg-gradient-to-r from-blue-900/20 to-emerald-900/20 border border-blue-500/20 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-                <h4 class="text-white font-bold text-lg">AI 深度洞察：<span id="aiInsight">正在分析您的职场竞争力...</span></h4>
-                <p class="text-slate-400 text-sm mt-1">根据您的最新画像，我们建议您立即进行以下操作：</p>
+        <div id="userDashboard" class="hidden mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 dashboard-card p-8 rounded-[2rem] border border-white/5 relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex justify-between items-end mb-4">
+                        <h4 class="text-sm font-bold text-slate-400 uppercase tracking-widest">职场生存韧性指数</h4>
+                        <span id="monthsText" class="text-3xl font-black text-white mono">00</span>
+                    </div>
+                    <div class="w-full h-4 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                        <div id="survivalBar" class="progress-fill h-full bg-gradient-to-r from-blue-600 to-emerald-400" style="width: 0%"></div>
+                    </div>
+                    <p class="mt-4 text-xs text-slate-500 leading-relaxed italic" id="aiInsight">系统正在调取您的最新算力评估结果...</p>
+                </div>
+                <div class="absolute top-0 right-0 p-8 opacity-10 text-8xl font-black italic select-none mono">L-BIO</div>
             </div>
-            <a id="aiActionBtn" href="/survive-calc/" class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 text-sm">
-                立即前往 →
-            </a>
+            
+            <div class="dashboard-card p-8 rounded-[2rem] border border-white/5 flex flex-col justify-between">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">风险评级</h4>
+                    <div class="flex items-baseline gap-2">
+                        <span id="riskLevel" class="text-5xl font-black mono text-emerald-500">0</span>
+                        <span class="text-slate-600 font-bold uppercase text-[10px]">/ 10</span>
+                    </div>
+                </div>
+                <a href="/survive-calc/" class="mt-6 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-center text-[10px] font-black uppercase tracking-widest transition-all">重新体检</a>
+            </div>
         </div>
-    </section>
+    </header>
 
     <section class="max-w-6xl mx-auto px-6 pb-32">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            <a href="/survive-calc/" class="group glass p-8 rounded-[2.5rem] hover-glow transition-all duration-500 border border-slate-800">
-                <div class="flex justify-between items-start mb-16">
-                    <div class="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🏃‍♂️</div>
-                    <div class="px-3 py-1 rounded-full bg-blue-500/10 text-[10px] font-black text-blue-500 uppercase tracking-widest">Calculated</div>
-                </div>
-                <h3 class="text-white text-2xl font-bold mb-3">离职生存计算器</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-8">评估财务韧性，获取 DeepSeek 提供的毒舌生存策略。</p>
-                <div class="flex items-center gap-2 text-blue-500 text-xs font-black uppercase tracking-[0.2em]">Start Protocol →</div>
+            <a href="/survive-calc/" class="group glass p-8 rounded-[2rem] hover:bg-white/[0.04] transition-all border border-white/5">
+                <div class="text-3xl mb-12 group-hover:scale-110 transition-transform">🏃‍♂️</div>
+                <h3 class="text-xl font-bold mb-2">离职生存计算器</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">评估财务韧性，获取 AI 深度生存策略建议。</p>
             </a>
 
-            <a href="/resume-optimizer/" class="group glass p-8 rounded-[2.5rem] hover-glow transition-all duration-500 border border-slate-800">
-                <div class="flex justify-between items-start mb-16">
-                    <div class="w-14 h-14 bg-emerald-600/10 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">📄</div>
-                    <div class="px-3 py-1 rounded-full bg-emerald-500/10 text-[10px] font-black text-emerald-500 uppercase tracking-widest">Hot Fix</div>
-                </div>
-                <h3 class="text-white text-2xl font-bold mb-3">AI 简历强力润色</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-8">根据您的财务压力和职场画像，自动匹配“求生”或“溢价”模式。</p>
-                <div class="flex items-center gap-2 text-emerald-500 text-xs font-black uppercase tracking-[0.2em]">Optimize Now →</div>
+            <a href="/resume-optimizer/" class="group glass p-8 rounded-[2rem] hover:bg-white/[0.04] transition-all border border-white/5">
+                <div class="text-3xl mb-12 group-hover:scale-110 transition-transform">📄</div>
+                <h3 class="text-xl font-bold mb-2">AI 简历优化器</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">根据生存压力模型，自动对齐“生存”或“溢价”简历风格。</p>
             </a>
 
-            <div class="glass p-8 rounded-[2.5rem] border-dashed border-slate-800 opacity-60">
-                <div class="flex justify-between items-start mb-16">
-                    <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-3xl">⚡</div>
-                    <div class="px-3 py-1 rounded-full bg-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-widest">Upcoming</div>
-                </div>
-                <h3 class="text-slate-400 text-2xl font-bold mb-3">算力成本分析仪</h3>
-                <p class="text-slate-600 text-sm leading-relaxed mb-8">实时监控多模型调用成本，优化您的 API 支出效率。</p>
+            <div class="glass p-8 rounded-[2rem] border-dashed border-white/10 opacity-40">
+                <div class="text-3xl mb-12">⚡</div>
+                <h3 class="text-xl font-bold mb-2">算力成本分析</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">即将上线：实时监控多模型调用成本，优化 API 支出。</p>
             </div>
 
         </div>
     </section>
 
-    <footer class="text-center py-12 border-t border-slate-900/50">
-        <p class="text-[10px] font-black text-slate-700 tracking-[0.5em] uppercase">© 2026 LBUDING AI Lab • Distributed Intelligence Network</p>
-    </footer>
-
     <script>
-        const IDENTITY_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
+        // 🛠️ 配置区
+        const IDENTITY_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile"; 
         const fpPromise = FingerprintJS.load();
 
-        async function recallIdentity() {
+        async function initDashboard() {
             try {
                 const fp = await fpPromise;
-                const visitorId = (await fp.get()).visitorId;
+                const result = await fp.get();
+                const visitorId = result.visitorId;
 
+                // 1. 请求画像
                 const response = await fetch(IDENTITY_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ visitor_id: visitorId })
                 });
 
-                if (!response.ok) return;
+                if (!response.ok) throw new Error('Network error');
                 const userData = await response.json();
 
-                // 🌟 如果是有记录的用户，启动“企业级”动态展示
+                // 🌟 2. 如果识别到老用户，进行 UI 变换
                 if (userData && userData.last_city) {
-                    // 1. 更新顶部状态
-                    const status = document.getElementById('userStatus');
-                    status.innerHTML = `<span class="w-2 h-2 bg-blue-500 rounded-full"></span> 已连接：${userData.last_city} 战友`;
-                    status.classList.remove('hidden');
+                    // 更新导航状态
+                    document.getElementById('statusDot').className = "w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_8px_#3b82f6]";
+                    document.getElementById('statusText').innerText = `Verified: ${userData.last_city}`;
+                    document.getElementById('statusText').classList.add('text-blue-400');
 
-                    // 2. 更新英雄区标题
-                    document.getElementById('personalBadge').classList.remove('hidden');
-                    document.getElementById('welcomeCity').innerText = `${userData.last_city} · ${userData.last_industry}`;
-                    document.getElementById('mainTitle').innerHTML = `欢迎回来，<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-400">${userData.last_city}的实干家</span>`;
+                    // 更新英雄区
+                    document.getElementById('heroTitle').innerHTML = `欢迎回来，<br><span class="text-white">${userData.last_city}的</span><span class="text-blue-500">实干家</span>`;
 
-                    // 3. 智能推荐逻辑
-                    const recBar = document.getElementById('recommendationBar');
-                    const insight = document.getElementById('aiInsight');
-                    const actionBtn = document.getElementById('aiActionBtn');
+                    // 显示并渲染看板
+                    document.getElementById('userDashboard').classList.remove('hidden');
                     
-                    if (userData.risk_level >= 7) {
-                        insight.innerText = "您的职场风险等级较高，建议立即优化简历。";
-                        actionBtn.innerText = "优化简历";
-                        actionBtn.href = "/resume-optimizer/";
-                        recBar.classList.remove('hidden');
-                    } else if (userData.total_interactions > 0) {
-                        insight.innerText = `您已进行过 ${userData.total_interactions} 次评估。现状：${userData.ai_summary || '正常'}`;
-                        actionBtn.innerText = "再次评估";
-                        actionBtn.href = "/survive-calc/";
-                        recBar.classList.remove('hidden');
-                    }
+                    // 模拟进度条动画（根据风险等级反向计算，越高越短）
+                    setTimeout(() => {
+                        const risk = userData.risk_level || 5;
+                        const survivalPercent = Math.max(10, 100 - (risk * 10));
+                        document.getElementById('survivalBar').style.width = survivalPercent + "%";
+                        document.getElementById('monthsText').innerText = userData.total_interactions || 1;
+                        document.getElementById('monthsText').nextSibling.textContent = " 次测算"; // 修改单位显示
+                        
+                        // 更新风险数字
+                        const riskEl = document.getElementById('riskLevel');
+                        riskEl.innerText = risk;
+                        if (risk > 7) riskEl.className = "text-5xl font-black mono text-red-500";
+                        else if (risk > 4) riskEl.className = "text-5xl font-black mono text-yellow-500";
+
+                        // 更新 AI 洞察
+                        document.getElementById('aiInsight').innerText = userData.ai_summary || "正在分析您的职场最新动态...";
+                    }, 300);
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.warn("Dashboard Initialization Silent Fail (Guest Mode):", err);
+            }
         }
 
-        window.addEventListener('DOMContentLoaded', recallIdentity);
+        window.addEventListener('DOMContentLoaded', initDashboard);
     </script>
 </body>
 </html>
