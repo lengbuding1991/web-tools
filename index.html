@@ -3,97 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>布丁「瞎折腾」武器库 | Pudding's Tech Arsenal</title>
+    <title>布丁实验室 | 数字化武器库</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
-        body { background-color: #020617; color: #f8fafc; font-family: 'JetBrains Mono', monospace; }
-        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .tool-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .tool-card:hover { transform: translateY(-8px); border-color: #3b82f6; box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.3); }
-        .active-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap');
+        
+        :root { --main-blue: #3b82f6; --bg-dark: #020617; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', 'PingFang SC', sans-serif; overflow-x: hidden; }
+        
+        .tech-grid { 
+            background-image: radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 0); 
+            background-size: 40px 40px; 
+        }
+
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .tool-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid rgba(59, 130, 246, 0.1); }
+        .tool-card:hover { transform: translateY(-10px); border-color: var(--main-blue); box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.3); }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glow-text { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        
+        /* 扫描线动画 */
+        .scanline { width: 100%; height: 100px; background: linear-gradient(0deg, transparent, rgba(59, 130, 246, 0.05), transparent); position: absolute; animation: scan 8s linear infinite; pointer-events: none; }
+        @keyframes scan { 0% { top: -100px; } 100% { top: 100%; } }
+
+        /* 呼吸灯 */
+        .status-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
-<body class="min-h-screen selection:bg-blue-500/30">
+<body class="tech-grid min-h-screen flex flex-col">
+    <div class="scanline"></div>
 
-    <nav class="sticky top-0 z-50 p-6 glass border-b border-white/5">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-white text-slate-950 rounded-xl flex items-center justify-center font-black text-2xl shadow-lg">P</div>
-                <div>
-                    <h1 class="font-black text-lg tracking-tighter uppercase leading-none">Pudding Lab</h1>
-                    <p class="text-[8px] text-blue-500 font-bold uppercase tracking-[0.4em]">布丁「瞎折腾」实验室</p>
-                </div>
+    <nav class="h-16 flex items-center justify-between px-8 glass border-b border-white/5 shrink-0 z-50">
+        <div class="flex items-center gap-4">
+            <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg">B</div>
+            <div>
+                <h1 class="text-sm font-black text-white tracking-widest uppercase">Pudding Lab</h1>
+                <p class="text-[9px] text-blue-500 font-bold tracking-[0.3em]">布丁实验室 // 大本营</p>
             </div>
-            <div id="idBadge" class="hidden px-4 py-2 glass rounded-full border border-blue-500/20 text-[10px] font-bold">
-                <span class="active-dot inline-block mr-2"></span>
-                SYSTEM RECALLED: <span id="userId" class="text-blue-400">---</span>
+        </div>
+        <div class="flex items-center gap-8">
+            <div id="userBadge" class="hidden md:flex items-center gap-2 glass px-4 py-1.5 rounded-full border border-blue-500/20">
+                <div class="status-pulse"></div>
+                <span class="text-[10px] font-bold text-blue-400 mono" id="userName">识别中...</span>
+            </div>
+            <div class="text-[10px] font-bold text-slate-500 mono uppercase hidden lg:block">
+                Nodes: <span class="text-white">Active</span> // Latency: <span class="text-emerald-500">24ms</span>
             </div>
         </div>
     </nav>
 
-    <header class="max-w-7xl mx-auto pt-24 pb-16 px-8">
-        <h2 id="heroTitle" class="text-5xl md:text-8xl font-black tracking-tighter mb-6 leading-[0.9]">
-            折腾，是为了<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-emerald-400 italic font-serif">更有价值。</span>
-        </h2>
-        <p class="text-slate-500 max-w-2xl text-sm md:text-base font-medium leading-relaxed">
-            这里是布丁的所有实验成果存放地。每一个“瞎折腾”出的工具都经过 DeepSeek 算力对齐，旨在通过自动化挖掘 2026 年的数字化不对称收益。
-        </p>
+    <header class="max-w-7xl mx-auto w-full pt-24 pb-16 px-8 relative z-10">
+        <div class="max-w-3xl">
+            <h2 id="welcomeTitle" class="text-5xl md:text-8xl font-black tracking-tighter text-white leading-[0.9] mb-8">
+                折腾出<br><span class="text-blue-500 italic glow-text">真实价值。</span>
+            </h2>
+            <p class="text-slate-500 text-sm md:text-base font-medium leading-relaxed max-w-xl">
+                这里是布丁的个人技术试验场。每一个工具都诞生于一个“瞎折腾”的念头，通过 DeepSeek 算力与 n8n 自动化逻辑，转化为解决实际问题的硬核武器。
+            </p>
+        </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-8 pb-32">
+    <main class="max-w-7xl mx-auto w-full px-8 pb-32 relative z-10">
+        <div class="flex items-center gap-4 mb-10">
+            <span class="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">武器库列表 / Arsenal</span>
+            <div class="h-px flex-1 bg-white/5"></div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             
-            <a href="/factory/" class="tool-card glass p-8 rounded-[2.5rem] border border-white/5 flex flex-col justify-between h-[320px]">
-                <div>
-                    <div class="flex justify-between items-start mb-12 text-3xl">⚡</div>
-                    <h3 class="text-2xl font-black text-white mb-2">灵感变现工厂</h3>
-                    <p class="text-slate-500 text-xs">输入你的技能与时间，AI 自动为你生成可落地的自动化套利方案。</p>
+            <a href="/factory/" class="tool-card glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] relative group overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <span class="text-8xl mono italic">01</span>
                 </div>
-                <div class="text-blue-500 text-[10px] font-black uppercase tracking-widest">初始化生产线 →</div>
+                <div>
+                    <div class="mb-8 w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
+                    <h3 class="text-2xl font-black text-white mb-3">灵感价值工厂</h3>
+                    <p class="text-slate-500 text-xs leading-relaxed">输入你的核心技能与时间，由 AI 自动扫描并生成可进阶、可变现的自动化套利蓝图。</p>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest">进入车间 →</span>
+                    <span class="text-[9px] px-2 py-0.5 rounded border border-blue-500/30 text-blue-400 font-bold uppercase">Ready</span>
+                </div>
             </a>
 
-            <div class="glass p-8 rounded-[2.5rem] border border-white/5 opacity-40 flex flex-col justify-between h-[320px]">
+            <div class="tool-card glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] opacity-40 grayscale pointer-events-none">
                 <div>
-                    <div class="flex justify-between items-start mb-12 text-3xl">🌍</div>
-                    <h3 class="text-2xl font-black text-slate-300 mb-2">城市对冲指南</h3>
-                    <p class="text-slate-600 text-xs">根据你的资产现状，计算全球性价比最高的数字化居住地与套利路径。</p>
+                    <div class="mb-8 w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-2xl">🌍</div>
+                    <h3 class="text-2xl font-black text-slate-300 mb-3">城市套利雷达</h3>
+                    <p class="text-slate-600 text-xs leading-relaxed">根据你的资产现状，计算全球范围内性价比最高的数字化居住地与远程办公套利路径。</p>
                 </div>
-                <div class="text-slate-600 text-[10px] font-black uppercase tracking-widest">算力对齐中...</div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-600 text-[10px] font-black uppercase tracking-widest italic">开发中...</span>
+                </div>
             </div>
 
-            <div class="glass p-8 rounded-[2.5rem] border-dashed border-white/10 flex items-center justify-center h-[320px] group">
-                <div class="text-center">
-                    <div class="text-4xl text-slate-700 group-hover:scale-110 transition-all">+</div>
-                    <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-4">更多模块正在折腾中</p>
-                </div>
+            <div class="glass p-10 rounded-[2.5rem] border-dashed border-white/10 flex flex-col items-center justify-center text-center h-[360px] group cursor-help">
+                <div class="w-16 h-16 rounded-full border border-white/5 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-all text-slate-700">+</div>
+                <p class="text-[10px] font-black text-slate-700 uppercase tracking-widest">更多“瞎折腾”筹备中</p>
+                <p class="text-[9px] text-slate-800 mt-2">你有想法？欢迎在飞书留言</p>
             </div>
 
         </div>
     </main>
 
+    <footer class="mt-auto border-t border-white/5 p-8 glass text-center">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-[9px] font-bold text-slate-700 uppercase tracking-[0.5em]">LBUDING LAB © 2026 // 数字化资产实验基地</p>
+            <div class="flex gap-6 text-[9px] font-bold text-slate-500 mono">
+                <span>FP_ID: <span id="footerFP" class="text-slate-700">SCANNING...</span></span>
+                <span>STATUS: STABLE</span>
+            </div>
+        </div>
+    </footer>
+
     <script>
-        const IDENTITY_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
+        // 配置你的后端接口
+        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         const fpPromise = FingerprintJS.load();
 
-        async function init() {
-            const fp = await fpPromise;
-            const vid = (await fp.get()).visitorId;
-            const res = await fetch(IDENTITY_API, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ visitor_id: vid })
-            });
-            const data = await res.json();
-            if (data.last_city) {
-                document.getElementById('idBadge').classList.remove('hidden');
-                document.getElementById('userId').innerText = vid.substring(0, 8).toUpperCase();
-                document.getElementById('heroTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500">${data.last_city}的</span>折腾家。`;
+        async function initBase() {
+            try {
+                const fp = await fpPromise;
+                const vid = (await fp.get()).visitorId;
+                
+                // 更新页脚指纹显示
+                document.getElementById('footerFP').innerText = vid.substring(0,16).toUpperCase();
+
+                // 尝试从后端召回用户信息
+                const response = await fetch(PROFILE_API, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ visitor_id: vid })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.last_city) {
+                        // 如果是老熟人，改写欢迎词
+                        document.getElementById('userName').innerText = `已识别：${vid.substring(0,8).toUpperCase()}`;
+                        document.getElementById('userBadge').classList.remove('hidden');
+                        document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500">${data.last_city}的</span>折腾家。`;
+                    }
+                }
+            } catch (e) {
+                console.log("新访客身份已匿名标记。");
             }
         }
-        window.onload = init;
+
+        window.onload = initBase;
     </script>
 </body>
 </html>
