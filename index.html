@@ -3,104 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LBUDING Matrix | 数字化套利中枢</title>
+    <title>布丁「瞎折腾」价值工厂 | AI 驱动的自动化试验场</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
-        body { background-color: #020617; color: #f8fafc; font-family: 'JetBrains Mono', monospace; }
-        .matrix-bg { background: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%); }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .glow-border { border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(37, 99, 235, 0.4); }
+        body { background-color: #020617; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; }
+        .factory-gradient { background: radial-gradient(circle at top right, #1e3a8a 0%, #020617 60%); }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glow-hover:hover { border-color: #3b82f6; box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); }
+        .status-ping { animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
     </style>
 </head>
-<body class="matrix-bg min-h-screen">
+<body class="factory-gradient min-h-screen antialiased">
 
-    <nav class="p-6 border-b border-white/5 flex justify-between items-center max-w-7xl mx-auto">
+    <nav class="max-w-7xl mx-auto p-8 flex justify-between items-center">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shadow-blue-500/20">B</div>
+            <div class="w-12 h-12 bg-white text-slate-900 rounded-2xl flex items-center justify-center font-black text-2xl">P</div>
             <div>
-                <h1 class="font-black text-xl tracking-tighter uppercase">Lbuding Matrix</h1>
-                <p class="text-[10px] text-blue-500 font-bold uppercase tracking-[0.3em]">Automated Intelligence Hub</p>
+                <h1 class="font-black text-xl tracking-tighter uppercase leading-none">Pudding Factory</h1>
+                <p class="text-[9px] text-blue-400 font-bold uppercase tracking-[0.4em] mt-1">「布丁瞎折腾」价值工厂</p>
             </div>
         </div>
-        <div class="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Nodes: Active</div>
-            <div id="userBadge" class="hidden px-3 py-1 glass rounded-full border border-blue-500/20 text-blue-400">Identified</div>
+        <div class="flex gap-4 items-center">
+            <div id="recallTag" class="hidden px-4 py-1.5 glass rounded-full text-[10px] font-bold text-blue-400 border border-blue-500/30">
+                已识别身份: <span id="userId" class="text-white">---</span>
+            </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-6 pt-20 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div class="lg:col-span-5 space-y-8">
-            <header>
-                <h2 class="text-5xl lg:text-7xl font-black tracking-tighter leading-none mb-6">折腾<br><span class="text-blue-500">创造价值</span></h2>
-                <p class="text-slate-500 text-sm leading-relaxed max-w-md">基于 DeepSeek-V3 的套利引擎。我们不计算生存期，我们计算如何在 2026 年通过自动化挖掘不对称收益。</p>
-            </header>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="glass p-6 rounded-3xl">
-                    <p class="text-[10px] text-slate-500 mb-2 uppercase font-bold">已识别机会</p>
-                    <p class="text-3xl font-black text-white" id="stat-opps">1,204</p>
-                </div>
-                <div class="glass p-6 rounded-3xl">
-                    <p class="text-[10px] text-slate-500 mb-2 uppercase font-bold">已入库画像</p>
-                    <p class="text-3xl font-black text-white" id="stat-users">0</p>
+    <main class="max-w-7xl mx-auto px-8 pt-12 grid grid-cols-1 lg:grid-cols-12 gap-16">
+        <div class="lg:col-span-5">
+            <h2 class="text-6xl lg:text-8xl font-black tracking-tighter text-white mb-8">
+                折腾出<br><span class="text-blue-500 italic">实价。</span>
+            </h2>
+            <p class="text-slate-400 text-sm leading-relaxed mb-12 max-w-md font-medium">
+                这里不是实验室，而是生产线。我们将看似随意的“瞎折腾”通过 DeepSeek 算力和 n8n 自动化逻辑，加工成可执行、可进阶、可变现的职场与商业方案。
+            </p>
+            
+            <div class="space-y-4">
+                <div class="flex items-center gap-4 p-4 glass rounded-2xl glow-hover">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full status-ping"></div>
+                    <div class="text-xs font-bold uppercase tracking-widest text-slate-500">
+                        当前在线算力: <span class="text-white">DeepSeek-V3 (Running)</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="lg:col-span-7">
-            <div class="glass p-8 md:p-12 rounded-[3rem] glow-border relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-[100px]"></div>
+            <div class="glass p-10 md:p-14 rounded-[3.5rem] border border-white/10 relative shadow-2xl">
+                <h3 class="text-2xl font-black mb-10">🚀 灵感价值化提取器</h3>
                 
-                <h3 class="text-2xl font-black mb-8 flex items-center gap-3">
-                    <span class="w-2 h-8 bg-blue-500 rounded-full"></span>
-                    变现路径嗅探器
-                </h3>
-
-                <form id="arbitrageForm" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form id="factoryForm" class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">擅长技能 / Core Skills</label>
-                            <input type="text" id="skills" required placeholder="如：Python, 视频剪辑, 英语" class="w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-sm">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">核心技能 / Skills</label>
+                            <input type="text" id="skills" required placeholder="如：Python, 文案, 运营" class="w-full px-0 py-3 bg-transparent border-b-2 border-white/10 outline-none focus:border-blue-500 transition-all text-sm font-bold">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">每日投入时长 / Hours Daily</label>
-                            <input type="number" id="hours" required placeholder="2" class="w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-sm">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">投入意愿 / Commitment</label>
+                            <input type="text" id="commitment" required placeholder="如：每天2小时, 周末全职" class="w-full px-0 py-3 bg-transparent border-b-2 border-white/10 outline-none focus:border-blue-500 transition-all text-sm font-bold">
                         </div>
                     </div>
+
                     <div class="space-y-2">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">当前关注领域 / Interests</label>
-                        <select id="interest" class="w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-sm appearance-none cursor-pointer">
-                            <option value="AI自动化">AI 自动化 (No-code/LLM)</option>
-                            <option value="内容出海">内容出海 (TikTok/YouTube)</option>
-                            <option value="数字资产套利">数字资产套利 (Domain/GPU)</option>
-                            <option value="Micro-SaaS">Micro-SaaS 独立开发</option>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">折腾方向 / Interest Sector</label>
+                        <select id="sector" class="w-full px-0 py-3 bg-transparent border-b-2 border-white/10 outline-none focus:border-blue-500 transition-all text-sm font-bold cursor-pointer">
+                            <option value="AI 自动化">AI 自动化工具 (Low-code)</option>
+                            <option value="数字化副业">数字化副业套利 (Arbitrage)</option>
+                            <option value="内容资产">自动化内容工厂 (Content Gen)</option>
+                            <option value="Micro-SaaS">微型 SaaS 产品 (Niche Tools)</option>
                         </select>
                     </div>
 
-                    <button type="submit" id="submitBtn" class="w-full btn-primary text-white font-black py-5 rounded-2xl text-xs uppercase tracking-[0.3em]">
-                        生成自动化套利蓝图
+                    <button type="submit" id="submitBtn" class="w-full py-5 bg-white text-slate-900 font-black rounded-2xl hover:bg-blue-500 hover:text-white transition-all text-xs uppercase tracking-[0.3em]">
+                        投入生产线生成方案
                     </button>
                 </form>
 
-                <div id="resultBox" class="hidden mt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div class="p-6 rounded-3xl bg-blue-500/10 border border-blue-500/20">
-                        <p class="text-blue-500 text-[10px] font-black uppercase tracking-widest mb-3">Blueprint Detected</p>
-                        <div id="aiOutput" class="text-sm leading-relaxed text-slate-300 font-medium whitespace-pre-wrap"></div>
-                    </div>
+                <div id="outputArea" class="hidden mt-12 p-8 rounded-3xl bg-blue-600/10 border border-blue-500/20">
+                    <div id="outputContent" class="text-sm leading-relaxed text-slate-200 font-medium whitespace-pre-wrap"></div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        const API_URL = "https://nas-n8n.lbuding.com/webhook/opportunity-scanner";
+        const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/factory-logic";
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         const fpPromise = FingerprintJS.load();
 
+        // 身份召回
         async function recall() {
             const fp = await fpPromise;
             const vid = (await fp.get()).visitorId;
@@ -110,17 +104,16 @@
                 body: JSON.stringify({ visitor_id: vid })
             });
             const data = await res.json();
-            if(data.total_interactions) {
-                document.getElementById('stat-users').innerText = data.total_interactions + 520; // 模拟虚假繁荣增加逼格
-                document.getElementById('userBadge').classList.remove('hidden');
-                document.getElementById('userBadge').innerText = `RECALLED: ${vid.substring(0,8)}`;
+            if(data.last_city) {
+                document.getElementById('recallTag').classList.remove('hidden');
+                document.getElementById('userId').innerText = vid.substring(0,8);
             }
         }
 
-        document.getElementById('arbitrageForm').addEventListener('submit', async (e) => {
+        document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerText = "SCANNING GLOBAL MARKET...";
+            btn.disabled = true; btn.innerText = "机器运转中 (PROCESSING)...";
 
             const fp = await fpPromise;
             const vid = (await fp.get()).visitorId;
@@ -128,21 +121,22 @@
             const payload = {
                 visitor_id: vid,
                 skills: document.getElementById('skills').value,
-                hours: document.getElementById('hours').value,
-                interest: document.getElementById('interest').value
+                commitment: document.getElementById('commitment').value,
+                sector: document.getElementById('sector').value
             };
 
             try {
-                const res = await fetch(API_URL, {
+                const res = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                document.getElementById('aiOutput').innerText = data.blueprint;
-                document.getElementById('resultBox').classList.remove('hidden');
-            } catch (e) { alert("CONNECTION FAILED"); }
-            finally { btn.disabled = false; btn.innerText = "REFRESH BLUEPRINT"; }
+                document.getElementById('outputContent').innerText = data.blueprint;
+                document.getElementById('outputArea').classList.remove('hidden');
+                document.getElementById('outputArea').scrollIntoView({behavior:'smooth'});
+            } catch (e) { alert("工厂停电 (CONNECTION ERROR)"); }
+            finally { btn.disabled = false; btn.innerText = "重新投入生产"; }
         });
 
         window.onload = recall;
