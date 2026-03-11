@@ -5,170 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>价值工厂 - 布丁实验室</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* 🔔 实验室通知系统 */
-        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .notify-card { pointer-events: auto; min-width: 300px; padding: 16px 20px; border-radius: 12px; border: 1px solid; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
-        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
-        .notify-success { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
-
-        /* 🚩 门禁锁屏 */
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; items-center; justify-center; }
-        .glitch-red { color: #ef4444; font-weight: 800; animation: glitch 0.3s infinite; text-transform: uppercase; letter-spacing: 0.5em; }
-        @keyframes glitch { 0% { transform: translate(2px, 0); } 50% { transform: translate(-2px, 0); } 100% { transform: translate(0, 0); } }
-        
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        .prose h2 { color: #fff !important; border-left: 4px solid var(--main-blue); padding-left: 1rem; }
-        #posterWrapper { width: 450px; background: #050a15; margin: 0 auto; display: none; }
+        #posterWrapper { width: 450px; background: #050a15; display: none; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col md:flex-row">
-    <div id="notify-container"></div>
-    <div id="lockscreen" class="hidden text-center">
-        <div class="mono text-[10px] text-blue-500 mb-4 tracking-[1em] uppercase animate-pulse">Security_Check_Fail</div>
-        <div class="glitch-red text-2xl mb-8">Unauthorized Access</div>
-        <div class="w-64 h-1 bg-white/5 rounded-full overflow-hidden mx-auto"><div id="lock-progress" class="h-full bg-blue-600 transition-all duration-1000" style="width: 0%"></div></div>
-        <p class="mono text-[8px] mt-6 text-slate-500 uppercase tracking-widest">正在引导至身份认证中心...</p>
-    </div>
+    <div id="lockscreen" class="hidden"><div class="text-blue-500 mono animate-pulse uppercase tracking-[0.5em]">Auth_Required...</div></div>
 
-    <script>
-        // 门禁哨兵
-        (function() {
-            if (!localStorage.getItem('pudding_token')) {
-                document.getElementById('lockscreen').classList.remove('hidden');
-                setTimeout(() => { document.getElementById('lock-progress').style.width = "100%"; }, 100);
-                setTimeout(() => { window.location.href = "/"; }, 2500);
-            }
-        })();
-
-        function showNotify(msg, type = 'error') {
-            const container = document.getElementById('notify-container');
-            const card = document.createElement('div');
-            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
-            card.innerHTML = `<div class="flex items-center gap-3">
-                <span class="text-lg">${type === 'error' ? '⚠️' : '✅'}</span>
-                <div>
-                    <div class="uppercase opacity-50 mb-1">${type === 'error' ? 'SYSTEM_ALERT' : 'SUCCESS_SYNC'}</div>
-                    <div class="leading-tight">${msg}</div>
-                </div>
-            </div>`;
-            container.appendChild(card);
-            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 4000);
-        }
-    </script>
-
-    <aside class="w-full md:w-72 p-6 hidden md:flex flex-col gap-6 shrink-0 glass-panel">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl">布</div>
-            <h2 class="font-black text-white text-lg tracking-tight">价值工厂</h2>
-        </div>
-        <div class="p-4 bg-black/40 rounded-lg border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto" id="logs">> 链路已加密...</div>
+    <aside class="w-full md:w-72 p-6 flex flex-col gap-6 shrink-0 glass-panel">
+        <div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-xl">布</div><h2 class="font-black text-white text-lg">价值工厂</h2></div>
+        <div class="p-4 bg-black/40 rounded-lg border border-white/5 mono text-[9px] text-slate-500 flex-1 overflow-y-auto" id="logs">> 系统就绪...</div>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="h-16 flex items-center justify-between px-8 border-b border-white/5">
-            <span class="text-xs font-bold text-slate-500 mono">PUDDING_FACTORY_V3.2</span>
-            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-xs hover:text-white transition-all">返回基地</a>
+            <span class="text-xs font-bold text-slate-500 mono">FACTORY_MODE_V3</span>
+            <a href="/" class="px-4 py-1.5 glass-panel rounded-full text-[10px] font-bold uppercase hover:text-white">返回基地</a>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8 md:p-12">
-            <div class="max-w-4xl mx-auto space-y-10">
-                <div class="glass-panel p-10 rounded-[3rem]">
-                    <h3 class="text-xl font-black text-white mb-8 italic flex items-center gap-3"><span class="w-1 h-6 bg-blue-600 rounded-full"></span>技能原材料投料</h3>
-                    <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <input type="text" id="skills" required placeholder="核心技能 (如: Python, 视频剪辑)" class="px-6 py-4 rounded-2xl outline-none focus:border-blue-500 transition-all">
-                        <input type="text" id="commitment" required placeholder="投入精力 (如: 每日1小时)" class="px-6 py-4 rounded-2xl outline-none focus:border-blue-500 transition-all">
-                        <select id="sector" class="md:col-span-2 px-6 py-4 rounded-2xl outline-none">
-                            <option value="AI 自动化">AI 自动化</option>
-                            <option value="数字化套利">数字化套利</option>
-                            <option value="内容工厂">内容工厂</option>
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <div class="glass-panel p-8 rounded-[2rem]">
+                    <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <input type="text" id="skills" required placeholder="核心技能" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                        <input type="text" id="commitment" required placeholder="投入精力" class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                        <select id="sector" class="md:col-span-2 px-6 py-4 rounded-xl text-sm outline-none">
+                            <option value="AI 自动化">AI 自动化</option><option value="内容工厂">内容工厂</option>
                         </select>
-                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 bg-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all hover:bg-blue-500">生成价值蓝图</button>
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest">生成价值蓝图</button>
                     </form>
                 </div>
-
-                <div id="resultArea" class="hidden glass-panel p-10 md:p-16 rounded-[3rem]">
+                <div id="resultArea" class="hidden glass-panel p-10 rounded-[2rem]">
                     <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300"></div>
-                    <div class="mt-12 flex justify-end">
-                        <button onclick="generatePoster()" id="posterBtn" class="px-8 py-3 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-900/40">固化海报分享</button>
-                    </div>
+                    <button onclick="generatePoster()" id="posterBtn" class="mt-8 px-8 py-3 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase">导出蓝图海报</button>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="posterWrapper" class="p-10 bg-[#050a15] border-2 border-blue-500/20">
-        <div class="border-b border-blue-500/30 pb-6 mb-10">
-            <h2 class="text-white text-2xl font-black">布丁实验室 // 价值工厂</h2>
-            <p class="text-blue-500 text-[10px] mono uppercase tracking-widest">AI_Value_Blueprint_2026</p>
-        </div>
-        <div id="posterContent" class="prose prose-invert prose-blue"></div>
-        <div class="mt-10 pt-6 border-t border-white/10 flex justify-between items-end">
-            <span class="text-slate-600 text-[8px] mono" id="posterID">ID:---</span>
-            <span class="text-blue-500 font-bold italic text-[10px]">tools.lbuding.com</span>
-        </div>
-    </div>
+    <div id="posterWrapper" class="p-12 bg-[#050a15] border-2 border-blue-500/20"><h2 class="text-white text-2xl font-black mb-10">PUDDING LAB // BLUEPRINT</h2><div id="posterContent" class="prose prose-invert prose-blue"></div></div>
 
     <script>
         const API_URL = "https://nas-n8n.lbuding.com/webhook/factory-engine";
-        const fpPromise = FingerprintJS.load();
+        window.onload = () => { if (!localStorage.getItem('pudding_token')) { document.getElementById('lockscreen').classList.remove('hidden'); setTimeout(() => location.href = "/", 1500); } };
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在同步加密算力...";
-            
+            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在同步算力...";
             try {
-                const vid = (await (await fpPromise).get()).visitorId;
-                const token = localStorage.getItem('pudding_token');
-                
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ visitor_id: vid, skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value })
-                });
-
-                if (res.status === 401) { showNotify("令牌已失效，重置会话...", "error"); setTimeout(() => location.reload(), 2000); return; }
+                const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value }) });
+                if (res.status === 401) { location.href = "/"; return; }
                 const data = await res.json();
-                
                 if (data.blueprint) {
-                    showNotify("蓝图计算完成，正在渲染...", "success");
                     const html = marked.parse(data.blueprint);
                     document.getElementById('blueprintContent').innerHTML = html;
                     document.getElementById('posterContent').innerHTML = html;
                     document.getElementById('resultArea').classList.remove('hidden');
-                    document.getElementById('posterID').innerText = `ID:${vid.substring(0,12).toUpperCase()}`;
-                    document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
                 }
-            } catch (err) { showNotify("系统繁忙，请稍后再试。", "error"); }
-            finally { btn.disabled = false; btn.innerText = "生成价值蓝图"; }
+            } catch (err) { alert("连接失败"); } finally { btn.disabled = false; btn.innerText = "生成价值蓝图"; }
         });
 
         async function generatePoster() {
-            const btn = document.getElementById('posterBtn');
-            const wrapper = document.getElementById('posterWrapper');
-            btn.innerText = "固化像素中...";
-            wrapper.style.display = 'block';
-            try {
-                const canvas = await html2canvas(wrapper, { backgroundColor: "#050a15", scale: 3, windowWidth: 450 });
-                const link = document.createElement('a');
-                link.download = `Factory_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                showNotify("报告已导出成功。", "success");
-            } finally { wrapper.style.display = 'none'; btn.innerText = "固化海报分享"; }
+            const wrapper = document.getElementById('posterWrapper'); wrapper.style.display = 'block';
+            const canvas = await html2canvas(wrapper, { backgroundColor: "#050a15", scale: 2 });
+            const link = document.createElement('a'); link.download = `Factory_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click();
+            wrapper.style.display = 'none';
         }
     </script>
 </body>

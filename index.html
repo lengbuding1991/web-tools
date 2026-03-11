@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>布丁实验室 | 大本营</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
@@ -17,15 +16,10 @@
         .status-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
         input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .notify-card { 
-            pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid;
-            animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
-            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
-        }
-        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
-        .notify-success { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
+        .notify-error { border-color: #ef4444; color: #fca5a5; }
+        .notify-success { border-color: #10b981; color: #a7f3d0; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
     </style>
@@ -42,14 +36,9 @@
             </div>
         </div>
         <div class="flex items-center gap-6">
-            <div id="authStatusArea">
-                <button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest transition-all hover:bg-blue-600/20">接入实验室 / CONNECT</button>
-            </div>
+            <div id="authStatusArea"><button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600/20">接入实验室 / CONNECT</button></div>
             <div id="userProfileArea" class="hidden flex items-center gap-4">
-                <div class="flex items-center gap-2 glass px-4 py-1.5 rounded-full border border-blue-500/20">
-                    <div class="status-pulse"></div>
-                    <span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span>
-                </div>
+                <div class="flex items-center gap-2 glass px-4 py-1.5 rounded-full border border-blue-500/20"><div class="status-pulse"></div><span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span></div>
                 <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
             </div>
         </div>
@@ -62,13 +51,11 @@
 
     <main class="max-w-7xl mx-auto w-full px-8 pb-32 z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <a href="/factory/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] border border-white/5 relative group hover:border-blue-500/50 transition-all">
-            <div class="mb-8 w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
-            <h3 class="text-2xl font-black text-white mb-3">灵感价值工厂</h3>
+            <div><div class="mb-8 w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div><h3 class="text-2xl font-black text-white mb-3">灵感价值工厂</h3></div>
             <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform">进入车间 →</span>
         </a>
         <a href="/radar/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-[360px] border border-white/5 relative group hover:border-emerald-500/50 transition-all">
-            <div class="mb-8 w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🌍</div>
-            <h3 class="text-2xl font-black text-white mb-3">全球套利雷达</h3>
+            <div><div class="mb-8 w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🌍</div><h3 class="text-2xl font-black text-white mb-3">全球套利雷达</h3></div>
             <span class="text-emerald-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform">启动扫描 →</span>
         </a>
     </main>
@@ -76,15 +63,14 @@
     <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
         <div class="w-full max-w-md glass p-10 rounded-[3.5rem] border-blue-500/30 relative">
             <button onclick="toggleAuthModal()" class="absolute top-8 right-10 text-slate-500 hover:text-white">✕</button>
-            <h3 id="modalTitle" class="text-3xl font-black text-white mb-2 italic">实验室身份接入</h3>
-            <p class="text-[10px] text-blue-500 uppercase tracking-[0.3em] mb-8 font-bold mono">Pudding-Auth / v0.1</p>
+            <h3 id="modalTitle" class="text-3xl font-black text-white mb-2 italic tracking-tighter">实验室身份接入</h3>
             <form id="authForm" class="space-y-4">
                 <input type="email" id="authEmail" placeholder="邮箱 / Email" required class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all">
                 <input type="password" id="authPassword" placeholder="密钥 / Password" required class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all">
-                <div id="registerFields" class="hidden space-y-4"><input type="text" id="authUsername" placeholder="代号 / Username" class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5 focus:border-blue-500 transition-all"></div>
-                <button type="submit" id="authSubmit" class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all">执行身份确认</button>
+                <div id="registerFields" class="hidden space-y-4"><input type="text" id="authUsername" placeholder="代号 / Username" class="w-full px-6 py-4 rounded-2xl text-sm outline-none border border-white/5"></div>
+                <button type="submit" id="authSubmit" class="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-[0.3em] transition-all">确认接入</button>
             </form>
-            <button onclick="toggleRegMode()" id="regToggleBtn" class="mt-8 w-full text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-widest">申请加入实验室 / APPLY</button>
+            <button onclick="toggleRegMode()" id="regToggleBtn" class="mt-8 w-full text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-widest">申请加入 / APPLY</button>
         </div>
     </div>
 
@@ -95,105 +81,41 @@
 
         function showNotify(msg, type = 'error') {
             const container = document.getElementById('notify-container');
-            if (!container) return;
             const card = document.createElement('div');
             card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
-            card.innerHTML = `<div class="flex items-center gap-3">
-                <span class="text-lg">${type === 'error' ? '⚠️' : '✅'}</span>
-                <div>
-                    <div class="uppercase opacity-50 mb-1">${type === 'error' ? 'SYSTEM_ALERT' : 'SUCCESS_SYNC'}</div>
-                    <div class="leading-tight">${msg}</div>
-                </div>
-            </div>`;
+            card.innerHTML = `<div class="flex items-center gap-3"><span>${type === 'error' ? '⚠️' : '✅'}</span><div>${msg}</div></div>`;
             container.appendChild(card);
-            setTimeout(() => {
-                card.style.animation = 'fadeOut 0.5s forwards';
-                setTimeout(() => card.remove(), 500);
-            }, 4000);
+            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 4000);
         }
 
-        // 🛡️ 对接“身份哨兵”协议
         async function recallProfile(token) {
             try {
-                const res = await fetch(PROFILE_API, { 
-                    method: 'POST', 
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    } 
-                });
+                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`} });
                 const data = await res.json();
-                
-                // 哨兵返回状态为 authorized 且包含 username 时通过
                 if (data.status === 'authorized' && data.username) {
                     document.getElementById('authStatusArea').classList.add('hidden');
                     document.getElementById('userProfileArea').classList.remove('hidden');
                     document.getElementById('userName').innerText = data.username.toUpperCase();
                     document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${data.username}</span>架构师。`;
-                    showNotify("身份验证成功：已接入实验室网络", "success");
-                } else {
-                    throw new Error("Unauthorized");
-                }
-            } catch (e) { 
-                console.warn("Sentinel: Token invalid or expired.");
-                localStorage.removeItem('pudding_token'); 
-                document.getElementById('authStatusArea').classList.remove('hidden');
-                document.getElementById('userProfileArea').classList.add('hidden');
-            }
+                } else { throw new Error(); }
+            } catch (e) { localStorage.removeItem('pudding_token'); }
         }
 
         function toggleAuthModal() { document.getElementById('authModal').classList.toggle('hidden'); }
-        function toggleRegMode() {
-            isRegisterMode = !isRegisterMode;
-            document.getElementById('modalTitle').innerText = isRegisterMode ? "申请特工代号" : "实验室身份接入";
-            document.getElementById('registerFields').classList.toggle('hidden');
-            document.getElementById('authUsername').required = isRegisterMode;
-        }
+        function toggleRegMode() { isRegisterMode = !isRegisterMode; document.getElementById('registerFields').classList.toggle('hidden'); document.getElementById('authUsername').required = isRegisterMode; }
 
         document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('authSubmit');
-            const originalText = btn.innerText;
-            btn.innerText = "信号同步中..."; btn.disabled = true;
-            
-            const payload = { 
-                action: isRegisterMode ? 'register' : 'login', 
-                email: document.getElementById('authEmail').value, 
-                password: document.getElementById('authPassword').value, 
-                username: document.getElementById('authUsername').value 
-            };
-            
+            const btn = document.getElementById('authSubmit'); btn.innerText = "信号同步中..."; btn.disabled = true;
             try {
-                const res = await fetch(AUTH_API, { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify(payload) 
-                });
+                const res = await fetch(AUTH_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: isRegisterMode ? 'register' : 'login', email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value, username: document.getElementById('authUsername').value }) });
                 const data = await res.json();
-                
-                if (res.ok && data.token) {
-                    showNotify(isRegisterMode ? "注册成功！正在初始化档案..." : "接入成功！正在同步身份...", "success");
-                    localStorage.setItem('pudding_token', data.token);
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showNotify(data.message || "接入失败：请检查访问密钥。", "error");
-                }
-            } catch (err) {
-                showNotify("核心链路异常：身份中心拒绝连接。", "error");
-            } finally {
-                btn.innerText = originalText; btn.disabled = false;
-            }
+                if (res.ok && data.token) { localStorage.setItem('pudding_token', data.token); location.reload(); } else { showNotify(data.message || "验证失败", "error"); }
+            } catch (err) { showNotify("链路中断", "error"); } finally { btn.innerText = "确认接入"; btn.disabled = false; }
         });
 
-        function handleLogout() { 
-            localStorage.removeItem('pudding_token'); 
-            location.reload(); 
-        }
-
-        window.onload = () => { 
-            const t = localStorage.getItem('pudding_token'); 
-            if(t) recallProfile(t); 
-        };
+        function handleLogout() { localStorage.removeItem('pudding_token'); location.reload(); }
+        window.onload = () => { const t = localStorage.getItem('pudding_token'); if(t) recallProfile(t); };
     </script>
 </body>
 </html>
