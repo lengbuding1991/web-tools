@@ -12,13 +12,26 @@
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 0); background-size: 40px 40px; }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .glow-text { text-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
+        .glow-text { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
+        
+        /* 极客通知系统样式 */
+        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
+        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
+        .notify-success { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+        .notify-info { border-color: #3b82f6; color: #bfdbfe; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 3px; }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col">
+    <div id="notify-container"></div> 
+
     <nav class="h-20 flex items-center justify-between px-8 glass border-b border-white/5 sticky top-0 z-50">
         <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg text-xl">B</div>
@@ -29,14 +42,14 @@
         </div>
         <div class="flex items-center gap-6">
             <div id="authStatusArea">
-                <button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600/20 transition-all shadow-[0_0_15px_rgba(59,130,246,0.2)]">接入实验室 / CONNECT</button>
+                <button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600/20 transition-all">接入实验室 / CONNECT</button>
             </div>
             <div id="userProfileArea" class="hidden flex items-center gap-4">
-                <div class="glass px-4 py-1.5 rounded-full border border-blue-500/30 flex items-center gap-2">
+                <div class="glass px-4 py-1.5 rounded-full border border-blue-500/20 flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span>
                 </div>
-                <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-500 hover:text-red-400 uppercase mono transition-colors">Logout</button>
+                <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
             </div>
         </div>
     </nav>
@@ -48,14 +61,14 @@
 
     <main class="max-w-7xl mx-auto w-full px-8 py-20 grid grid-cols-1 md:grid-cols-2 gap-8">
         <a href="/factory/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all">
-            <div class="w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner">⚡</div>
+            <div class="w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
             <div>
                 <h3 class="text-2xl font-black text-white mb-2">灵感价值工厂</h3>
                 <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform inline-block">进入车间 →</span>
             </div>
         </a>
         <a href="/radar/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-emerald-500/50 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] transition-all">
-            <div class="w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner">🌍</div>
+            <div class="w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🌍</div>
             <div>
                 <h3 class="text-2xl font-black text-white mb-2">全球套利雷达</h3>
                 <span class="text-emerald-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform inline-block">启动扫描 →</span>
@@ -64,19 +77,17 @@
     </main>
 
     <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
-        <div class="w-full max-w-md glass p-10 rounded-[3rem] border-blue-500/30 shadow-2xl">
+        <div class="w-full max-w-md glass p-10 rounded-[3rem] border-blue-500/30">
             <h3 id="modalTitle" class="text-3xl font-black text-white mb-8 italic">实验室身份接入</h3>
             <form id="authForm" class="space-y-4">
-                <input type="email" id="authEmail" placeholder="邮箱" required class="w-full px-6 py-4 bg-slate-900/80 border border-white/10 text-white rounded-xl text-sm outline-none focus:border-blue-500 transition-colors placeholder-slate-600">
-                <input type="password" id="authPassword" placeholder="密钥" required class="w-full px-6 py-4 bg-slate-900/80 border border-white/10 text-white rounded-xl text-sm outline-none focus:border-blue-500 transition-colors placeholder-slate-600">
-                <div id="registerFields" class="hidden">
-                    <input type="text" id="authUsername" placeholder="代号" class="w-full px-6 py-4 bg-slate-900/80 border border-white/10 text-white rounded-xl text-sm outline-none focus:border-blue-500 transition-colors placeholder-slate-600 mt-4">
-                </div>
+                <input type="email" id="authEmail" placeholder="邮箱" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                <input type="password" id="authPassword" placeholder="密钥" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                <div id="registerFields" class="hidden"><input type="text" id="authUsername" placeholder="代号" class="w-full px-6 py-4 rounded-xl text-sm outline-none mt-4"></div>
                 <button type="submit" id="authSubmit" class="w-full py-5 mt-4 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest hover:bg-blue-500 active:scale-95 transition-all">确认接入</button>
             </form>
-            <div class="flex justify-between mt-8 border-t border-white/10 pt-6">
-                <button onclick="toggleRegMode()" class="text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase transition-colors">申请加入 / APPLY</button>
-                <button onclick="toggleAuthModal()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-colors">取消</button>
+            <div class="flex justify-between mt-8 pt-4 border-t border-white/10">
+                <button onclick="toggleRegMode()" class="text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase">申请加入 / APPLY</button>
+                <button onclick="toggleAuthModal()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase">取消</button>
             </div>
         </div>
     </div>
@@ -84,6 +95,28 @@
     <script>
         const AUTH_API = "https://nas-n8n.lbuding.com/webhook/auth";
         let isRegisterMode = false;
+
+        // 🛡️ 核心：极客风格通知系统
+        function showNotify(msg, type = 'info') {
+            const container = document.getElementById('notify-container');
+            const card = document.createElement('div');
+            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
+            const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '💡';
+            const title = type === 'error' ? 'SYSTEM_ALERT' : type === 'success' ? 'ACCESS_GRANTED' : 'SYSTEM_INFO';
+            
+            card.innerHTML = `
+                <span class="text-xl">${icon}</span>
+                <div>
+                    <div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div>
+                    <div class="leading-tight">${msg}</div>
+                </div>`;
+            container.appendChild(card);
+            
+            setTimeout(() => {
+                card.style.animation = 'fadeOut 0.5s forwards';
+                setTimeout(() => card.remove(), 500);
+            }, 3000);
+        }
 
         function localFastCheck() {
             const t = localStorage.getItem('pudding_token');
@@ -114,17 +147,29 @@
                     body: JSON.stringify({ action: isRegisterMode ? 'register' : 'login', email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value, username: document.getElementById('authUsername').value }) 
                 });
                 const data = await res.json();
+                
                 if (data.token) {
                     localStorage.setItem('pudding_token', data.token);
                     localStorage.setItem('pudding_user', data.username || "Architect");
-                    location.reload();
-                } else { alert(data.message || "接入被拒绝"); }
-            } catch (err) { alert("通讯中心无响应，请检查网络"); } 
-            finally { btn.innerText = "确认接入"; btn.disabled = false; }
+                    showNotify("身份协议同步成功！", "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else { 
+                    showNotify(data.message || "接入被拒绝，请核对凭证", "error"); 
+                }
+            } catch (err) { 
+                showNotify("通讯中心无响应，请检查雷达网络", "error"); 
+            } finally { 
+                btn.innerText = "确认接入"; btn.disabled = false; 
+            }
         });
 
-        function handleLogout() { localStorage.clear(); location.reload(); }
-        window.onload = localFastCheck; 
+        function handleLogout() { 
+            localStorage.clear(); 
+            showNotify("正在注销终端...", "info");
+            setTimeout(() => location.reload(), 800);
+        }
+        
+        window.addEventListener('DOMContentLoaded', localFastCheck); 
     </script>
 </body>
 </html>

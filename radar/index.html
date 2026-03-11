@@ -10,33 +10,44 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --radar-green: #10b981; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(16, 185, 129, 0.2); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); box-shadow: 0 0 15px var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; pointer-events: none; z-index: 9998; }
+        /* 强力遮罩层，过渡动画 */
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, background-color 0.3s ease; }
+        .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); box-shadow: 0 0 15px var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; pointer-events: none; z-index: 9998; transition: opacity 0.5s ease; }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
         
+        /* 通知系统样式 */
+        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
+        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
+        .notify-success { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+        .notify-info { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #020617; z-index: -1; }
-        
+        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 3px; }
-
         .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
     </style>
 </head>
-<body class="tech-grid flex flex-col lg:flex-row w-full">
+<body class="tech-grid flex flex-col lg:flex-row w-full h-full">
     
-    <div id="lockscreen">
-        <div class="text-emerald-500 font-bold mono animate-pulse tracking-[0.5em] text-lg">RADAR_ESTABLISHING...</div>
-        <div class="mt-4 text-[10px] text-slate-600 mono">锁定操作员卫星信号</div>
-    </div>
-    <div class="scanning-beam"></div>
+    <div id="notify-container"></div>
 
-    <aside class="w-full lg:w-80 p-6 md:p-8 flex flex-col gap-8 shrink-0 glass lg:min-h-screen lg:sticky lg:top-0 z-20 border-r border-emerald-500/20">
+    <div id="lockscreen">
+        <div id="lockTitle" class="text-emerald-500 font-bold mono animate-pulse tracking-[0.5em] text-lg transition-colors">RADAR_ESTABLISHING...</div>
+        <div id="lockSub" class="mt-4 text-[10px] text-slate-600 mono transition-colors">正在锁定操作员卫星信号</div>
+    </div>
+    <div id="scanBeam" class="scanning-beam"></div>
+
+    <aside class="w-full lg:w-80 p-6 md:p-8 flex flex-col gap-8 shrink-0 glass h-full z-20 border-r border-emerald-500/20">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)]">R</div>
             <div>
@@ -48,15 +59,15 @@
         <form id="radarForm" class="space-y-8 mt-4">
             <div class="space-y-3">
                 <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">探测地理位置</label>
-                <input type="text" id="location" required placeholder="如: 曼谷, 大理" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600">
+                <input type="text" id="location" required placeholder="如: 曼谷, 大理" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
             </div>
             <div class="space-y-3">
                 <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">可调配资产预算</label>
-                <input type="text" id="assets" required placeholder="如: 5w 人民币" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600">
+                <input type="text" id="assets" required placeholder="如: 5w 人民币" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
             </div>
             <div class="space-y-3">
                 <label class="text-[10px] uppercase font-bold text-emerald-500 tracking-widest ml-1">套利赛道波段</label>
-                <select id="niche" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all appearance-none cursor-pointer">
+                <select id="niche" class="w-full px-6 py-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all cursor-pointer">
                     <option value="居住套利">🌴 居住套利 (Digital Nomad)</option>
                     <option value="汇率套利">💱 汇率/消费差额套利</option>
                     <option value="数字技能出海">💻 数字技能出海</option>
@@ -66,7 +77,7 @@
         </form>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 z-10">
+    <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
         <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-emerald-500/10 glass sticky top-0 z-10">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
@@ -75,6 +86,128 @@
             <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors">← 返回基地</a>
         </header>
         
-        <div class="p-6 md:p-10 lg:p-16">
+        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16">
             <div class="max-w-4xl mx-auto space-y-8 pb-20">
-                <div id="resultArea" class="hidden glass p-8 md:p-14 rounded-[3rem] shadow-2xl shadow-emerald-900/10 border border-emerald-500/
+                <div id="resultArea" class="hidden glass p-8 md:p-14 rounded-[3rem] shadow-2xl shadow-emerald-900/10 border border-emerald-500/20">
+                    <div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300 leading-relaxed"></div>
+                    
+                    <div class="mt-16 pt-8 border-t border-emerald-500/20 flex justify-end">
+                        <button onclick="exportRadar()" id="exportBtn" class="px-8 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">↓ 导出雷达探测报告</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="posterWrapper" class="p-16 border-4 border-emerald-900/40">
+        <h1 class="text-white text-4xl font-black italic mb-2 uppercase">Pudding Radar</h1>
+        <p class="text-emerald-500 mono text-xs mb-12 tracking-[0.4em] uppercase">Global_Arbitrage_Report</p>
+        <div id="posterContent" class="prose prose-invert prose-emerald max-w-none"></div>
+    </div>
+
+    <script>
+        const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/radar-engine";
+
+        function showNotify(msg, type = 'info') {
+            const container = document.getElementById('notify-container');
+            const card = document.createElement('div');
+            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
+            const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '📡';
+            const title = type === 'error' ? 'RADAR_ALERT' : type === 'success' ? 'LINK_ESTABLISHED' : 'SCANNING_INFO';
+            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div><div class="leading-tight">${msg}</div></div>`;
+            container.appendChild(card);
+            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
+        }
+
+        // 🚀 DOMContentLoaded: 忽略外部资源延迟，立即执行验证
+        document.addEventListener('DOMContentLoaded', () => {
+            const t = localStorage.getItem('pudding_token');
+            const u = localStorage.getItem('pudding_user');
+            const lockscreen = document.getElementById('lockscreen');
+            const lockTitle = document.getElementById('lockTitle');
+            const lockSub = document.getElementById('lockSub');
+            const scanBeam = document.getElementById('scanBeam');
+
+            if (!t || !u) { 
+                lockTitle.innerText = "ACCESS_DENIED";
+                lockTitle.classList.replace('text-emerald-500', 'text-red-500');
+                lockSub.innerText = "信号未授权，拒绝访问雷达";
+                lockscreen.style.backgroundColor = 'rgba(10,0,0,0.95)';
+                scanBeam.style.display = 'none';
+                showNotify("雷达拦截：未检测到特工凭证，强制遣返...", "error");
+                
+                setTimeout(() => { window.location.href = "/"; }, 1500);
+                return; 
+            }
+
+            // 登录状态：等待1秒仪式感，然后淡出
+            setTimeout(() => {
+                lockscreen.style.opacity = '0';
+                lockscreen.style.pointerEvents = 'none';
+                setTimeout(() => lockscreen.style.display = 'none', 500);
+                
+                document.getElementById('radarUser').innerText = "OPERATOR: " + u.toUpperCase();
+                showNotify("卫星信号已锁定，雷达面板已解锁", "success");
+            }, 1000);
+        });
+
+        document.getElementById('radarForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn'); 
+            btn.innerText = "锁定坐标波段..."; btn.disabled = true;
+            showNotify("正在激活全域扫描，接收数据中...", "info");
+            
+            try {
+                const res = await fetch(ENGINE_API, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, 
+                    body: JSON.stringify({ location: document.getElementById('location').value, assets: document.getElementById('assets').value, niche: document.getElementById('niche').value }) 
+                });
+                
+                if (res.status === 401) {
+                    showNotify("权限被撤销，强制切断雷达连接", "error");
+                    setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 1500);
+                    return;
+                }
+
+                const data = await res.json();
+                const content = data.blueprint || data.output;
+                if (content) { 
+                    const html = marked.parse(content);
+                    document.getElementById('radarContent').innerHTML = html;
+                    document.getElementById('posterContent').innerHTML = html;
+                    document.getElementById('resultArea').classList.remove('hidden'); 
+                    showNotify("雷达扫描完成，报告已解密", "success");
+                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                }
+            } catch (err) { 
+                showNotify("雷达信号丢失，请检查通讯链路", "error");
+            } finally { 
+                btn.innerText = "激活全域扫描"; btn.disabled = false; 
+            }
+        });
+
+        async function exportRadar() {
+            const btn = document.getElementById('exportBtn');
+            const wrap = document.getElementById('posterWrapper');
+            btn.innerText = "正在封装修补像素..."; 
+            wrap.style.display = 'block';
+            showNotify("正在渲染数据海报...", "info");
+            
+            try {
+                const canvas = await html2canvas(wrap, { backgroundColor: "#020617", scale: 2, useCORS: true });
+                const link = document.createElement('a');
+                link.download = `Radar_Report_${Date.now()}.png`; 
+                link.href = canvas.toDataURL('image/png'); 
+                link.click();
+                showNotify("海报封图成功！", "success");
+            } catch(e) {
+                showNotify("渲染海报失败，请稍后重试", "error");
+            } finally { 
+                wrap.style.display = 'none'; 
+                btn.innerText = "↓ 导出雷达探测报告"; 
+            }
+        }
+    </script>
+</body>
+</html>

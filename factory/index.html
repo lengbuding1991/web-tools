@@ -10,36 +10,41 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
-        /* 核心布局修复：保证页面整体能正常响应，不锁死滚动条 */
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 强力遮罩层 */
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        /* 强力遮罩层，增加透明度过渡动画 */
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, background-color 0.3s ease; }
         
-        /* 隐藏生成海报的渲染区，绝不影响可视区域 */
+        /* 通知系统样式 */
+        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
+        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
+        .notify-success { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+        .notify-info { border-color: #3b82f6; color: #bfdbfe; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #050a15; z-index: -1; }
-        
-        /* 滚动条美化 */
+        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 3px; }
-        
-        /* Markdown 样式微调，让文字更亮 */
         .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
-        .prose a { color: #3b82f6 !important; text-decoration: none; }
     </style>
 </head>
-<body class="tech-grid flex flex-col md:flex-row w-full">
+<body class="tech-grid flex flex-col md:flex-row w-full h-full">
+
+    <div id="notify-container"></div>
 
     <div id="lockscreen">
-        <div class="text-blue-500 font-bold mono animate-pulse tracking-[0.5em] text-lg">FACTORY_VERIFYING...</div>
-        <div class="mt-4 text-[10px] text-slate-600 mono">正在核验物理架构师权限</div>
+        <div id="lockTitle" class="text-blue-500 font-bold mono animate-pulse tracking-[0.5em] text-lg transition-colors">FACTORY_VERIFYING...</div>
+        <div id="lockSub" class="mt-4 text-[10px] text-slate-600 mono transition-colors">正在核验物理架构师权限</div>
     </div>
 
-    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel md:min-h-screen md:sticky md:top-0 z-20 border-r border-white/5">
+    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel md:h-full z-20 border-r border-white/5">
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_20px_rgba(59,130,246,0.4)]">布</div>
             <div>
@@ -52,7 +57,7 @@
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 z-10">
+    <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
         <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel sticky top-0 z-10">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
@@ -61,22 +66,21 @@
             <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">返回基地</a>
         </header>
 
-        <div class="p-6 md:p-10 lg:p-16">
+        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16">
             <div class="max-w-4xl mx-auto space-y-12 pb-20">
-                
                 <div class="glass-panel p-8 md:p-12 rounded-[2.5rem] shadow-xl">
                     <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-3">
                             <label class="text-[10px] uppercase font-black text-blue-500 tracking-widest ml-1">核心技能输入</label>
-                            <input type="text" id="skills" required placeholder="如: Python编程, 英语翻译" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600">
+                            <input type="text" id="skills" required placeholder="如: Python编程, 英语翻译" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 outline-none transition-all placeholder-slate-600">
                         </div>
                         <div class="space-y-3">
                             <label class="text-[10px] uppercase font-black text-blue-500 tracking-widest ml-1">时间精力投料</label>
-                            <input type="text" id="commitment" required placeholder="如: 每天下班后2小时" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600">
+                            <input type="text" id="commitment" required placeholder="如: 每天下班后2小时" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 outline-none transition-all placeholder-slate-600">
                         </div>
                         <div class="md:col-span-2 space-y-3">
                             <label class="text-[10px] uppercase font-black text-blue-500 tracking-widest ml-1">生产线选择</label>
-                            <select id="sector" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer">
+                            <select id="sector" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 outline-none transition-all cursor-pointer">
                                 <option value="AI 自动化">⚡ AI 自动化工具链</option>
                                 <option value="内容工厂">📝 高产内容流水线</option>
                                 <option value="数字化套利">🌍 数字化地理套利</option>
@@ -88,12 +92,10 @@
 
                 <div id="resultArea" class="hidden glass-panel p-8 md:p-14 rounded-[3rem] shadow-2xl border border-blue-500/20">
                     <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300 leading-relaxed"></div>
-                    
                     <div class="mt-16 pt-8 border-t border-white/10 flex justify-end">
                         <button onclick="generatePoster()" id="posterBtn" class="px-8 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">↓ 导出为高清海报</button>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
@@ -107,24 +109,54 @@
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
 
-        // 🚀 终极物理破防遮罩层
-        window.onload = () => {
+        function showNotify(msg, type = 'info') {
+            const container = document.getElementById('notify-container');
+            const card = document.createElement('div');
+            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
+            const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '⚡';
+            const title = type === 'error' ? 'FACTORY_ALERT' : type === 'success' ? 'SYSTEM_READY' : 'ENGINE_INFO';
+            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div><div class="leading-tight">${msg}</div></div>`;
+            container.appendChild(card);
+            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
+        }
+
+        // 🚀 核心：DOM加载完毕立即执行，不被外部脚本卡死
+        document.addEventListener('DOMContentLoaded', () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
+            const lockscreen = document.getElementById('lockscreen');
+            const lockTitle = document.getElementById('lockTitle');
+            const lockSub = document.getElementById('lockSub');
+
             if (!t || !u) { 
-                window.location.href = "/"; 
+                // 未登录状态：变红并拦截
+                lockTitle.innerText = "ACCESS_DENIED";
+                lockTitle.classList.replace('text-blue-500', 'text-red-500');
+                lockSub.innerText = "未检测到有效身份凭证";
+                lockscreen.style.backgroundColor = 'rgba(10,0,0,0.95)';
+                showNotify("非法闯入，正在遣返大本营...", "error");
+                
+                setTimeout(() => { window.location.href = "/"; }, 1500);
                 return; 
             }
-            // 直接操控 DOM 强杀锁屏，无视 CSS 权重
-            document.getElementById('lockscreen').style.display = 'none';
-            document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
-        };
+
+            // 登录状态：等待1秒仪式感，然后淡出
+            setTimeout(() => {
+                lockscreen.style.opacity = '0';
+                lockscreen.style.pointerEvents = 'none'; // 确保点击能穿透
+                setTimeout(() => lockscreen.style.display = 'none', 500); // 彻底隐藏
+                
+                document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
+                showNotify("算力链路连接成功，欢迎入驻。", "success");
+            }, 1000);
+        });
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); 
             btn.innerText = "算力正在燃烧..."; 
             btn.disabled = true;
+            showNotify("正在提交投料，唤醒 DeepSeek 引擎...", "info");
             
             try {
                 const res = await fetch(ENGINE_API, { 
@@ -133,22 +165,48 @@
                     body: JSON.stringify({ skills: document.getElementById('skills').value, commitment: document.getElementById('commitment').value, sector: document.getElementById('sector').value }) 
                 });
                 
-                // 拦截失效凭据
                 if (res.status === 401) {
-                    alert("身份凭证已过期，请重新登录基地。");
-                    localStorage.clear(); window.location.href = "/"; return;
+                    showNotify("凭证已过期，系统强制注销", "error");
+                    setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 1500);
+                    return;
                 }
 
                 const data = await res.json();
                 if (data.blueprint) {
-                    const html = marked.parse(data.blueprint);
-                    document.getElementById('blueprintContent').innerHTML = html;
-                    document.getElementById('posterContent').innerHTML = html;
+                    document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
+                    document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
-                    // 丝滑滚动到结果区域
-                    setTimeout(() => {
-                        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
+                    showNotify("蓝图生成完毕", "success");
+                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
                 }
             } catch (err) { 
-                alert("引擎连接中断，
+                showNotify("引擎连接中断，请检查网络或 NAS 状态", "error");
+            } finally { 
+                btn.innerText = "调配算力 · 生成价值蓝图"; btn.disabled = false; 
+            }
+        });
+
+        async function generatePoster() {
+            const btn = document.getElementById('posterBtn');
+            const wrap = document.getElementById('posterWrapper'); 
+            btn.innerText = "正在排版像素...";
+            wrap.style.display = 'block';
+            showNotify("正在渲染高清海报，请稍候...", "info");
+            
+            try {
+                const canvas = await html2canvas(wrap, { backgroundColor: "#050a15", scale: 2, useCORS: true });
+                const link = document.createElement('a'); 
+                link.download = `Pudding_Blueprint_${Date.now()}.png`; 
+                link.href = canvas.toDataURL('image/png'); 
+                link.click();
+                showNotify("海报导出成功！", "success");
+            } catch(e) {
+                showNotify("渲染海报失败，请重试", "error");
+            } finally {
+                wrap.style.display = 'none';
+                btn.innerText = "↓ 导出为高清海报";
+            }
+        }
+    </script>
+</body>
+</html>
