@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵感变现工厂 | 布丁实验室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
+        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .blueprint-paper { background: #0f172a; border: 1px dashed rgba(59, 130, 246, 0.3); position: relative; }
+        .blueprint-paper::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; h-full; background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 20px 20px; z-index: -1; }
+        .input-focus:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); outline: none; }
+    </style>
+</head>
+<body class="min-h-screen p-6 md:p-12">
+
+    <main class="max-w-4xl mx-auto">
+        <header class="mb-12 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="/" class="w-10 h-10 glass rounded-xl flex items-center justify-center hover:bg-white/5 transition-all">←</a>
+                <h1 class="text-xl font-black tracking-tighter uppercase">Factory / 车间 01</h1>
+            </div>
+            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 py-1 border border-white/10 rounded-full">
+                AI Pipeline: Online
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-12">
+            <section class="lg:col-span-2 space-y-8">
+                <div>
+                    <h2 class="text-3xl font-black mb-2">投入灵感。</h2>
+                    <p class="text-slate-500 text-xs leading-relaxed font-medium">输入你的现状，AI 将通过 2026 算力波谱分析，为你提取可进阶的套利方案。</p>
+                </div>
+
+                <form id="factoryForm" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">核心技能</label>
+                        <input type="text" id="skills" required placeholder="如：Python, 文案, 运营" class="w-full px-5 py-4 rounded-2xl glass border border-white/5 input-focus text-sm transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">投入精力</label>
+                        <input type="text" id="commitment" required placeholder="如：每天2小时, 周末全职" class="w-full px-5 py-4 rounded-2xl glass border border-white/5 input-focus text-sm transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">关注方向</label>
+                        <select id="sector" class="w-full px-5 py-4 rounded-2xl glass border border-white/5 input-focus text-sm appearance-none cursor-pointer">
+                            <option value="AI 自动化">AI 自动化 (n8n/LLM)</option>
+                            <option value="数字化套利">数字化套利 (Arbitrage)</option>
+                            <option value="内容工厂">内容工厂 (Content Gen)</option>
+                            <option value="Micro-SaaS">微型 SaaS (Product)</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98] uppercase tracking-widest text-[10px]">
+                        开始提取商业价值
+                    </button>
+                </form>
+            </section>
+
+            <section class="lg:col-span-3">
+                <div id="loading" class="hidden py-32 text-center glass rounded-[2.5rem] border-dashed border-white/10">
+                    <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p class="text-xs text-slate-500 mono animate-pulse uppercase tracking-widest">Architecting Blueprint...</p>
+                </div>
+
+                <div id="blueprintArea" class="hidden blueprint-paper p-8 md:p-12 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 text-6xl font-black italic select-none mono">P-LAB</div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-8">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_#3b82f6]"></span>
+                            <span class="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">Verified Blueprint</span>
+                        </div>
+
+                        <div id="blueprintContent" class="prose prose-invert max-w-none text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                            </div>
+
+                        <div class="mt-12 pt-8 border-t border-white/10 flex justify-between items-center">
+                            <div class="text-[8px] text-slate-600 uppercase mono">
+                                Timestamp: <span id="timestamp">2026-03-11</span><br>
+                                Factory ID: LBUDING-01
+                            </div>
+                            <button onclick="window.print()" class="text-[10px] font-black text-slate-400 hover:text-white transition-colors uppercase">保存为 PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const WEBHOOK_URL = "https://nas-n8n.lbuding.com/webhook/factory-engine";
+        const fpPromise = FingerprintJS.load();
+
+        document.getElementById('factoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const blueprint = document.getElementById('blueprintArea');
+            const content = document.getElementById('blueprintContent');
+
+            btn.disabled = true;
+            btn.innerText = "MACHINERY RUNNING...";
+            loading.classList.remove('hidden');
+            blueprint.classList.add('hidden');
+
+            const fp = await fpPromise;
+            const vid = (await fp.get()).visitorId;
+
+            const payload = {
+                visitor_id: vid,
+                skills: document.getElementById('skills').value,
+                commitment: document.getElementById('commitment').value,
+                sector: document.getElementById('sector').value
+            };
+
+            try {
+                const res = await fetch(WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                content.innerText = data.blueprint;
+                document.getElementById('timestamp').innerText = new Date().toISOString().split('T')[0];
+                
+                loading.classList.add('hidden');
+                blueprint.classList.remove('hidden');
+                blueprint.scrollIntoView({ behavior: 'smooth' });
+            } catch (err) {
+                alert("工厂连接失败。请检查 n8n 节点是否已 Active 且 Webhook URL 正确。");
+                loading.classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "投入新灵感";
+            }
+        });
+    </script>
+</body>
+</html>
