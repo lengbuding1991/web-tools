@@ -10,17 +10,18 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --radar-green: #10b981; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        /* 🚀 核心修复：原生滚动解禁 */
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(16, 185, 129, 0.2); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 强力遮罩层，过渡动画 */
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, background-color 0.3s ease; }
+        /* 门禁与扫描特效 */
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease; }
         .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); box-shadow: 0 0 15px var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; pointer-events: none; z-index: 9998; transition: opacity 0.5s ease; }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
         
-        /* 通知系统样式 */
+        /* 通知系统 */
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
         .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
@@ -30,14 +31,18 @@
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #020617; z-index: -1; }
+        
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
+        
         .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
+        .prose code { color: #6ee7b7 !important; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
-<body class="tech-grid flex flex-col lg:flex-row w-full h-full">
+<body class="tech-grid flex flex-col lg:flex-row w-full relative">
     
     <div id="notify-container"></div>
 
@@ -47,7 +52,7 @@
     </div>
     <div id="scanBeam" class="scanning-beam"></div>
 
-    <aside class="w-full lg:w-80 p-6 md:p-8 flex flex-col gap-8 shrink-0 glass h-full z-20 border-r border-emerald-500/20">
+    <aside class="w-full lg:w-80 p-6 md:p-8 flex flex-col gap-8 lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen glass z-20 border-r border-emerald-500/20 shadow-2xl">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)]">R</div>
             <div>
@@ -77,17 +82,18 @@
         </form>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-emerald-500/10 glass sticky top-0 z-10">
+    <main class="flex-1 flex flex-col min-h-screen min-w-0 z-10 lg:ml-80">
+        
+        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-emerald-500/10 glass sticky top-0 z-30 backdrop-blur-xl">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
                 <span class="mono text-[11px] font-bold text-emerald-400 uppercase tracking-widest" id="radarUser">SCANNING_SATELLITE</span>
             </div>
-            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors">← 返回基地</a>
+            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors shadow-sm">← 返回基地</a>
         </header>
         
-        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16">
-            <div class="max-w-4xl mx-auto space-y-8 pb-20">
+        <div class="p-6 md:p-10 lg:p-16 flex-1">
+            <div class="max-w-4xl mx-auto space-y-8 pb-24">
                 <div id="resultArea" class="hidden glass p-8 md:p-14 rounded-[3rem] shadow-2xl shadow-emerald-900/10 border border-emerald-500/20">
                     <div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300 leading-relaxed"></div>
                     
@@ -119,7 +125,6 @@
             setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
         }
 
-        // 🚀 DOMContentLoaded: 忽略外部资源延迟，立即执行验证
         document.addEventListener('DOMContentLoaded', () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
@@ -140,15 +145,13 @@
                 return; 
             }
 
-            // 登录状态：等待1秒仪式感，然后淡出
+            // 物理破防开门
             setTimeout(() => {
                 lockscreen.style.opacity = '0';
-                lockscreen.style.pointerEvents = 'none';
                 setTimeout(() => lockscreen.style.display = 'none', 500);
-                
                 document.getElementById('radarUser').innerText = "OPERATOR: " + u.toUpperCase();
                 showNotify("卫星信号已锁定，雷达面板已解锁", "success");
-            }, 1000);
+            }, 800);
         });
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
@@ -178,7 +181,11 @@
                     document.getElementById('posterContent').innerHTML = html;
                     document.getElementById('resultArea').classList.remove('hidden'); 
                     showNotify("雷达扫描完成，报告已解密", "success");
-                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                    
+                    // 平滑滚动
+                    setTimeout(() => {
+                        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
                 }
             } catch (err) { 
                 showNotify("雷达信号丢失，请检查通讯链路", "error");

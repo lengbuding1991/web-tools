@@ -10,15 +10,16 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        /* 🚀 核心修复：解除 body 的高度锁定，恢复原生流畅滚动 */
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 强力遮罩层，增加透明度过渡动画 */
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, background-color 0.3s ease; }
+        /* 门禁锁屏层 */
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease; }
         
-        /* 通知系统样式 */
+        /* 通知系统 */
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
         .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
@@ -27,15 +28,23 @@
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
+        /* 海报容器隐藏 */
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #050a15; z-index: -1; }
+        
+        /* 滚动条与输入框美化 */
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.5); }
+        
+        /* Markdown 文本提亮 */
         .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
+        .prose a { color: #3b82f6 !important; text-decoration: none; }
+        .prose code { color: #93c5fd !important; background: rgba(59,130,246,0.1); padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
-<body class="tech-grid flex flex-col md:flex-row w-full h-full">
+<body class="tech-grid flex flex-col lg:flex-row w-full relative">
 
     <div id="notify-container"></div>
 
@@ -44,7 +53,7 @@
         <div id="lockSub" class="mt-4 text-[10px] text-slate-600 mono transition-colors">正在核验物理架构师权限</div>
     </div>
 
-    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel md:h-full z-20 border-r border-white/5">
+    <aside class="w-full lg:w-80 p-6 md:p-8 flex flex-col gap-6 lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen glass-panel z-20 border-r border-white/5 shadow-2xl">
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_20px_rgba(59,130,246,0.4)]">布</div>
             <div>
@@ -52,22 +61,24 @@
                 <span class="text-[9px] text-blue-500 mono uppercase tracking-widest">DeepSeek Engine v3</span>
             </div>
         </div>
-        <div class="p-5 bg-[#050a15] rounded-xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block shadow-inner" id="logs">
+        <div class="p-5 bg-[#050a15] rounded-xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden lg:block shadow-inner" id="logs">
             > 初始化工厂终端...<br>> 核心算力池连接成功...<br>> 准备接收灵感投料。
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel sticky top-0 z-10">
+    <main class="flex-1 flex flex-col min-h-screen min-w-0 z-10 lg:ml-80">
+        
+        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel sticky top-0 z-30 backdrop-blur-xl">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
                 <span class="text-[11px] font-bold text-slate-400 mono tracking-widest" id="userTag">LOADING_STATION</span>
             </div>
-            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">返回基地</a>
+            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">返回基地</a>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16">
-            <div class="max-w-4xl mx-auto space-y-12 pb-20">
+        <div class="p-6 md:p-10 lg:p-16 flex-1">
+            <div class="max-w-4xl mx-auto space-y-12 pb-24">
+                
                 <div class="glass-panel p-8 md:p-12 rounded-[2.5rem] shadow-xl">
                     <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-3">
@@ -92,10 +103,12 @@
 
                 <div id="resultArea" class="hidden glass-panel p-8 md:p-14 rounded-[3rem] shadow-2xl border border-blue-500/20">
                     <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300 leading-relaxed"></div>
+                    
                     <div class="mt-16 pt-8 border-t border-white/10 flex justify-end">
                         <button onclick="generatePoster()" id="posterBtn" class="px-8 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">↓ 导出为高清海报</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </main>
@@ -120,7 +133,6 @@
             setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
         }
 
-        // 🚀 核心：DOM加载完毕立即执行，不被外部脚本卡死
         document.addEventListener('DOMContentLoaded', () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
@@ -129,7 +141,6 @@
             const lockSub = document.getElementById('lockSub');
 
             if (!t || !u) { 
-                // 未登录状态：变红并拦截
                 lockTitle.innerText = "ACCESS_DENIED";
                 lockTitle.classList.replace('text-blue-500', 'text-red-500');
                 lockSub.innerText = "未检测到有效身份凭证";
@@ -140,15 +151,13 @@
                 return; 
             }
 
-            // 登录状态：等待1秒仪式感，然后淡出
+            // 物理破防开门
             setTimeout(() => {
                 lockscreen.style.opacity = '0';
-                lockscreen.style.pointerEvents = 'none'; // 确保点击能穿透
-                setTimeout(() => lockscreen.style.display = 'none', 500); // 彻底隐藏
-                
+                setTimeout(() => lockscreen.style.display = 'none', 500);
                 document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
                 showNotify("算力链路连接成功，欢迎入驻。", "success");
-            }, 1000);
+            }, 800);
         });
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
@@ -173,16 +182,22 @@
 
                 const data = await res.json();
                 if (data.blueprint) {
-                    document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
-                    document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
+                    const html = marked.parse(data.blueprint);
+                    document.getElementById('blueprintContent').innerHTML = html;
+                    document.getElementById('posterContent').innerHTML = html;
                     document.getElementById('resultArea').classList.remove('hidden');
                     showNotify("蓝图生成完毕", "success");
-                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                    
+                    // 平滑滚动至结果
+                    setTimeout(() => {
+                        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
                 }
             } catch (err) { 
                 showNotify("引擎连接中断，请检查网络或 NAS 状态", "error");
             } finally { 
-                btn.innerText = "调配算力 · 生成价值蓝图"; btn.disabled = false; 
+                btn.innerText = "调配算力 · 生成价值蓝图"; 
+                btn.disabled = false; 
             }
         });
 
