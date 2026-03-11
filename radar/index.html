@@ -12,14 +12,14 @@
         .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(16, 185, 129, 0.2); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); box-shadow: 0 0 15px var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; pointer-events: none; }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
+        .scanning-beam { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--radar-green); box-shadow: 0 0 15px var(--radar-green); animation: scan 4s infinite linear; opacity: 0.2; pointer-events: none; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
     </style>
 </head>
 <body class="tech-grid min-h-screen flex flex-col lg:flex-row">
-    <div id="lockscreen" class="hidden"><div class="text-emerald-500 mono animate-pulse tracking-[0.5em]">RADAR_AUTH_GATE_LOCKED</div></div>
+    <div id="lockscreen"><div class="text-emerald-500 mono animate-pulse tracking-[0.5em] text-xs">Radar_Link_Establishing...</div></div>
     <div class="scanning-beam"></div>
 
     <aside class="w-full lg:w-80 p-8 glass flex flex-col gap-8 shrink-0">
@@ -27,30 +27,48 @@
         <form id="radarForm" class="space-y-6">
             <input type="text" id="location" required placeholder="探测地理位置" class="w-full px-5 py-4 rounded-xl text-sm outline-none">
             <input type="text" id="assets" required placeholder="可调配资产" class="w-full px-5 py-4 rounded-xl text-sm outline-none">
-            <select id="niche" class="w-full px-5 py-4 rounded-xl text-sm"><option value="居住套利">居住套利</option><option value="内容出海">内容出海</option></select>
+            <select id="niche" class="w-full px-5 py-4 rounded-xl text-sm"><option value="居住套利">居住套利</option><option value="数字技能出海">数字技能出海</option></select>
             <button type="submit" id="submitBtn" class="w-full py-5 bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-widest">激活雷达扫描</button>
         </form>
     </aside>
 
     <main class="flex-1 p-8 lg:p-12 overflow-y-auto">
-        <header class="flex justify-between items-center mb-12"><div class="mono text-[10px] text-emerald-500 uppercase tracking-widest">Satellite_Link_Active</div><a href="/" class="text-[10px] mono text-slate-500 hover:text-emerald-500 transition-colors uppercase">← Back_to_Base</a></header>
+        <header class="flex justify-between items-center mb-12">
+            <span class="mono text-[10px] text-emerald-500 uppercase tracking-widest" id="radarUser">SCANNING...</span>
+            <a href="/" class="text-[10px] mono text-slate-500 hover:text-emerald-500 transition-colors uppercase">← 返回基地</a>
+        </header>
         <div id="resultArea" class="hidden max-w-4xl mx-auto w-full glass p-12 rounded-[3rem]"><div id="radarContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div></div>
     </main>
 
     <script>
         const API_URL = "https://nas-n8n.lbuding.com/webhook/radar-engine";
-        window.onload = () => { if (!localStorage.getItem('pudding_token')) { document.getElementById('lockscreen').classList.remove('hidden'); setTimeout(() => location.href = "/", 1500); } };
+        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
+
+        async function verifyRadar() {
+            const token = localStorage.getItem('pudding_token');
+            if (!token) { window.location.href = "/"; return; }
+            try {
+                const res = await fetch(PROFILE_API, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`} });
+                const data = await res.json();
+                if (data.status === 'authorized') {
+                    document.getElementById('lockscreen').classList.add('hidden'); // 🚩 身份确认，撤去雷达锁屏
+                    document.getElementById('radarUser').innerText = "OPERATOR: " + data.username.toUpperCase();
+                } else { throw new Error(); }
+            } catch (e) { localStorage.removeItem('pudding_token'); window.location.href = "/"; }
+        }
+        window.onload = verifyRadar;
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "扫描中...";
+            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "信号探测中...";
             try {
                 const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ location: document.getElementById('location').value, assets: document.getElementById('assets').value, niche: document.getElementById('niche').value }) });
-                if (res.status === 401) { location.href = "/"; return; }
                 const data = await res.json();
-                const content = data.blueprint || data.output;
-                if (content) { document.getElementById('radarContent').innerHTML = marked.parse(content); document.getElementById('resultArea').classList.remove('hidden'); }
-            } catch (err) { alert("信号丢失"); } finally { btn.disabled = false; btn.innerText = "激活雷达扫描"; }
+                if (data.blueprint || data.output) {
+                    document.getElementById('radarContent').innerHTML = marked.parse(data.blueprint || data.output);
+                    document.getElementById('resultArea').classList.remove('hidden');
+                }
+            } catch (err) { alert("探测失败"); } finally { btn.disabled = false; btn.innerText = "激活雷达扫描"; }
         });
     </script>
 </body>
