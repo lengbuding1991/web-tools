@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全球套利雷达 - 布丁实验室</title>
+    <title>全球套利雷达 | 布丁实验室</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -12,145 +12,163 @@
         :root { --main-emerald: #10b981; --bg-dark: #020617; }
         
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
-        
         .tech-grid { background-image: radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 185, 129, 0.15); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 极致丝滑的快速加载屏 */
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
-        
-        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
-        .notify-error { border-color: #ef4444; color: #fca5a5; }
-        .notify-success { border-color: #10b981; color: #a7f3d0; }
-        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+        /* 极致下拉框样式 */
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2310b981'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.5rem center;
+            background-size: 1rem;
+        }
 
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
+        
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #050a15; z-index: -1; }
-        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 4px; }
+        input, select { background: #0a1122 !important; border: 1px solid rgba(255,255,255,0.05) !important; color: #f8fafc !important; transition: all 0.3s !important; }
+        input:focus, select:focus { border-color: var(--main-emerald) !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
         
-        .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
-        .prose a { color: #34d399 !important; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 10px; }
+        .prose h1, .prose h2, .prose h3 { color: #fff !important; margin-top: 1.5em !important; }
     </style>
 </head>
 <body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
 
     <div id="notify-container"></div>
+    <div id="lockscreen"><div class="text-emerald-500 font-bold mono animate-pulse tracking-[1em] text-lg">RADAR_LINKING...</div></div>
 
-    <div id="lockscreen">
-        <div class="text-emerald-500 font-bold mono animate-pulse tracking-[0.5em] text-lg uppercase">Radar_Syncing...</div>
-    </div>
-
-    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5 shadow-2xl">
-        <div class="flex items-center gap-3 shrink-0">
-            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)]">布</div>
+    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)]">R</div>
             <div>
-                <h2 class="font-black text-white text-xl tracking-wide">全球套利雷达</h2>
-                <span class="text-[9px] text-emerald-500 mono uppercase tracking-widest">Geo-Arbitrage System</span>
+                <h2 class="font-black text-white text-xl tracking-tight uppercase">套利雷达</h2>
+                <span class="text-[9px] text-emerald-500 mono font-bold uppercase tracking-widest animate-pulse">Scanning_Global_Gap</span>
             </div>
         </div>
-        <div class="p-5 bg-[#050a15] rounded-xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block shadow-inner" id="logs">
-            > 初始化雷达阵列...<br>> 卫星数据链已就绪...<br>> 正在监听全球差价信号。
+        <div class="p-5 bg-black/40 rounded-2xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block" id="logs">
+            <div class="text-emerald-900">> [系统] 卫星链路已握手...</div>
+            <div class="text-emerald-900">> [状态] 全球差价监听站在线，等待坐标。</div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-        
-        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel z-10 shadow-sm">
+        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel z-10">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
-                <span class="text-[11px] font-bold text-slate-400 mono tracking-widest" id="userTag">STATION_ACTIVE</span>
+                <span class="text-[10px] font-black text-slate-400 mono tracking-[0.3em]" id="userTag">SCANNER_STATION</span>
             </div>
-            <a href="/dashboard/" class="px-5 py-2 border border-purple-500/30 rounded-full text-[10px] font-bold uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all ml-auto mr-4 shadow-sm">进入金库</a>
-            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">返回基地</a>
+            <div class="flex gap-4">
+                <a href="/dashboard/" class="px-5 py-2.5 border border-purple-500/30 rounded-full text-[10px] font-black uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all">进入金库</a>
+                <a href="/" class="px-5 py-2.5 border border-white/10 rounded-full text-[10px] font-black uppercase text-slate-400 hover:bg-emerald-600 hover:text-white transition-all">返回基地</a>
+            </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 scroll-smooth" id="scrollArea">
-            <div class="max-w-4xl mx-auto space-y-12 pb-32">
+        <div class="flex-1 overflow-y-auto p-6 md:p-12 lg:p-20" id="scrollArea">
+            <div class="max-w-4xl mx-auto space-y-16 pb-32">
                 
-                <div class="glass-panel p-8 md:p-12 rounded-[2.5rem] shadow-xl">
-                    <form id="radarForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-3">
-                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-widest ml-1">目标探测坐标</label>
-                            <input type="text" id="location" required placeholder="如: 泰国曼谷 / 日本东京" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
+                <div class="glass-panel p-10 md:p-14 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-emerald-600"></div>
+                    <form id="radarForm" class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div class="space-y-4">
+                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">全球监测目标区 / Location</label>
+                            <input type="text" id="location" required placeholder="例如：泰国曼谷、日本东京、离岸群岛..." class="w-full px-7 py-5 rounded-2xl text-sm placeholder-slate-700">
                         </div>
-                        <div class="space-y-3">
-                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-widest ml-1">可用资产规模</label>
-                            <input type="text" id="assets" required placeholder="如: 50万人民币" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all placeholder-slate-600">
+                        <div class="space-y-4">
+                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">拟定投入资本 / Capital</label>
+                            <input type="text" id="assets" required placeholder="例如：10万人民币、5万美元..." class="w-full px-7 py-5 rounded-2xl text-sm placeholder-slate-700">
                         </div>
-                        <div class="md:col-span-2 space-y-3">
-                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-widest ml-1">锁定降维波段</label>
-                            <select id="niche" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-emerald-500 outline-none transition-all cursor-pointer">
-                                <option value="数字游民生活套利">💻 数字游民高薪低消费生活套利</option>
-                                <option value="跨境电商商品差价">🛒 跨境电商与实体商品差价网络</option>
-                                <option value="Web3与资产全球化">🌍 Web3 与个人数字资产全球化</option>
+                        
+                        <div class="md:col-span-2 space-y-4">
+                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">锁定地理套利赛道 / Arbitrage Niche</label>
+                            <select id="niche" class="custom-select w-full px-7 py-5 rounded-2xl text-sm cursor-pointer">
+                                <option value="数字游民生活套利">💻 数字游民高净值流转 (Global High-Net-Worth Flow)</option>
+                                <option value="跨境贸易降维打击">🚢 跨境贸易降维打击 (Cross-border Arbitrage Networks)</option>
+                                <option value="全球资产价值洼地">💎 全球资产价值洼地 (Global Asset Undervaluation Scans)</option>
+                                <option value="技能全球化溢价">🛠️ 技能全球化溢价 (Global Skill Premium Arbitrage)</option>
+                                <option value="离岸税务与被动收入">🌴 离岸税务与被动收入 (Offshore Wealth Preservation)</option>
                             </select>
                         </div>
-                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 mt-4 bg-emerald-600 text-white font-black rounded-xl text-sm uppercase tracking-widest hover:bg-emerald-500 active:scale-95 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]">启动雷达 · 扫描全球套利空间</button>
+                        
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-6 mt-6 bg-emerald-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.4em] hover:bg-emerald-500 active:scale-95 transition-all shadow-[0_15px_40px_rgba(16,185,129,0.25)]">
+                            发射探测波束 · 捕捉全球差价
+                        </button>
                     </form>
                 </div>
 
-                <div id="resultArea" class="hidden glass-panel p-8 md:p-14 rounded-[3rem] shadow-2xl border border-emerald-500/20">
-                    <div id="blueprintContent" class="prose prose-invert prose-emerald max-w-none text-slate-300 leading-relaxed"></div>
-                    <div class="mt-16 pt-8 border-t border-white/10 flex justify-end">
-                        <button onclick="generatePoster()" id="posterBtn" class="px-8 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">↓ 导出情报海报</button>
+                <div id="resultArea" class="hidden glass-panel p-10 md:p-16 rounded-[3.5rem] shadow-2xl border border-emerald-500/20">
+                    <div id="blueprintContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div>
+                    <div class="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Signal_Strength: High_Resolution</div>
+                        <button onclick="generatePoster()" id="posterBtn" class="px-10 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                            ↓ 导出高清情报海报
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="posterWrapper" class="p-16 border-4 border-emerald-500/20">
-        <h2 class="text-white text-4xl font-black mb-2 uppercase italic tracking-tighter">Pudding Lab Radar</h2>
-        <p class="text-emerald-500 text-xs mono mb-12 tracking-[0.4em] uppercase">Geo_Arbitrage_Intelligence</p>
+    <div id="posterWrapper" class="p-20">
+        <div style="border-left: 4px solid #10b981; padding-left: 30px;">
+            <h2 class="text-white text-4xl font-black mb-2 uppercase italic tracking-tighter">Pudding Lab Radar</h2>
+            <p class="text-emerald-500 text-[10px] mono mb-12 tracking-[0.5em] uppercase">Geo_Arbitrage_Intelligence_v3.1</p>
+        </div>
         <div id="posterContent" class="prose prose-invert prose-emerald max-w-none"></div>
+        <div class="mt-20 pt-10 border-t border-white/10 text-[9px] text-slate-600 mono text-right uppercase">
+            Captured by DeepSeek Radar Engine
+        </div>
     </div>
 
     <script>
         const RADAR_API = "https://nas-n8n.lbuding.com/webhook/radar-engine";
 
+        function addLog(msg, color = 'text-slate-500') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = color + ' mb-1';
+            div.innerText = `> ${msg}`;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
         function showNotify(msg, type = 'info') {
             const container = document.getElementById('notify-container');
             const card = document.createElement('div');
-            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
-            const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '🌍';
-            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="leading-tight">${msg}</div></div>`;
+            card.className = `notify-card mono text-[11px] font-bold text-white`;
+            const accent = type === 'error' ? 'border-red-500' : type === 'success' ? 'border-green-500' : 'border-emerald-500';
+            card.classList.add(accent);
+            card.innerHTML = `⚡ ${msg}`;
             container.appendChild(card);
-            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
+            setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3500);
         }
 
-        // 🚀 优化后的进门逻辑：本地信任，移除 PROFILE_API 依赖
         document.addEventListener('DOMContentLoaded', () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
-
-            if (!t || !u) { 
-                showNotify("凭证失效，正在强制撤离...", "error");
-                setTimeout(() => { window.location.href = "/"; }, 1000);
-                return; 
-            }
-
-            // 立即渲染 UI
+            if (!t || !u) { window.location.href = "/"; return; }
             document.getElementById('userTag').innerText = u.toUpperCase() + "_SCANNER";
-
-            // 快速解密解锁
             setTimeout(() => {
                 document.getElementById('lockscreen').style.opacity = '0';
-                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 400); 
-                showNotify("雷达监听站已上线，欢迎特工。", "success");
-            }, 300);
+                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500);
+                addLog(`特工 ${u} 成功接入雷达站。`, 'text-emerald-400');
+            }, 500);
         });
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn'); 
-            btn.innerText = "信号解析中..."; 
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "正在向全球发射波束...";
             btn.disabled = true;
-            showNotify("正在发射探测波束，连接 DeepSeek 引擎...", "info");
+            addLog("正在锁定地理坐标参数...", "text-emerald-400");
+            addLog("请求 DeepSeek 引擎进行空间建模...", "text-emerald-400");
             
             try {
                 const res = await fetch(RADAR_API, { 
@@ -165,28 +183,21 @@
                     }) 
                 });
                 
-                if (res.status === 401) {
-                    showNotify("身份验证过期，请重新登录", "error");
-                    setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 1500);
-                    return;
-                }
+                if (res.status === 401) { localStorage.clear(); window.location.href = "/"; return; }
 
                 const data = await res.json();
-                if (data.status === "error") {
-                    showNotify(data.message, "error");
-                    return; 
-                }
-
                 const outputText = data.blueprint || data.report;
                 if (outputText) {
+                    addLog("全球差价信号捕捉成功，正在生成情报图谱...", "text-green-500");
                     document.getElementById('blueprintContent').innerHTML = marked.parse(outputText);
                     document.getElementById('posterContent').innerHTML = marked.parse(outputText);
                     document.getElementById('resultArea').classList.remove('hidden');
+                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 300);
                     showNotify("全球套利情报捕获成功！", "success");
-                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 100);
                 }
             } catch (err) { 
                 showNotify("雷达信号中断，请检查 NAS 连接", "error");
+                addLog("错误：波束丢失，链路被中断。", "text-red-500");
             } finally { 
                 btn.innerText = "启动雷达 · 扫描全球套利空间"; 
                 btn.disabled = false; 
@@ -196,21 +207,17 @@
         async function generatePoster() {
             const btn = document.getElementById('posterBtn');
             const wrap = document.getElementById('posterWrapper'); 
-            btn.innerText = "渲染中...";
+            btn.innerText = "情报排版渲染中...";
             wrap.style.display = 'block';
             try {
                 const canvas = await html2canvas(wrap, { backgroundColor: "#050a15", scale: 2, useCORS: true });
                 const link = document.createElement('a'); 
-                link.download = `Radar_Intel_${Date.now()}.png`; 
+                link.download = `PuddingRadar_Intel_${Date.now()}.png`; 
                 link.href = canvas.toDataURL('image/png'); 
                 link.click();
-                showNotify("情报海报导出成功！", "success");
-            } catch(e) {
-                showNotify("海报生成失败", "error");
-            } finally {
-                wrap.style.display = 'none';
-                btn.innerText = "↓ 导出情报海报";
-            }
+                showNotify("高清情报海报已存档", "success");
+            } catch(e) { showNotify("海报生成失败", "error"); }
+            finally { wrap.style.display = 'none'; btn.innerText = "↓ 导出情报海报"; }
         }
     </script>
 </body>
