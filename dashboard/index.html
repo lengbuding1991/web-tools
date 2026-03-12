@@ -6,47 +6,42 @@
     <title>资产指挥中心 | 布丁实验室</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        :root { --vault-purple: #a855f7; --bg-dark: #020617; --blue-accent: #3b82f6; --emerald-accent: #10b981; }
+        :root { --vault-purple: #a855f7; --bg-dark: #020617; }
         
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 统计卡片 */
-        .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .stat-card:hover { transform: translateY(-4px); border-color: var(--vault-purple); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15); }
+        /* 统计卡片与资产卡片样式保持一致... */
+        .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s; cursor: pointer; }
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
-
-        /* 资产卡片 */
-        .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .asset-card:hover { border-color: var(--vault-purple); transform: scale(1.02); }
-        
-        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0; transition: all 0.2s; z-index: 10; color: #64748b; }
+        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0; color: #64748b; }
         .asset-card:hover .shredder-btn { opacity: 0.6; }
-        .shredder-btn:hover { opacity: 1 !important; color: #ef4444; }
-
-        input[type="search"] { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(168, 85, 247, 0.2); color: white; outline: none; }
-        input[type="search"]:focus { border-color: var(--vault-purple); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
-
+        
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
-        
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
 
-        /* 🚀 PDF 导出专用模板 (隐藏) */
-        #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; background: white; color: #111; padding: 60px; font-family: serif; }
-        .pdf-header { border-bottom: 2px solid var(--vault-purple); padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .pdf-footer { margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 10px; color: #999; display: flex; justify-content: space-between; }
+        /* 🚀 文本 PDF 打印室核心样式 */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #1a1a1a !important; background: white !important; padding: 0; }
+            .no-print { display: none !important; }
+            pre { white-space: pre-wrap !important; word-wrap: break-word !important; }
+            .prose { max-width: none !important; color: #333 !important; }
+            a { color: #3b82f6 !important; text-decoration: underline; }
+        }
+
+        #print-area { display: none; } /* 屏幕显示时隐藏 */
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
@@ -54,21 +49,29 @@
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
 
-    <div id="pdf-template">
-        <div class="pdf-header" id="pdfHeaderLine">
+    <div id="print-area">
+        <div style="padding: 40px; border-bottom: 3px solid #a855f7; display: flex; justify-content: space-between; align-items: flex-end;">
             <div>
-                <h1 style="font-size: 26px; font-weight: 900; margin: 0; color: #000;" id="pdfTitle">布丁实验室资产报告</h1>
-                <p style="font-size: 10px; color: #a855f7; margin-top: 5px; font-weight: bold;" class="mono uppercase tracking-widest" id="pdfSubTitle">Confidential Asset Report</p>
+                <h1 style="margin:0; font-size:28px; color: #000;" id="pdfTitle">布丁实验室资产报告</h1>
+                <p style="color:#a855f7; margin-top:5px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;" id="pdfSubTitle">Confidential Asset Report</p>
             </div>
-            <div style="text-align: right;">
-                <p style="font-size: 10px; margin: 0; color: #666;" id="pdf-asn">ASN: ---</p>
-                <p style="font-size: 10px; margin: 0; color: #666;" id="pdf-date">DATE: ---</p>
+            <div style="text-align:right;">
+                <p id="pdf-asn" style="margin:0; font-weight:bold; color: #000;"></p>
+                <p id="pdf-date" style="margin:0; font-size:12px; color:#666;"></p>
             </div>
         </div>
-        <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
-        <div class="pdf-footer">
-            <div class="mono">HUB: https://tools.lbuding.com</div>
-            <div class="mono">CONTACT: wechat:lengbuding0101</div>
+        
+        <div id="pdf-content" class="prose prose-slate max-w-none" style="padding: 40px; color: #333;"></div>
+        
+        <div style="margin-top: 50px; padding: 30px 40px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 11px; color: #999;">
+            <div>
+                <p style="margin:0; font-weight: bold; color: #666;">HUB: https://tools.lbuding.com</p>
+                <p style="margin:5px 0 0 0;">WECHAT: lengbuding0101</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="margin:0;">本文件由布丁实验室系统生成</p>
+                <p style="margin:5px 0 0 0;">© Pudding Lab Confidential</p>
+            </div>
         </div>
     </div>
 
@@ -79,30 +82,25 @@
                 <div><h1 class="text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1><p class="text-[10px] text-purple-400 font-bold mono uppercase tracking-[0.4em]" id="opName">LOADING...</p></div>
             </div>
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="全库情报检索..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64 bg-slate-900 border-none text-white">
                 <div class="flex gap-2">
-                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
-                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">刷新资产</button>
+                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase hover:text-white transition-all">返回基地</a>
+                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase hover:bg-purple-600">刷新资产</button>
                 </div>
             </div>
         </header>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 glass-panel p-8 rounded-[2.5rem]">
-                <div class="flex justify-between items-center mb-8">
-                    <div class="text-[10px] mono text-purple-400 uppercase tracking-widest flex items-center gap-2">
-                        <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span> 生产效率监测 (7 DAYS)
-                    </div>
-                </div>
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest mb-8">生产效率监测</div>
                 <div class="h-56"><canvas id="trendChart"></canvas></div>
             </div>
-            <div class="glass-panel p-8 rounded-[2.5rem] flex flex-col">
-                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest mb-8">资产分布权重</div>
-                <div class="flex-1 flex items-center justify-center relative">
+            <div class="glass-panel p-8 rounded-[2.5rem] flex flex-col items-center">
+                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest mb-8 self-start">资产构成</div>
+                <div class="relative w-full h-full flex items-center justify-center">
                     <canvas id="typeChart"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <div class="absolute flex flex-col items-center">
                         <span class="text-2xl font-black text-white" id="totalAssetCount">0</span>
-                        <span class="text-[8px] mono text-slate-500 uppercase">Total_Units</span>
                     </div>
                 </div>
             </div>
@@ -110,15 +108,15 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div onclick="setFilter('all')" id="filter-all" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 active">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存 / TOTAL</div>
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存</div>
                 <div class="text-4xl font-black text-white italic" id="stat-all">0</div>
             </div>
             <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-blue-500/30">
-                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / FACTORY</div>
+                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图</div>
                 <div class="text-4xl font-black text-white" id="stat-factory">0</div>
             </div>
             <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-emerald-500/30">
-                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / RADAR</div>
+                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达情报</div>
                 <div class="text-4xl font-black text-white" id="stat-radar">0</div>
             </div>
         </div>
@@ -128,11 +126,11 @@
 
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10 shrink-0">
+            <div class="flex justify-between items-center mb-10">
                 <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Vault_Decrypted</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 PDF 报告</button>
-                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
+                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出文本 PDF 报告</button>
+                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600">关闭</button>
                 </div>
             </div>
             <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4 scroll-smooth"></div>
@@ -162,33 +160,20 @@
             const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user'), cached = localStorage.getItem('pudding_assets');
             if (!t) { window.location.href = "/"; return; }
             document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
-            
-            if (cached) {
-                globalData = JSON.parse(cached);
-                renderUI(); initCharts();
-                showNotify("加密记忆链路建立成功");
-            } else {
-                fetchAssets(false);
-            }
-
-            setTimeout(() => {
-                document.getElementById('lockscreen').style.opacity = '0';
-                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500);
-            }, 500);
+            if (cached) { globalData = JSON.parse(cached); renderUI(); initCharts(); } else { fetchAssets(false); }
+            setTimeout(() => { document.getElementById('lockscreen').style.opacity = '0'; setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); }, 500);
         };
 
         async function fetchAssets(isManual = false) {
             const t = localStorage.getItem('pudding_token'), e = localStorage.getItem('pudding_email');
-            if (isManual) document.getElementById('syncBtn').innerText = "同步中...";
             try {
                 const res = await fetch(ASSETS_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ email: e }) });
                 const data = await res.json();
                 globalData.factory = data.factory || []; globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
-                if (isManual) showNotify("云端情报库同步完成");
-            } catch (err) { showNotify("链路阻塞", "error"); }
-            finally { document.getElementById('syncBtn').innerText = "刷新资产"; }
+                if (isManual) showNotify("云端同步完成");
+            } catch (err) { showNotify("同步失败", "error"); }
         }
 
         function renderUI() {
@@ -197,159 +182,60 @@
             document.getElementById('stat-factory').innerText = globalData.factory.length;
             document.getElementById('stat-radar').innerText = globalData.radar.length;
             document.getElementById('totalAssetCount').innerText = totalCount;
-
             const grid = document.getElementById('assetGrid'); grid.innerHTML = '';
-
-            const allItems = [
-                ...globalData.factory.map((item, i) => ({ ...item, _type: 'factory', _idx: i })),
-                ...globalData.radar.map((item, i) => ({ ...item, _type: 'radar', _idx: i }))
-            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            const filtered = allItems.filter(item => {
-                const matchType = currentFilter === 'all' || item._type === currentFilter;
-                const title = (item.sector || item.location || "").toLowerCase();
-                return matchType && title.includes(currentSearch);
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-20 text-center mono opacity-10 tracking-[1em]">NO_DATA</div>`;
-                return;
-            }
-
+            const allItems = [...globalData.factory.map((item, i) => ({ ...item, _type: 'factory', _idx: i })), ...globalData.radar.map((item, i) => ({ ...item, _type: 'radar', _idx: i }))].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            const filtered = allItems.filter(item => (currentFilter === 'all' || item._type === currentFilter) && (item.sector || item.location || "").toLowerCase().includes(currentSearch));
             filtered.forEach(item => {
                 const isF = item._type === 'factory';
                 const accent = isF ? 'text-blue-500' : 'text-emerald-500';
                 const card = document.createElement('div');
-                card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border border-white/5 relative`;
+                card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border border-white/5`;
                 card.onclick = () => openModal(item._type, item._idx);
-                card.innerHTML = `
-                    <button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
-                    <div class="flex justify-between items-start mb-6">
-                        <span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span>
-                        <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase tracking-tight leading-tight">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">DECRYPT_ASN_${item.id} →</div>
-                `;
+                card.innerHTML = `<button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
+                    <div class="flex justify-between items-start mb-6"><span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span><span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span></div>
+                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${isF ? item.sector : item.location}</h4>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">DECRYPT_ASN_${item.id} →</div>`;
                 grid.appendChild(card);
             });
+        }
+
+        function openModal(type, idx) {
+            activeAsset = globalData[type][idx]; activeAsset._type = type;
+            const content = activeAsset.blueprint_content || activeAsset.report_content;
+            document.getElementById('modalBody').innerHTML = marked.parse(content);
+            document.getElementById('viewModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('pdfBtn').onclick = () => generateTextPDF(activeAsset, content);
+        }
+
+        // 🚀 核心：文本级 PDF 渲染引擎
+        function generateTextPDF(asset, markdown) {
+            const isF = asset._type === 'factory';
+            document.getElementById('pdfTitle').innerText = isF ? "布丁实验室 - 价值资产蓝图" : "布丁实验室 - 全球套利情报";
+            document.getElementById('pdfSubTitle').innerText = isF ? "Confidential Blueprint Asset" : "Confidential Arbitrage Intelligence";
+            document.getElementById('pdfSubTitle').style.color = isF ? "#3b82f6" : "#10b981";
+            document.getElementById('pdf-asn').innerText = `ASN: ${asset.id}`;
+            document.getElementById('pdf-date').innerText = `DATE: ${new Date(asset.created_at).toLocaleString()}`;
+            document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
+            
+            // 唤醒系统打印桥接
+            window.print();
+            showNotify("已调起文本级打印引擎");
         }
 
         function initCharts() {
             const ctxTrend = document.getElementById('trendChart').getContext('2d');
             const ctxType = document.getElementById('typeChart').getContext('2d');
             if(charts.trend) charts.trend.destroy(); if(charts.type) charts.type.destroy();
-
-            const days = Array.from({length: 7}, (_, i) => { 
-                const d = new Date(); d.setDate(d.getDate() - i); 
-                return d.toISOString().split('T')[0]; 
-            }).reverse();
+            const days = Array.from({length: 7}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return d.toISOString().split('T')[0]; }).reverse();
             const counts = days.map(day => [...globalData.factory, ...globalData.radar].filter(i => i.created_at.startsWith(day)).length);
-
-            const gradient = ctxTrend.createLinearGradient(0, 0, 0, 200);
-            gradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
-            gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
-
-            charts.trend = new Chart(ctxTrend, {
-                type: 'line',
-                data: {
-                    labels: days.map(d => d.slice(5)),
-                    datasets: [{
-                        data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, 
-                        pointBackgroundColor: '#a855f7', fill: true, backgroundColor: gradient, tension: 0.4
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { 
-                        x: { grid: { display: false }, ticks: { color: '#475569', font: { family: 'JetBrains Mono', size: 10 } } },
-                        y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { stepSize: 1, color: '#475569' } }
-                    }
-                }
-            });
-
-            charts.type = new Chart(ctxType, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Factory', 'Radar'],
-                    datasets: [{
-                        data: [globalData.factory.length, globalData.radar.length],
-                        backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%', borderRadius: 10
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
+            charts.trend = new Chart(ctxTrend, { type: 'line', data: { labels: days.map(d => d.slice(5)), datasets: [{ data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' } } } } });
+            charts.type = new Chart(ctxType, { type: 'doughnut', data: { labels: ['Factory', 'Radar'], datasets: [{ data: [globalData.factory.length, globalData.radar.length], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        async function handleDelete(e, type, id) {
-            e.stopPropagation(); if (!confirm(`警告：正在销毁物理存档 ${id}，此操作不可撤销。`)) return;
-            const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
-            try {
-                const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
-                if (res.ok) { fetchAssets(true); }
-            } catch (err) { showNotify("操作失败", "error"); }
-        }
-
+        async function handleDelete(e, type, id) { e.stopPropagation(); if (!confirm(`确认物理抹除？`)) return; try { const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, email: localStorage.getItem('pudding_email') }) }); if (res.ok) fetchAssets(true); } catch (err) { } }
         function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
-        function setFilter(type) {
-            currentFilter = type;
-            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
-            document.getElementById(`filter-${type}`).classList.add('active');
-            renderUI();
-        }
-
-        function openModal(type, idx) {
-            activeAsset = globalData[type][idx];
-            activeAsset._type = type;
-            const content = activeAsset.blueprint_content || activeAsset.report_content;
-            document.getElementById('modalBody').innerHTML = marked.parse(content || "档案损坏");
-            document.getElementById('viewModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            
-            document.getElementById('pdfBtn').onclick = () => generatePDF(activeAsset, content);
-        }
-
-        // 🚀 核心：多页 PDF 导出逻辑 (对齐 Factory/Radar 标准)
-        async function generatePDF(asset, markdown) {
-            const { jsPDF } = window.jspdf;
-            const btn = document.getElementById('pdfBtn');
-            btn.innerText = "加密排版中...";
-            btn.disabled = true;
-
-            // 动态调整 PDF 模板样式
-            const isF = asset._type === 'factory';
-            document.getElementById('pdfTitle').innerText = isF ? "布丁实验室 - 价值资产蓝图" : "布丁实验室 - 全球套利情报";
-            document.getElementById('pdfSubTitle').innerText = isF ? "Confidential Blueprint Asset" : "Confidential Arbitrage Intelligence";
-            document.getElementById('pdfSubTitle').style.color = isF ? "#3b82f6" : "#10b981";
-            document.getElementById('pdfHeaderLine').style.borderBottomColor = isF ? "#3b82f6" : "#10b981";
-            
-            document.getElementById('pdf-asn').innerText = `ASN: ${asset.id}`;
-            document.getElementById('pdf-date').innerText = `DATE: ${new Date(asset.created_at).toLocaleString()}`;
-            document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
-            
-            const template = document.getElementById('pdf-template');
-            
-            try {
-                const canvas = await html2canvas(template, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 210, imgHeight = (canvas.height * imgWidth) / canvas.width;
-                let heightLeft = imgHeight, pos = 0, pageH = 295;
-
-                pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
-                heightLeft -= pageH;
-                while (heightLeft > 0) {
-                    pos = heightLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
-                    heightLeft -= pageH;
-                }
-                pdf.save(`PuddingLab_Asset_${asset.id}.pdf`);
-                showNotify("PDF 资产报告导出成功");
-            } catch (err) { showNotify("导出引擎异常", "error"); }
-            finally { btn.innerText = "导出 PDF 报告"; btn.disabled = false; }
-        }
-
+        function setFilter(type) { currentFilter = type; document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active')); document.getElementById(`filter-${type}`).classList.add('active'); renderUI(); }
         function closeModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
     </script>
 </body>
