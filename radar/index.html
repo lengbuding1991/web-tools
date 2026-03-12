@@ -173,19 +173,20 @@
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); 
-            btn.innerText = "锁定坐标波段..."; btn.disabled = true;
-            showNotify("正在激活全域扫描，接收数据中...", "info");
+            btn.innerText = "校验算力配额中..."; // 🚀 更改文案，提示正在验证额度
+            btn.disabled = true;
             
             try {
                 const res = await fetch(ENGINE_API, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, 
                     body: JSON.stringify({ 
-						username: localStorage.getItem('pudding_user'), // 🚀 核心新增：把名字传给引擎
-						location: document.getElementById('location').value, 
-						assets: document.getElementById('assets').value, 
-						niche: document.getElementById('niche').value 
-					}) 
+                        email: localStorage.getItem('pudding_email'), // 🚀 核心新增：传邮箱给 n8n 查额度
+                        username: localStorage.getItem('pudding_user'), 
+                        location: document.getElementById('location').value, 
+                        assets: document.getElementById('assets').value, 
+                        niche: document.getElementById('niche').value 
+                    }) 
                 });
                 
                 if (res.status === 401) {
@@ -195,13 +196,20 @@
                 }
 
                 const data = await res.json();
+
+                // 🚀 核心新增：额度耗尽拦截防刷
+                if (data.status === "error") {
+                    showNotify(data.message, "error");
+                    return; // 拦截往下执行
+                }
+
                 const content = data.blueprint || data.output;
                 if (content) { 
                     const html = marked.parse(content);
                     document.getElementById('radarContent').innerHTML = html;
                     document.getElementById('posterContent').innerHTML = html;
                     document.getElementById('resultArea').classList.remove('hidden'); 
-                    showNotify("雷达扫描完成，报告已解密", "success");
+                    showNotify("雷达扫描完成，已扣除 1 点算力", "success");
                     
                     // 🚀 滚动
                     setTimeout(() => {

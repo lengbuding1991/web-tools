@@ -170,20 +170,20 @@
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); 
-            btn.innerText = "算力正在燃烧..."; 
+            btn.innerText = "校验算力配额中..."; 
             btn.disabled = true;
-            showNotify("正在提交投料，唤醒 DeepSeek 引擎...", "info");
             
             try {
                 const res = await fetch(ENGINE_API, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, 
                     body: JSON.stringify({ 
-						username: localStorage.getItem('pudding_user'), // 🚀 核心新增：把名字传给引擎
-						skills: document.getElementById('skills').value, 
-						commitment: document.getElementById('commitment').value, 
-						sector: document.getElementById('sector').value 
-					}) 
+                        email: localStorage.getItem('pudding_email'), // 🚀 核心新增：把邮箱传给引擎作风控
+                        username: localStorage.getItem('pudding_user'),
+                        skills: document.getElementById('skills').value, 
+                        commitment: document.getElementById('commitment').value, 
+                        sector: document.getElementById('sector').value 
+                    }) 
                 });
                 
                 if (res.status === 401) {
@@ -193,11 +193,18 @@
                 }
 
                 const data = await res.json();
+
+                // 🚀 核心新增：额度耗尽防刷系统拦截
+                if (data.status === "error") {
+                    showNotify(data.message, "error");
+                    return; // 拦截执行，保留现场
+                }
+
                 if (data.blueprint) {
                     document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
-                    showNotify("蓝图生成完毕", "success");
+                    showNotify("蓝图生成完毕，已扣除 1 点算力", "success");
                     
                     // 🚀 精准让右侧内容区向下滚动
                     setTimeout(() => { 
