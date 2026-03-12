@@ -8,82 +8,63 @@
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/pudding-core.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --vault-purple: #a855f7; --bg-dark: #020617; }
-        
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* UI 交互样式 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s; cursor: pointer; }
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
         .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .asset-card:hover { border-color: var(--vault-purple); transform: scale(1.02); }
-        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0.4; color: #64748b; transition: all 0.2s; }
-        .shredder-btn:hover { opacity: 1; color: #ef4444; }
-        
+        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0.4; color: #64748b; }
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        @media print {
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
-
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
-
-    <div id="confirmModal" class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 hidden">
-        <div class="max-w-sm w-full glass-panel p-8 rounded-[2.5rem] border-red-500/20 text-center">
-            <div class="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span class="text-red-500 text-2xl font-black">!</span>
-            </div>
-            <h3 class="text-white font-black text-xl mb-2">确认销毁档案？</h3>
-            <p class="text-slate-500 text-xs mb-8 leading-relaxed">警告：此操作将永久从云端抹除该项资产记录，物理链路断开后不可找回。</p>
-            <div class="flex gap-4">
-                <button id="cancelConfirm" class="flex-1 py-4 border border-white/5 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:bg-white/5 transition-all">取消 / CANCEL</button>
-                <button id="okConfirm" class="flex-1 py-4 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase hover:bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)] transition-all">确认销毁</button>
-            </div>
-        </div>
-    </div>
 
     <div class="max-w-7xl mx-auto space-y-6 md:space-y-12">
         <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 md:pb-10 border-b border-purple-500/10">
             <div class="flex items-center gap-5">
                 <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
-                <div><h1 class="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1><p class="text-[10px] text-purple-400 font-bold mono uppercase tracking-[0.4em]" id="opName">LOADING...</p></div>
+                <div><h1 class="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none">资产指挥中心</h1><p class="text-[9px] text-purple-400 font-bold mono uppercase tracking-[0.4em] mt-2">Pudding_Vault_Secure</p></div>
             </div>
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="全库档案检索..." class="px-6 py-3 rounded-full text-xs w-full md:w-64 bg-slate-900 border border-white/5 text-white outline-none focus:ring-1 ring-purple-500">
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案..." class="px-6 py-3 rounded-full text-xs w-full md:w-64 bg-slate-900 border border-white/5 text-white outline-none focus:ring-1 ring-purple-500">
                 <div class="flex gap-2 w-full md:w-auto">
-                    <a href="/" class="flex-1 text-center px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
-                    <button id="syncBtn" onclick="fetchAssets(true)" class="flex-1 px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white">同步云端</button>
+                    <a href="/" class="flex-1 text-center px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">返回基地</a>
+                    <div class="hidden md:flex glass-panel px-4 py-3 rounded-full border border-blue-500/20 items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                        <span class="text-[9px] font-bold text-blue-400 mono uppercase" id="opName">ARCHITECT</span>
+                    </div>
+                    <button onclick="handleLogout()" class="px-4 py-3 border border-white/5 text-slate-600 hover:text-red-400 transition-all font-bold text-[10px] uppercase mono">Logout</button>
                 </div>
             </div>
         </header>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl"><div class="h-48 md:h-56"><canvas id="trendChart"></canvas></div></div>
-            <div class="glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center relative shadow-xl"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
+            <div class="lg:col-span-2 glass-panel p-6 md:p-8 rounded-[2rem] shadow-xl"><div class="h-48 md:h-56"><canvas id="trendChart"></canvas></div></div>
+            <div class="glass-panel p-6 md:p-8 rounded-[2rem] flex items-center justify-center relative shadow-xl"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
         </section>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             <div onclick="setFilter('all')" id="filter-all" class="stat-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-between h-32 md:h-40 active">
-                <div class="text-[9px] mono text-purple-400 uppercase tracking-widest">全量库存 / TOTAL</div><div class="text-3xl md:text-4xl font-black text-white italic" id="stat-all">0</div>
+                <div class="text-[9px] mono text-purple-400 uppercase tracking-widest">全量库存</div><div class="text-3xl md:text-4xl font-black text-white italic" id="stat-all">0</div>
             </div>
             <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-between h-32 md:h-40 border-blue-500/30">
-                <div class="text-[9px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / FACTORY</div><div class="text-3xl md:text-4xl font-black text-white" id="stat-factory">0</div>
+                <div class="text-[9px] mono text-blue-400 uppercase tracking-widest">工厂蓝图</div><div class="text-3xl md:text-4xl font-black text-white" id="stat-factory">0</div>
             </div>
             <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-between h-32 md:h-40 border-emerald-500/30">
-                <div class="text-[9px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / RADAR</div><div class="text-3xl md:text-4xl font-black text-white" id="stat-radar">0</div>
+                <div class="text-[9px] mono text-emerald-400 uppercase tracking-widest">雷达情报</div><div class="text-3xl md:text-4xl font-black text-white" id="stat-radar">0</div>
             </div>
         </div>
 
@@ -93,7 +74,7 @@
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-4 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 text-white">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v4.1</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v4.2</div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <button id="pdfBtn" class="flex-1 md:flex-none px-6 py-3 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出无损 PDF</button>
                     <button onclick="closeModal()" class="flex-1 md:flex-none px-6 py-3 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
@@ -106,47 +87,14 @@
     <script>
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         const DELETE_API = "https://nas-n8n.lbuding.com/webhook/delete-asset";
-
         let globalData = { factory: [], radar: [] };
-        let activeAsset = null;
         let currentFilter = 'all', currentSearch = '';
         let charts = { trend: null, type: null };
-
-        function showNotify(msg) {
-            const container = document.getElementById('notify-container');
-            const card = document.createElement('div');
-            card.className = `notify-card mono text-[11px] font-bold text-purple-300`;
-            card.innerHTML = `⚡ ${msg}`;
-            container.appendChild(card);
-            setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3000);
-        }
-
-        // 🚀 新增：Promise 封装的自定义确认框
-        function showConfirm() {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('confirmModal');
-                const okBtn = document.getElementById('okConfirm');
-                const cancelBtn = document.getElementById('cancelConfirm');
-                
-                modal.classList.remove('hidden');
-                
-                const handleOk = () => { cleanup(); resolve(true); };
-                const handleCancel = () => { cleanup(); resolve(false); };
-                const cleanup = () => {
-                    modal.classList.add('hidden');
-                    okBtn.removeEventListener('click', handleOk);
-                    cancelBtn.removeEventListener('click', handleCancel);
-                };
-
-                okBtn.addEventListener('click', handleOk);
-                cancelBtn.addEventListener('click', handleCancel);
-            });
-        }
 
         window.onload = () => {
             const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user'), cached = localStorage.getItem('pudding_assets');
             if (!t) { window.location.href = "/"; return; }
-            document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
+            document.getElementById('opName').innerText = u.toUpperCase();
             if (cached) { globalData = JSON.parse(cached); renderUI(); initCharts(); } else { fetchAssets(false); }
             setTimeout(() => { document.getElementById('lockscreen').style.opacity = '0'; setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); }, 500);
         };
@@ -160,7 +108,7 @@
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
                 if (isManual) showNotify("数据已同步");
-            } catch (err) { showNotify("链路阻塞"); }
+            } catch (err) { showNotify("同步受阻", "error"); }
         }
 
         function renderUI() {
@@ -179,32 +127,32 @@
                 card.onclick = () => openModal(item._type, item._idx);
                 card.innerHTML = `<button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
                     <div class="flex justify-between items-start mb-6"><span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span><span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span></div>
-                    <h4 class="text-white font-black text-lg md:text-xl mb-4 line-clamp-2 uppercase leading-tight">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic tracking-wider">ASN_${item.id} DECRYPT →</div>`;
+                    <h4 class="text-white font-black text-lg md:text-xl mb-4 line-clamp-2 uppercase">${isF ? item.sector : item.location}</h4>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">ASN_${item.id} DECRYPT →</div>`;
                 grid.appendChild(card);
             });
         }
 
         function openModal(type, idx) {
-            activeAsset = globalData[type][idx]; activeAsset._type = type;
-            const content = activeAsset.blueprint_content || activeAsset.report_content;
+            const asset = globalData[type][idx];
+            const content = asset.blueprint_content || asset.report_content;
             document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('pdfBtn').onclick = () => generateFormattedPrint(activeAsset, content);
+            document.getElementById('pdfBtn').onclick = () => generateIsolatedPDF(asset, content, type); // 🚀 调用中台逻辑
         }
 
-        function generateFormattedPrint(asset, markdown) {
-            const isF = asset._type === 'factory', themeColor = isF ? "#3b82f6" : "#10b981", subTitle = isF ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'fixed'; iframe.style.right = '0'; iframe.style.bottom = '0';
-            iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0';
-            document.body.appendChild(iframe);
-            const doc = iframe.contentWindow.document;
-            const printHTML = `<html><head><style>body { background: white !important; color: #1a1a1a !important; font-family: sans-serif; padding: 40px; margin: 0; }.header { border-bottom: 3px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }.footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #888; font-family: monospace; }.markdown-body { line-height: 1.7; font-size: 11pt; }.markdown-body h1, .markdown-body h2, .markdown-body h3 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; font-weight: bold; }.markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; }.markdown-body strong { font-weight: 800; color: #000; }.markdown-body ul { padding-left: 1.5em; margin-bottom: 1em; list-style-type: disc; }.markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }* { box-shadow: none !important; text-shadow: none !important; border-radius: 0 !important; background-clip: padding-box !important; }@media print { @page { margin: 1.5cm; } .container { padding: 0; } }</style></head><body><div class="container"><div class="header"><div><h1 style="margin:0; font-size:24pt; color: black;">布丁实验室 - 资产报告</h1><p style="color:${themeColor}; margin:5px 0 0 0; font-weight:bold; font-size:10pt; letter-spacing:1px;">${subTitle}</p></div><div style="text-align:right;"><p style="margin:0; font-weight:bold; font-size:12pt;">ASN: ${asset.id}</p><p style="margin:0; font-size:9pt; color:#666;">DATE: ${new Date(asset.created_at).toLocaleString()}</p></div></div><div class="markdown-body">${marked.parse(markdown)}</div><div class="footer"><div>HUB: https://tools.lbuding.com | WECHAT: lengbuding0101</div><div>SECURE_DOC_V4.1 © Pudding Lab</div></div></div></body></html>`;
-            doc.open(); doc.write(printHTML); doc.close();
-            showNotify("正在解析排版...");
-            iframe.contentWindow.onload = () => { setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 1000); }, 600); };
+        // 🚀 修改：使用中台的 Toast 确认对话框逻辑
+        async function handleDelete(e, type, id) { 
+            e.stopPropagation(); 
+            const confirmed = await showConfirmToast(`确认物理销毁 ASN-${id}？`);
+            if (!confirmed) return; 
+
+            const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
+            try {
+                const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
+                if (res.ok) { fetchAssets(true); showNotify("资产已抹除"); }
+            } catch (err) { showNotify("操作失败", "error"); } 
         }
 
         function initCharts() {
@@ -214,21 +162,6 @@
             const counts = days.map(day => [...globalData.factory, ...globalData.radar].filter(i => i.created_at.startsWith(day)).length);
             charts.trend = new Chart(ctxTrend, { type: 'line', data: { labels: days.map(d => d.slice(5)), datasets: [{ data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { stepSize: 1 } } } } });
             charts.type = new Chart(ctxType, { type: 'doughnut', data: { labels: ['Factory', 'Radar'], datasets: [{ data: [globalData.factory.length, globalData.radar.length], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-        }
-
-        // 🚀 修改：使用自定义确认框逻辑
-        async function handleDelete(e, type, id) { 
-            e.stopPropagation(); 
-            
-            // 调用自定义确认对话框
-            const confirmed = await showConfirm();
-            if (!confirmed) return; 
-
-            const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
-            try {
-                const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
-                if (res.ok) { fetchAssets(true); showNotify("资产已销毁"); }
-            } catch (err) { showNotify("操作失败"); } 
         }
 
         function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
