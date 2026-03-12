@@ -30,79 +30,14 @@
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* 🚀 极致兼容打印样式 */
-        @media print {
-            /* 1. 隐藏非打印内容 */
-            body > *:not(#print-area) { display: none !important; visibility: hidden !important; }
-            
-            /* 2. 强行还原打印区域 */
-            #print-area { 
-                display: block !important; 
-                visibility: visible !important; 
-                position: relative !important; 
-                left: 0 !important; 
-                top: 0 !important; 
-                width: 100% !important; 
-                background: #ffffff !important; 
-                color: #000000 !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-
-            /* 3. 彻底消除黑边和阴影 */
-            #print-area, #print-area * {
-                box-shadow: none !important;
-                text-shadow: none !important;
-                border-radius: 0 !important; /* 手机端圆角常导致黑边 */
-                background-clip: padding-box !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .prose { max-width: none !important; font-size: 11pt !important; line-height: 1.6 !important; }
-            .prose h1, .prose h2 { color: #000 !important; border-bottom: 1px solid #eee !important; padding-bottom: 5px !important; }
-            pre { background: #f8f8f8 !important; border: 1px solid #ddd !important; padding: 10px !important; }
-            
-            @page { margin: 1.5cm; size: auto; }
-        }
-
-        /* 🚀 关键：平时不使用 display:none，而是移出屏幕，防止打印机抓不到内容 */
-        #print-area { 
-            position: absolute; 
-            left: -9999px; 
-            top: -9999px; 
-            width: 800px; 
-            background: white; 
-            color: #111;
-        }
+        /* 隐藏原始打印层（屏幕不显示，打印也不靠它，靠动态iframe） */
+        #print-content-source { display: none; }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
 
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
-
-    <div id="print-area">
-        <div style="padding-bottom: 20px; border-bottom: 3px solid #a855f7; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div>
-                <h1 style="margin:0; font-size:28px; color: #000;">布丁实验室 - 资产报告</h1>
-                <div style="color:#a855f7; margin-top:5px; font-weight: bold; font-size: 10px; letter-spacing: 1px;" id="pdfSubTitle">CONFIDENTIAL_DATA_ARCHIVE</div>
-            </div>
-            <div style="text-align:right;">
-                <p id="pdf-asn" style="margin:0; font-weight:bold; font-size: 12px; color: #000;"></p>
-                <p id="pdf-date" style="margin:0; font-size:10px; color:#666;"></p>
-            </div>
-        </div>
-        
-        <div id="pdf-content" class="prose prose-slate max-w-none"></div>
-        
-        <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #888;">
-            <div>
-                HUB: <strong>https://tools.lbuding.com</strong> | WECHAT: <strong>lengbuding0101</strong>
-            </div>
-            <div style="text-align: right;">© Pudding Lab Confidential</div>
-        </div>
-    </div>
 
     <div class="max-w-7xl mx-auto space-y-12">
         <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-10 border-b border-purple-500/10">
@@ -126,7 +61,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div onclick="setFilter('all')" id="filter-all" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 active">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存</div><div class="text-4xl font-black text-white" id="stat-all">0</div>
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存</div><div class="text-4xl font-black text-white italic" id="stat-all">0</div>
             </div>
             <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-blue-500/30">
                 <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图</div><div class="text-4xl font-black text-white" id="stat-factory">0</div>
@@ -142,9 +77,9 @@
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex justify-between items-center mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Archive_Access_v3.7</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v3.8</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出文本 PDF 资产</button>
+                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出无损 PDF 资产</button>
                     <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
                 </div>
             </div>
@@ -162,7 +97,7 @@
         let currentSearch = '';
         let charts = { trend: null, type: null };
 
-        function showNotify(msg, type = 'success') {
+        function showNotify(msg) {
             const container = document.getElementById('notify-container');
             const card = document.createElement('div');
             card.className = `notify-card mono text-[11px] font-bold text-purple-300`;
@@ -188,7 +123,7 @@
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
                 if (isManual) showNotify("同步完成");
-            } catch (err) { showNotify("同步受阻", "error"); }
+            } catch (err) { showNotify("同步受阻"); }
         }
 
         function renderUI() {
@@ -220,29 +155,78 @@
             document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('pdfBtn').onclick = () => generatePrintPDF(activeAsset, content);
+            document.getElementById('pdfBtn').onclick = () => generateIsolatedPrint(activeAsset, content);
         }
 
-        // 🚀 核心打印引擎 V3.7
-        function generatePrintPDF(asset, markdown) {
+        // 🚀 核心：虚拟沙盒打印引擎 (解决手机端空白与黑边)
+        function generateIsolatedPrint(asset, markdown) {
             const isF = asset._type === 'factory';
-            const printContent = document.getElementById('pdf-content');
+            const themeColor = isF ? "#3b82f6" : "#10b981";
+            const subTitle = isF ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
 
-            // 1. 注入元数据
-            document.getElementById('pdfSubTitle').innerText = isF ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
-            document.getElementById('pdfSubTitle').style.color = isF ? "#3b82f6" : "#10b981";
-            document.getElementById('pdf-asn').innerText = `ASN: ${asset.id}`;
-            document.getElementById('pdf-date').innerText = `DATE: ${new Date(asset.created_at).toLocaleString()}`;
-            
-            // 2. 注入内容并强制触发布局更新
-            printContent.innerHTML = marked.parse(markdown);
+            // 1. 创建隐形 iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
 
-            showNotify("正在解析情报图谱，请在弹出窗口选‘另存为 PDF’");
+            // 2. 注入纯净打印样式和内容
+            const doc = iframe.contentWindow.document;
+            const printHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+                    <style>
+                        @media print { @page { margin: 1.5cm; } }
+                        body { background: white !important; color: black !important; font-family: sans-serif; padding: 0; margin: 0; }
+                        .header { border-bottom: 4px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+                        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #666; font-family: monospace; }
+                        .content { line-height: 1.6; font-size: 11.5pt; color: #111; }
+                        h1, h2, h3 { color: #000 !important; margin-top: 1.5em; font-weight: bold; }
+                        pre { background: #f8f8f8; border: 1px solid #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; }
+                        strong { font-weight: 900; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div>
+                            <h1 style="margin:0; font-size:24pt; color: black;">布丁实验室 - 资产报告</h1>
+                            <p style="color:${themeColor}; margin:5px 0 0 0; font-weight:bold; font-size:10pt; letter-spacing:1px;">${subTitle}</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="margin:0; font-weight:bold;">ASN: ${asset.id}</p>
+                            <p style="margin:0; font-size:9pt; color:#666;">DATE: ${new Date(asset.created_at).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="content">${marked.parse(markdown)}</div>
+                    <div class="footer">
+                        <div>HUB: tools.lbuding.com | WECHAT: lengbuding0101</div>
+                        <div>© Pudding Lab Confidential</div>
+                    </div>
+                </body>
+                </html>
+            `;
 
-            // 3. 增加到 800ms 延迟，确保手机端完成 Markdown 渲染绘制
-            setTimeout(() => {
-                window.print();
-            }, 800);
+            doc.open();
+            doc.write(printHTML);
+            doc.close();
+
+            showNotify("虚拟沙盒已就绪，正在导出文本 PDF...");
+
+            // 3. 延迟等待 iframe 内的 Tailwind 加载并渲染
+            iframe.contentWindow.onload = () => {
+                setTimeout(() => {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    // 4. 打印完成后移除隐形窗口
+                    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+                }, 500);
+            };
         }
 
         function initCharts() {
@@ -255,7 +239,7 @@
             charts.type = new Chart(ctxType, { type: 'doughnut', data: { labels: ['Factory', 'Radar'], datasets: [{ data: [globalData.factory.length, globalData.radar.length], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        async function handleDelete(e, type, id) { e.stopPropagation(); if (!confirm(`确认销毁记录 ${id}？`)) return; try { const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, email: localStorage.getItem('pudding_email') }) }); if (res.ok) fetchAssets(true); } catch (err) { } }
+        async function handleDelete(e, type, id) { e.stopPropagation(); if (!confirm(`彻底销毁记录 ${id}？`)) return; try { const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, email: localStorage.getItem('pudding_email') }) }); if (res.ok) fetchAssets(true); } catch (err) { } }
         function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
         function setFilter(type) { currentFilter = type; document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active')); document.getElementById(`filter-${type}`).classList.add('active'); renderUI(); }
         function closeModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
