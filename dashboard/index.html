@@ -17,7 +17,7 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* UI 卡片样式保持 */
+        /* UI 交互样式 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s; cursor: pointer; }
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
         .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); position: relative; }
@@ -30,24 +30,41 @@
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* 🚀 核心：强力文本 PDF 打印适配 */
+        /* 🚀 核心修复：针对手机端 PDF 导出黑边的打印适配 */
         @media print {
-            /* 1. 隐藏所有 UI 元素 */
+            /* 1. 彻底隐藏屏幕 UI，防止干扰渲染 */
             body > *:not(#print-area) { display: none !important; }
-            #viewModal, #lockscreen, #notify-container, nav, header, main, section { display: none !important; }
+            #viewModal, #lockscreen, #notify-container, .glass-panel, .tech-grid { display: none !important; }
             
-            /* 2. 强制显示打印区域 */
-            #print-area { display: block !important; visibility: visible !important; position: static !important; width: 100% !important; background: white !important; color: #000 !important; }
+            /* 2. 打印区域重绘与黑边修正 */
+            #print-area { 
+                display: block !important; 
+                visibility: visible !important; 
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                width: 100% !important; 
+                background: #ffffff !important; 
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
+            }
+
+            /* 修正手机端圆角背景出现的黑 fringe */
+            #print-area * {
+                box-shadow: none !important;
+                text-shadow: none !important;
+                background-clip: padding-box !important; /* 关键修复：防止背景溢出 */
+                border-color: transparent !important; /* 关键修复：移除默认边框色 */
+            }
+
             .prose { max-width: none !important; color: #111 !important; }
-            pre { white-space: pre-wrap !important; word-wrap: break-word !important; background: #f4f4f4 !important; color: #000 !important; }
-            a { text-decoration: underline !important; color: #3b82f6 !important; }
+            pre { background: #f4f4f4 !important; border: 1px solid #ddd !important; }
             
-            /* 3. 移除页眉页脚默认 URL（由浏览器控制） */
-            @page { margin: 2cm; }
+            @page { margin: 1.5cm; }
         }
 
-        /* 屏幕显示时彻底隐藏打印层 */
-        #print-area { display: none; }
+        #print-area { display: none; } /* 默认在屏幕显示时隐藏 */
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
@@ -56,9 +73,9 @@
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
 
     <div id="print-area">
-        <div style="padding: 20px 0; border-bottom: 4px solid #a855f7; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
+        <div style="padding: 20px 0; border-bottom: 4px solid #a855f7; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; border-top: none; border-left: none; border-right: none;">
             <div>
-                <h1 style="margin:0; font-size:32px; color: #000; font-family: sans-serif;">布丁实验室 - 资产报告</h1>
+                <h1 style="margin:0; font-size:32px; color: #000; font-family: sans-serif; font-weight: 900;">布丁实验室 - 资产报告</h1>
                 <p style="color:#a855f7; margin-top:8px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;" id="pdfSubTitle">CONFIDENTIAL_ASSET_REPORT</p>
             </div>
             <div style="text-align:right;">
@@ -69,7 +86,7 @@
         
         <div id="pdf-content" class="prose prose-slate max-w-none" style="min-height: 500px;"></div>
         
-        <div style="margin-top: 80px; padding-top: 30px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 12px; color: #666; font-family: monospace;">
+        <div style="margin-top: 80px; padding-top: 30px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 12px; color: #666; font-family: monospace; border-bottom: none; border-left: none; border-right: none;">
             <div>
                 <p style="margin:0;">HUB: <strong>https://tools.lbuding.com</strong></p>
                 <p style="margin:5px 0 0 0;">WECHAT: <strong>lengbuding0101</strong></p>
@@ -97,8 +114,8 @@
         </header>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 glass-panel p-8 rounded-[2.5rem]"><div class="h-56"><canvas id="trendChart"></canvas></div></div>
-            <div class="glass-panel p-8 rounded-[2.5rem] flex items-center justify-center relative"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
+            <div class="lg:col-span-2 glass-panel p-8 rounded-[2.5rem] shadow-xl"><div class="h-56"><canvas id="trendChart"></canvas></div></div>
+            <div class="glass-panel p-8 rounded-[2.5rem] flex items-center justify-center relative shadow-xl"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
         </section>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -119,9 +136,9 @@
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex justify-between items-center mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Asset_Decrypted_v3.3</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Vault_Decrypted_v3.6</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出文本级 PDF</button>
+                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出文本 PDF 报告</button>
                     <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
                 </div>
             </div>
@@ -164,7 +181,7 @@
                 globalData.factory = data.factory || []; globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
-                if (isManual) showNotify("同步完成");
+                if (isManual) showNotify("云端同步完成");
             } catch (err) { showNotify("同步失败", "error"); }
         }
 
@@ -186,7 +203,7 @@
                 card.innerHTML = `<button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
                     <div class="flex justify-between items-start mb-6"><span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span><span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span></div>
                     <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">VIEW_ASN_${item.id} →</div>`;
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">DECRYPT_ASN_${item.id} →</div>`;
                 grid.appendChild(card);
             });
         }
@@ -200,27 +217,15 @@
             document.getElementById('pdfBtn').onclick = () => generatePrintPDF(activeAsset, content);
         }
 
-        // 🚀 强力打印逻辑：解决内容为空的问题
         function generatePrintPDF(asset, markdown) {
             const isF = asset._type === 'factory';
-            const printArea = document.getElementById('print-area');
-            const printContent = document.getElementById('pdf-content');
-
-            // 1. 填充内容
             document.getElementById('pdfSubTitle').innerText = isF ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
             document.getElementById('pdfSubTitle').style.color = isF ? "#3b82f6" : "#10b981";
             document.getElementById('pdf-asn').innerText = `ASN: ${asset.id}`;
             document.getElementById('pdf-date').innerText = `DATE: ${new Date(asset.created_at).toLocaleString()}`;
-            
-            // 2. 渲染 Markdown 并写入打印层
-            printContent.innerHTML = marked.parse(markdown);
-
-            showNotify("正在调起文本打印引擎...");
-
-            // 3. 关键：给浏览器渲染 HTML 预留时间，确保不为空
-            setTimeout(() => {
-                window.print();
-            }, 300);
+            document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
+            showNotify("正在解析排版，请在弹出窗口选‘另存为 PDF’");
+            setTimeout(() => { window.print(); }, 500);
         }
 
         function initCharts() {
