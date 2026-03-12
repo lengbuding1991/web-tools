@@ -140,6 +140,7 @@
                     console.warn(">> [审计] 令牌已失效，清理环境...");
                     localStorage.removeItem('pudding_token');
                     localStorage.removeItem('pudding_user');
+                    localStorage.removeItem('pudding_email'); // 🚀 核心新增：一并清理邮箱
                     showNotify("凭据已过期，请重新接入网络", "error");
                     setTimeout(() => location.reload(), 1500);
                 });
@@ -168,6 +169,7 @@
                 if (data.token) {
                     localStorage.setItem('pudding_token', data.token);
                     localStorage.setItem('pudding_user', data.username || "Architect");
+                    localStorage.setItem('pudding_email', document.getElementById('authEmail').value); // 🚀 核心新增：把邮箱存入本地
                     showNotify("身份协议同步成功！", "success");
                     setTimeout(() => location.reload(), 1000);
                 } else { 
@@ -181,7 +183,7 @@
         });
 
         function handleLogout() { 
-            localStorage.clear(); 
+            localStorage.clear(); // 🚀 原本的 clear() 会自动把邮箱一起清掉，非常完美
             showNotify("正在注销终端...", "info");
             setTimeout(() => location.reload(), 800);
         }
