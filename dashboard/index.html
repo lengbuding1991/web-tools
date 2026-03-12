@@ -17,7 +17,7 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 统计卡片与资产卡片样式保持一致... */
+        /* UI 卡片样式保持 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s; cursor: pointer; }
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
         .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); position: relative; }
@@ -30,18 +30,24 @@
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* 🚀 文本 PDF 打印室核心样式 */
+        /* 🚀 核心：强力文本 PDF 打印适配 */
         @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #1a1a1a !important; background: white !important; padding: 0; }
-            .no-print { display: none !important; }
-            pre { white-space: pre-wrap !important; word-wrap: break-word !important; }
-            .prose { max-width: none !important; color: #333 !important; }
-            a { color: #3b82f6 !important; text-decoration: underline; }
+            /* 1. 隐藏所有 UI 元素 */
+            body > *:not(#print-area) { display: none !important; }
+            #viewModal, #lockscreen, #notify-container, nav, header, main, section { display: none !important; }
+            
+            /* 2. 强制显示打印区域 */
+            #print-area { display: block !important; visibility: visible !important; position: static !important; width: 100% !important; background: white !important; color: #000 !important; }
+            .prose { max-width: none !important; color: #111 !important; }
+            pre { white-space: pre-wrap !important; word-wrap: break-word !important; background: #f4f4f4 !important; color: #000 !important; }
+            a { text-decoration: underline !important; color: #3b82f6 !important; }
+            
+            /* 3. 移除页眉页脚默认 URL（由浏览器控制） */
+            @page { margin: 2cm; }
         }
 
-        #print-area { display: none; } /* 屏幕显示时隐藏 */
+        /* 屏幕显示时彻底隐藏打印层 */
+        #print-area { display: none; }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
@@ -50,27 +56,27 @@
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
 
     <div id="print-area">
-        <div style="padding: 40px; border-bottom: 3px solid #a855f7; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div style="padding: 20px 0; border-bottom: 4px solid #a855f7; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
             <div>
-                <h1 style="margin:0; font-size:28px; color: #000;" id="pdfTitle">布丁实验室资产报告</h1>
-                <p style="color:#a855f7; margin-top:5px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;" id="pdfSubTitle">Confidential Asset Report</p>
+                <h1 style="margin:0; font-size:32px; color: #000; font-family: sans-serif;">布丁实验室 - 资产报告</h1>
+                <p style="color:#a855f7; margin-top:8px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;" id="pdfSubTitle">CONFIDENTIAL_ASSET_REPORT</p>
             </div>
             <div style="text-align:right;">
-                <p id="pdf-asn" style="margin:0; font-weight:bold; color: #000;"></p>
+                <p id="pdf-asn" style="margin:0; font-weight:bold; font-size: 14px; color: #000;"></p>
                 <p id="pdf-date" style="margin:0; font-size:12px; color:#666;"></p>
             </div>
         </div>
         
-        <div id="pdf-content" class="prose prose-slate max-w-none" style="padding: 40px; color: #333;"></div>
+        <div id="pdf-content" class="prose prose-slate max-w-none" style="min-height: 500px;"></div>
         
-        <div style="margin-top: 50px; padding: 30px 40px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 11px; color: #999;">
+        <div style="margin-top: 80px; padding-top: 30px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 12px; color: #666; font-family: monospace;">
             <div>
-                <p style="margin:0; font-weight: bold; color: #666;">HUB: https://tools.lbuding.com</p>
-                <p style="margin:5px 0 0 0;">WECHAT: lengbuding0101</p>
+                <p style="margin:0;">HUB: <strong>https://tools.lbuding.com</strong></p>
+                <p style="margin:5px 0 0 0;">WECHAT: <strong>lengbuding0101</strong></p>
             </div>
             <div style="text-align: right;">
-                <p style="margin:0;">本文件由布丁实验室系统生成</p>
-                <p style="margin:5px 0 0 0;">© Pudding Lab Confidential</p>
+                <p style="margin:0;">SECURE_DOCUMENT_GENERATED</p>
+                <p style="margin:5px 0 0 0;">© Pudding Lab All Rights Reserved</p>
             </div>
         </div>
     </div>
@@ -82,42 +88,28 @@
                 <div><h1 class="text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1><p class="text-[10px] text-purple-400 font-bold mono uppercase tracking-[0.4em]" id="opName">LOADING...</p></div>
             </div>
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64 bg-slate-900 border-none text-white">
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64 bg-slate-900 border-none text-white focus:ring-1 ring-purple-500 outline-none">
                 <div class="flex gap-2">
-                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase hover:text-white transition-all">返回基地</a>
-                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase hover:bg-purple-600">刷新资产</button>
+                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
+                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">刷新资产</button>
                 </div>
             </div>
         </header>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 glass-panel p-8 rounded-[2.5rem]">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest mb-8">生产效率监测</div>
-                <div class="h-56"><canvas id="trendChart"></canvas></div>
-            </div>
-            <div class="glass-panel p-8 rounded-[2.5rem] flex flex-col items-center">
-                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest mb-8 self-start">资产构成</div>
-                <div class="relative w-full h-full flex items-center justify-center">
-                    <canvas id="typeChart"></canvas>
-                    <div class="absolute flex flex-col items-center">
-                        <span class="text-2xl font-black text-white" id="totalAssetCount">0</span>
-                    </div>
-                </div>
-            </div>
+            <div class="lg:col-span-2 glass-panel p-8 rounded-[2.5rem]"><div class="h-56"><canvas id="trendChart"></canvas></div></div>
+            <div class="glass-panel p-8 rounded-[2.5rem] flex items-center justify-center relative"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
         </section>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div onclick="setFilter('all')" id="filter-all" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 active">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存</div>
-                <div class="text-4xl font-black text-white italic" id="stat-all">0</div>
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存</div><div class="text-4xl font-black text-white italic" id="stat-all">0</div>
             </div>
             <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-blue-500/30">
-                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图</div>
-                <div class="text-4xl font-black text-white" id="stat-factory">0</div>
+                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图</div><div class="text-4xl font-black text-white" id="stat-factory">0</div>
             </div>
             <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-emerald-500/30">
-                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达情报</div>
-                <div class="text-4xl font-black text-white" id="stat-radar">0</div>
+                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达情报</div><div class="text-4xl font-black text-white" id="stat-radar">0</div>
             </div>
         </div>
 
@@ -127,10 +119,10 @@
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex justify-between items-center mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Vault_Decrypted</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Asset_Decrypted_v3.3</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出文本 PDF 报告</button>
-                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600">关闭</button>
+                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出文本级 PDF</button>
+                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
                 </div>
             </div>
             <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4 scroll-smooth"></div>
@@ -172,7 +164,7 @@
                 globalData.factory = data.factory || []; globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
-                if (isManual) showNotify("云端同步完成");
+                if (isManual) showNotify("同步完成");
             } catch (err) { showNotify("同步失败", "error"); }
         }
 
@@ -194,7 +186,7 @@
                 card.innerHTML = `<button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
                     <div class="flex justify-between items-start mb-6"><span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span><span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span></div>
                     <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">DECRYPT_ASN_${item.id} →</div>`;
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">VIEW_ASN_${item.id} →</div>`;
                 grid.appendChild(card);
             });
         }
@@ -205,22 +197,30 @@
             document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('pdfBtn').onclick = () => generateTextPDF(activeAsset, content);
+            document.getElementById('pdfBtn').onclick = () => generatePrintPDF(activeAsset, content);
         }
 
-        // 🚀 核心：文本级 PDF 渲染引擎
-        function generateTextPDF(asset, markdown) {
+        // 🚀 强力打印逻辑：解决内容为空的问题
+        function generatePrintPDF(asset, markdown) {
             const isF = asset._type === 'factory';
-            document.getElementById('pdfTitle').innerText = isF ? "布丁实验室 - 价值资产蓝图" : "布丁实验室 - 全球套利情报";
-            document.getElementById('pdfSubTitle').innerText = isF ? "Confidential Blueprint Asset" : "Confidential Arbitrage Intelligence";
+            const printArea = document.getElementById('print-area');
+            const printContent = document.getElementById('pdf-content');
+
+            // 1. 填充内容
+            document.getElementById('pdfSubTitle').innerText = isF ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
             document.getElementById('pdfSubTitle').style.color = isF ? "#3b82f6" : "#10b981";
             document.getElementById('pdf-asn').innerText = `ASN: ${asset.id}`;
             document.getElementById('pdf-date').innerText = `DATE: ${new Date(asset.created_at).toLocaleString()}`;
-            document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
             
-            // 唤醒系统打印桥接
-            window.print();
-            showNotify("已调起文本级打印引擎");
+            // 2. 渲染 Markdown 并写入打印层
+            printContent.innerHTML = marked.parse(markdown);
+
+            showNotify("正在调起文本打印引擎...");
+
+            // 3. 关键：给浏览器渲染 HTML 预留时间，确保不为空
+            setTimeout(() => {
+                window.print();
+            }, 300);
         }
 
         function initCharts() {
@@ -233,7 +233,7 @@
             charts.type = new Chart(ctxType, { type: 'doughnut', data: { labels: ['Factory', 'Radar'], datasets: [{ data: [globalData.factory.length, globalData.radar.length], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        async function handleDelete(e, type, id) { e.stopPropagation(); if (!confirm(`确认物理抹除？`)) return; try { const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, email: localStorage.getItem('pudding_email') }) }); if (res.ok) fetchAssets(true); } catch (err) { } }
+        async function handleDelete(e, type, id) { e.stopPropagation(); if (!confirm(`确认彻底销毁档案 ${id}？`)) return; try { const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, email: localStorage.getItem('pudding_email') }) }); if (res.ok) fetchAssets(true); } catch (err) { } }
         function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
         function setFilter(type) { currentFilter = type; document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active')); document.getElementById(`filter-${type}`).classList.add('active'); renderUI(); }
         function closeModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
