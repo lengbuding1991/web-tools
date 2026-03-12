@@ -44,6 +44,8 @@
                 <button onclick="toggleAuthModal()" class="px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[10px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600/20 transition-all">接入实验室 / CONNECT</button>
             </div>
             <div id="userProfileArea" class="hidden flex items-center gap-4">
+                <a href="/dashboard/" class="px-4 py-1.5 bg-purple-600/10 border border-purple-500/40 rounded-full text-[10px] font-black text-purple-400 uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">进入金库 / DASHBOARD</a>
+                
                 <div class="glass px-4 py-1.5 rounded-full border border-blue-500/20 flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span>
@@ -103,12 +105,7 @@
             const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '💡';
             const title = type === 'error' ? 'SYSTEM_ALERT' : type === 'success' ? 'ACCESS_GRANTED' : 'SYSTEM_INFO';
             
-            card.innerHTML = `
-                <span class="text-xl">${icon}</span>
-                <div>
-                    <div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div>
-                    <div class="leading-tight">${msg}</div>
-                </div>`;
+            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div><div class="leading-tight">${msg}</div></div>`;
             container.appendChild(card);
             
             setTimeout(() => {
@@ -117,30 +114,26 @@
             }, 3000);
         }
 
-        // 🚀 静默审计逻辑：先光速渲染本地数据，后台再慢条斯理地查岗
         function localFastCheckAndAudit() {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
             
             if (t && u) {
-                // 1. 瞬间秒开渲染
                 document.getElementById('authStatusArea').classList.add('hidden');
                 document.getElementById('userProfileArea').classList.remove('hidden');
                 document.getElementById('userName').innerText = u.toUpperCase();
                 document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${u}</span>架构师。`;
 
-                // 2. 发起无感后台请求核对
                 fetch(PROFILE_API, { 
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
                 }).then(res => res.json()).then(data => {
                     if (data.status !== 'authorized') throw new Error("Token Invalid");
                 }).catch(err => {
-                    // 如果被抓包发现伪造或过期，悄悄清理并踢出
                     console.warn(">> [审计] 令牌已失效，清理环境...");
                     localStorage.removeItem('pudding_token');
                     localStorage.removeItem('pudding_user');
-                    localStorage.removeItem('pudding_email'); // 🚀 核心新增：一并清理邮箱
+                    localStorage.removeItem('pudding_email'); 
                     showNotify("凭据已过期，请重新接入网络", "error");
                     setTimeout(() => location.reload(), 1500);
                 });
@@ -169,7 +162,7 @@
                 if (data.token) {
                     localStorage.setItem('pudding_token', data.token);
                     localStorage.setItem('pudding_user', data.username || "Architect");
-                    localStorage.setItem('pudding_email', document.getElementById('authEmail').value); // 🚀 核心新增：把邮箱存入本地
+                    localStorage.setItem('pudding_email', document.getElementById('authEmail').value); 
                     showNotify("身份协议同步成功！", "success");
                     setTimeout(() => location.reload(), 1000);
                 } else { 
@@ -183,7 +176,7 @@
         });
 
         function handleLogout() { 
-            localStorage.clear(); // 🚀 原本的 clear() 会自动把邮箱一起清掉，非常完美
+            localStorage.clear(); 
             showNotify("正在注销终端...", "info");
             setTimeout(() => location.reload(), 800);
         }
