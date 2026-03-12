@@ -117,19 +117,89 @@ window.showConfirmToast = (msg) => {
     });
 };
 
-// 6. 🚀 PDF 引擎
+// 6. 🚀 企业级品牌化 PDF 引擎 (V5.2 Custom)
 window.generateIsolatedPDF = (asset, markdown, type = 'factory') => {
     const themeColor = type === 'factory' ? "#3b82f6" : "#10b981";
+    const reportTag = type === 'factory' ? "VAL_FACTORY_BLUEPRINT" : "GEO_RADAR_INTEL";
+    
     const iframe = document.createElement('iframe');
     iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
     document.body.appendChild(iframe);
+    
     const doc = iframe.contentWindow.document;
-    const printHTML = `<html><head><style>body{background:white;color:#1a1a1a;font-family:sans-serif;padding:40px;margin:0}.header{border-bottom:3px solid ${themeColor};padding-bottom:20px;margin-bottom:30px;display:flex;justify-content:space-between;align-items:flex-end}.markdown-body{line-height:1.7;font-size:11pt}*{box-shadow:none!important;border-radius:0!important;background-clip:padding-box!important}@media print{@page{margin:1.5cm}}</style></head><body><div class="header"><div><h1 style="margin:0">资产报告</h1><p style="color:${themeColor};font-weight:bold">SECURE_DOCUMENT_STREAM</p></div><div style="text-align:right"><p style="margin:0;font-weight:bold">ASN: ${asset.id}</p><p style="margin:0;font-size:9pt;color:#666">${new Date().toLocaleString()}</p></div></div><div class="markdown-body">${marked.parse(markdown)}</div></body></html>`;
-    doc.open(); doc.write(printHTML); doc.close();
-    window.showNotify("解析排版中...");
+    
+    // 注入高度定制的打印模板
+    const printHTML = `
+        <html>
+        <head>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
+                body { background: white; color: #1a1a1a; font-family: sans-serif; padding: 50px 60px; margin: 0; }
+                
+                /* 顶部品牌区 */
+                .header { border-bottom: 2px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+                .brand-title { margin: 0; font-size: 26pt; font-weight: 900; letter-spacing: -1px; }
+                .report-tag { color: ${themeColor}; font-family: 'JetBrains Mono', monospace; font-size: 9pt; font-weight: bold; margin: 5px 0 0 0; }
+                
+                /* 资产元数据 */
+                .meta { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 9pt; color: #666; }
+                .meta b { color: #000; }
+
+                /* 正文区 */
+                .markdown-body { line-height: 1.8; font-size: 11.5pt; min-height: 700px; }
+                .markdown-body h1, .markdown-body h2 { color: #000; margin-top: 1.5em; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; }
+                .markdown-body strong { color: ${themeColor}; }
+                
+                /* 🚀 品牌页脚区 */
+                .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 8.5pt; color: #999; }
+                .footer-links b { color: #333; }
+                .watermark { position: fixed; bottom: 20px; right: 20px; font-size: 60pt; color: rgba(0,0,0,0.03); transform: rotate(-25deg); pointer-events: none; z-index: -1; font-weight: 900; }
+
+                @media print { 
+                    @page { margin: 1.5cm; } 
+                    .markdown-body { min-height: auto; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="watermark">PUDDING</div>
+            
+            <div class="header">
+                <div>
+                    <h1 class="brand-title">布丁实验室资产报告</h1>
+                    <p class="report-tag">${reportTag} // SECURE_ACCESS</p>
+                </div>
+                <div class="meta">
+                    <p>SERIAL_NO: <b>ASN-${asset.id || 'INTERNAL'}</b></p>
+                    <p>GEN_DATE: <b>${new Date().toLocaleString()}</b></p>
+                </div>
+            </div>
+
+            <div class="markdown-body">
+                ${marked.parse(markdown)}
+            </div>
+
+            <div class="footer">
+                <div class="footer-links">
+                    <span>SOURCE: <b>tools.lbuding.com</b></span>
+                    <span style="margin-left: 20px;">WECHAT: <b>lengbuding0101</b></span>
+                </div>
+                <div>© PUDDING LAB CONFIDENTIAL</div>
+            </div>
+        </body>
+        </html>`;
+
+    doc.open();
+    doc.write(printHTML);
+    doc.close();
+
+    window.showNotify("生成专属品牌报告...", "success");
+
     iframe.contentWindow.onload = () => {
-        setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => document.body.removeChild(iframe), 1000); }, 600);
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            setTimeout(() => document.body.removeChild(iframe), 1000);
+        }, 800);
     };
 };
-
-window.handleLogout = () => { localStorage.clear(); location.href = "/"; };
