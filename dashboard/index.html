@@ -31,7 +31,6 @@
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* 修复移动端打印背景色的浏览器属性 */
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
@@ -41,6 +40,20 @@
 
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
+
+    <div id="confirmModal" class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 hidden">
+        <div class="max-w-sm w-full glass-panel p-8 rounded-[2.5rem] border-red-500/20 text-center">
+            <div class="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="text-red-500 text-2xl font-black">!</span>
+            </div>
+            <h3 class="text-white font-black text-xl mb-2">确认销毁档案？</h3>
+            <p class="text-slate-500 text-xs mb-8 leading-relaxed">警告：此操作将永久从云端抹除该项资产记录，物理链路断开后不可找回。</p>
+            <div class="flex gap-4">
+                <button id="cancelConfirm" class="flex-1 py-4 border border-white/5 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:bg-white/5 transition-all">取消 / CANCEL</button>
+                <button id="okConfirm" class="flex-1 py-4 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase hover:bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)] transition-all">确认销毁</button>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-7xl mx-auto space-y-6 md:space-y-12">
         <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 md:pb-10 border-b border-purple-500/10">
@@ -58,8 +71,8 @@
         </header>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem]"><div class="h-48 md:h-56"><canvas id="trendChart"></canvas></div></div>
-            <div class="glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center relative"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
+            <div class="lg:col-span-2 glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl"><div class="h-48 md:h-56"><canvas id="trendChart"></canvas></div></div>
+            <div class="glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center relative shadow-xl"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
         </section>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -79,8 +92,8 @@
 
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-4 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v4.0</div>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 text-white">
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v4.1</div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <button id="pdfBtn" class="flex-1 md:flex-none px-6 py-3 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出无损 PDF</button>
                     <button onclick="closeModal()" class="flex-1 md:flex-none px-6 py-3 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
@@ -106,6 +119,28 @@
             card.innerHTML = `⚡ ${msg}`;
             container.appendChild(card);
             setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3000);
+        }
+
+        // 🚀 新增：Promise 封装的自定义确认框
+        function showConfirm() {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                const okBtn = document.getElementById('okConfirm');
+                const cancelBtn = document.getElementById('cancelConfirm');
+                
+                modal.classList.remove('hidden');
+                
+                const handleOk = () => { cleanup(); resolve(true); };
+                const handleCancel = () => { cleanup(); resolve(false); };
+                const cleanup = () => {
+                    modal.classList.add('hidden');
+                    okBtn.removeEventListener('click', handleOk);
+                    cancelBtn.removeEventListener('click', handleCancel);
+                };
+
+                okBtn.addEventListener('click', handleOk);
+                cancelBtn.addEventListener('click', handleCancel);
+            });
         }
 
         window.onload = () => {
@@ -159,74 +194,17 @@
             document.getElementById('pdfBtn').onclick = () => generateFormattedPrint(activeAsset, content);
         }
 
-        // 🚀 核心修复：隔离沙盒 + 黑边像素消除 (V4.0)
         function generateFormattedPrint(asset, markdown) {
-            const isF = asset._type === 'factory';
-            const themeColor = isF ? "#3b82f6" : "#10b981";
-            const subTitle = isF ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
-
+            const isF = asset._type === 'factory', themeColor = isF ? "#3b82f6" : "#10b981", subTitle = isF ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
             const iframe = document.createElement('iframe');
             iframe.style.position = 'fixed'; iframe.style.right = '0'; iframe.style.bottom = '0';
             iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0';
             document.body.appendChild(iframe);
-
             const doc = iframe.contentWindow.document;
-            const printHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { background: white !important; color: #1a1a1a !important; font-family: -apple-system, sans-serif; padding: 0; margin: 0; }
-                        .container { padding: 40px; }
-                        .header { border-bottom: 3px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; border-radius: 0 !important; }
-                        .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #888; font-family: monospace; }
-                        
-                        /* Markdown 样式 */
-                        .markdown-body { line-height: 1.7; font-size: 11pt; }
-                        .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; font-weight: bold; border-radius: 0 !important; }
-                        .markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                        .markdown-body strong { font-weight: 800; color: #000; }
-                        .markdown-body ul { padding-left: 1.5em; margin-bottom: 1em; list-style-type: disc; }
-                        .markdown-body li { margin-bottom: 0.5em; }
-                        .markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; box-shadow: none !important; }
-                        
-                        /* 🚀 极致黑边消除 */
-                        * { box-shadow: none !important; text-shadow: none !important; border-radius: 0 !important; background-clip: padding-box !important; }
-                        
-                        @media print { @page { margin: 1.5cm; } .container { padding: 0; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <div>
-                                <h1 style="margin:0; font-size:24pt; color: black;">布丁实验室 - 资产报告</h1>
-                                <p style="color:${themeColor}; margin:5px 0 0 0; font-weight:bold; font-size:10pt; letter-spacing:1px;">${subTitle}</p>
-                            </div>
-                            <div style="text-align:right;">
-                                <p style="margin:0; font-weight:bold; font-size:12pt;">ASN: ${asset.id}</p>
-                                <p style="margin:0; font-size:9pt; color:#666;">DATE: ${new Date(asset.created_at).toLocaleString()}</p>
-                            </div>
-                        </div>
-                        <div class="markdown-body">${marked.parse(markdown)}</div>
-                        <div class="footer">
-                            <div>HUB: https://tools.lbuding.com | WECHAT: lengbuding0101</div>
-                            <div>SECURE_DOC_V4.0 © Pudding Lab</div>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `;
-
+            const printHTML = `<html><head><style>body { background: white !important; color: #1a1a1a !important; font-family: sans-serif; padding: 40px; margin: 0; }.header { border-bottom: 3px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }.footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #888; font-family: monospace; }.markdown-body { line-height: 1.7; font-size: 11pt; }.markdown-body h1, .markdown-body h2, .markdown-body h3 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; font-weight: bold; }.markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; }.markdown-body strong { font-weight: 800; color: #000; }.markdown-body ul { padding-left: 1.5em; margin-bottom: 1em; list-style-type: disc; }.markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }* { box-shadow: none !important; text-shadow: none !important; border-radius: 0 !important; background-clip: padding-box !important; }@media print { @page { margin: 1.5cm; } .container { padding: 0; } }</style></head><body><div class="container"><div class="header"><div><h1 style="margin:0; font-size:24pt; color: black;">布丁实验室 - 资产报告</h1><p style="color:${themeColor}; margin:5px 0 0 0; font-weight:bold; font-size:10pt; letter-spacing:1px;">${subTitle}</p></div><div style="text-align:right;"><p style="margin:0; font-weight:bold; font-size:12pt;">ASN: ${asset.id}</p><p style="margin:0; font-size:9pt; color:#666;">DATE: ${new Date(asset.created_at).toLocaleString()}</p></div></div><div class="markdown-body">${marked.parse(markdown)}</div><div class="footer"><div>HUB: https://tools.lbuding.com | WECHAT: lengbuding0101</div><div>SECURE_DOC_V4.1 © Pudding Lab</div></div></div></body></html>`;
             doc.open(); doc.write(printHTML); doc.close();
-            showNotify("正在解析情报图谱...");
-            iframe.contentWindow.onload = () => {
-                setTimeout(() => {
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
-                }, 600);
-            };
+            showNotify("正在解析排版...");
+            iframe.contentWindow.onload = () => { setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 1000); }, 600); };
         }
 
         function initCharts() {
@@ -238,7 +216,21 @@
             charts.type = new Chart(ctxType, { type: 'doughnut', data: { labels: ['Factory', 'Radar'], datasets: [{ data: [globalData.factory.length, globalData.radar.length], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        async function handleDelete(e, type, id) { e.stopPropagation(); if (!confirm(`销毁 ID: ${id}？`)) return; try { const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type, email: localStorage.getItem('pudding_email') }) }); if (res.ok) fetchAssets(true); } catch (err) { } }
+        // 🚀 修改：使用自定义确认框逻辑
+        async function handleDelete(e, type, id) { 
+            e.stopPropagation(); 
+            
+            // 调用自定义确认对话框
+            const confirmed = await showConfirm();
+            if (!confirmed) return; 
+
+            const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
+            try {
+                const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
+                if (res.ok) { fetchAssets(true); showNotify("资产已销毁"); }
+            } catch (err) { showNotify("操作失败"); } 
+        }
+
         function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
         function setFilter(type) { currentFilter = type; document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active')); document.getElementById(`filter-${type}`).classList.add('active'); renderUI(); }
         function closeModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
