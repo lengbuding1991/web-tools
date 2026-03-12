@@ -9,20 +9,16 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --vault-purple: #a855f7; --bg-dark: #020617; }
-        
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); }
         .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
         .asset-card:hover { transform: translateY(-5px); border-color: var(--vault-purple); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.2); }
-        
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
-        
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
@@ -48,7 +44,7 @@
             </div>
             <div class="flex items-center gap-4">
                 <a href="/" class="px-6 py-2.5 bg-slate-800/50 border border-white/10 rounded-full text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all">返回基地</a>
-                <button onclick="fetchAssets()" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">同步资产</button>
+                <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">刷新资产库</button>
             </div>
         </header>
 
@@ -72,26 +68,22 @@
                 <h3 class="text-xs font-black text-blue-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
                     <span class="w-2 h-2 bg-blue-500 rounded-full"></span> 灵感价值工厂资产
                 </h3>
-                <div id="factoryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="col-span-full py-10 text-center mono text-slate-700">档案提取中...</div>
-                </div>
+                <div id="factoryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
             </section>
 
             <section>
                 <h3 class="text-xs font-black text-emerald-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
                     <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> 全球套利雷达情报
                 </h3>
-                <div id="radarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="col-span-full py-10 text-center mono text-slate-700">信号同步中...</div>
-                </div>
+                <div id="radarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
             </section>
         </main>
     </div>
 
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Decrypted_Asset_View</div>
+            <div class="flex justify-between items-center mb-10 shrink-0">
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Encrypted_Asset_v2.2</div>
                 <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-xs font-bold text-slate-400 hover:bg-red-600 hover:text-white transition-all">关闭 / CLOSE</button>
             </div>
             <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none scroll-smooth"></div>
@@ -100,7 +92,6 @@
 
     <script>
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
-
         let globalData = { factory: [], radar: [] };
 
         function showNotify(msg, type = 'success') {
@@ -117,24 +108,40 @@
             const e = localStorage.getItem('pudding_email');
             const u = localStorage.getItem('pudding_user');
             const r = localStorage.getItem('pudding_role');
+            const cachedAssets = localStorage.getItem('pudding_assets');
 
             if (!t || !e) { window.location.href = "/"; return; }
 
-            // 1. 【瞬时加载】渲染本地已知的数据
+            // 1. 【瞬时恢复环境】
             document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
             if (r) document.getElementById('stat-role').innerText = r.toUpperCase();
             
-            // 2. 【快速解锁】不再发起多余的 Profile 审计请求
+            // 2. 【核心优化：检查缓存】
+            if (cachedAssets) {
+                console.log(">> 正在从本地记忆提取资产...");
+                globalData = JSON.parse(cachedAssets);
+                updateUI();
+                showNotify("本地加密备份已加载");
+            } else {
+                fetchAssets(false); // 没缓存才去拉
+            }
+
+            // 3. 【极速解锁】
             setTimeout(() => {
                 document.getElementById('lockscreen').style.opacity = '0';
                 setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 400);
-                fetchAssets(); 
             }, 300);
         };
 
-        async function fetchAssets() {
+        async function fetchAssets(isManual = false) {
             const t = localStorage.getItem('pudding_token');
             const e = localStorage.getItem('pudding_email');
+            const btn = document.getElementById('syncBtn');
+
+            if (isManual) {
+                btn.innerText = "信号同步中...";
+                btn.disabled = true;
+            }
             
             try {
                 const res = await fetch(ASSETS_API, {
@@ -143,32 +150,40 @@
                     body: JSON.stringify({ email: e })
                 });
 
-                // 如果资产拉取都报 401，才说明真的被登出了
                 if (res.status === 401) {
-                    showNotify("身份凭据过期", "error");
-                    setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 1500);
-                    return;
+                    localStorage.clear(); window.location.href = "/"; return;
                 }
 
                 const data = await res.json();
                 
+                // 3. 【存入本地记忆】
                 globalData.factory = data.factory || [];
                 globalData.radar = data.radar || [];
+                localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 
-                document.getElementById('stat-factory').innerText = `${globalData.factory.length} UNITS`;
-                document.getElementById('stat-radar').innerText = `${globalData.radar.length} UNITS`;
-                
-                renderGrid('factoryGrid', globalData.factory, 'factory');
-                renderGrid('radarGrid', globalData.radar, 'radar');
+                updateUI();
+                if (isManual) showNotify("云端同步完成，记忆已更新");
             } catch (err) {
-                showNotify("数据同步暂时受阻，请检查网络", "error");
+                showNotify("同步失败，请检查 NAS 状态", "error");
+            } finally {
+                if (isManual) {
+                    btn.innerText = "刷新资产库";
+                    btn.disabled = false;
+                }
             }
+        }
+
+        function updateUI() {
+            document.getElementById('stat-factory').innerText = `${globalData.factory.length} UNITS`;
+            document.getElementById('stat-radar').innerText = `${globalData.radar.length} UNITS`;
+            renderGrid('factoryGrid', globalData.factory, 'factory');
+            renderGrid('radarGrid', globalData.radar, 'radar');
         }
 
         function renderGrid(containerId, data, type) {
             const grid = document.getElementById(containerId);
             if (!data || data.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/5 rounded-2xl opacity-30 mono text-xs uppercase">No_Data_Found</div>`;
+                grid.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/5 rounded-2xl opacity-30 mono text-xs uppercase">No_Archive_Found</div>`;
                 return;
             }
             const isFactory = type === 'factory';
@@ -186,7 +201,7 @@
                     </div>
                     <h4 class="text-white font-black text-xl mb-4 line-clamp-2 leading-tight uppercase tracking-tight">${title}</h4>
                     <div class="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
-                        <span class="text-[10px] mono ${accentColor} font-bold tracking-tighter">DECRYPT →</span>
+                        <span class="text-[10px] mono ${accentColor} font-bold tracking-tighter italic">DECRYPT →</span>
                     </div>
                 </div>`;
             }).join('');
@@ -194,7 +209,7 @@
 
         function openModal(type, index) {
             const item = globalData[type][index];
-            const content = item.blueprint_content || item.report_content || "档案内容损坏。";
+            const content = item.blueprint_content || item.report_content || "档案损坏。";
             document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
