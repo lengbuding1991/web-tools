@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>资产指挥中心 | 布丁实验室</title>
+    <link rel="icon" href="../favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,18 +18,23 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* UI 基础样式 */
+        /* UI 交互样式 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s; cursor: pointer; }
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
         .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .asset-card:hover { border-color: var(--vault-purple); transform: scale(1.02); }
-        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0; color: #64748b; }
-        .asset-card:hover .shredder-btn { opacity: 0.6; }
+        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0.4; color: #64748b; transition: all 0.2s; }
+        .shredder-btn:hover { opacity: 1; color: #ef4444; }
         
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* 修复移动端打印背景色的浏览器属性 */
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
@@ -36,51 +42,51 @@
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
 
-    <div class="max-w-7xl mx-auto space-y-12">
-        <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-10 border-b border-purple-500/10">
+    <div class="max-w-7xl mx-auto space-y-6 md:space-y-12">
+        <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 md:pb-10 border-b border-purple-500/10">
             <div class="flex items-center gap-5">
-                <div class="w-16 h-16 bg-purple-600 rounded-[1.5rem] flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
-                <div><h1 class="text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1><p class="text-[10px] text-purple-400 font-bold mono uppercase tracking-[0.4em]" id="opName">LOADING...</p></div>
+                <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
+                <div><h1 class="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1><p class="text-[10px] text-purple-400 font-bold mono uppercase tracking-[0.4em]" id="opName">LOADING...</p></div>
             </div>
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索资产存档..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64 bg-slate-900 border-none text-white outline-none">
-                <div class="flex gap-2">
-                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/10 rounded-full text-[10px] font-black text-slate-400 hover:text-white transition-all shadow-sm uppercase tracking-widest">返回基地</a>
-                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black hover:bg-purple-600 hover:text-white transition-all shadow-sm uppercase tracking-widest">同步云端</button>
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="全库档案检索..." class="px-6 py-3 rounded-full text-xs w-full md:w-64 bg-slate-900 border border-white/5 text-white outline-none focus:ring-1 ring-purple-500">
+                <div class="flex gap-2 w-full md:w-auto">
+                    <a href="/" class="flex-1 text-center px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
+                    <button id="syncBtn" onclick="fetchAssets(true)" class="flex-1 px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white">同步云端</button>
                 </div>
             </div>
         </header>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 glass-panel p-8 rounded-[2.5rem]"><div class="h-56"><canvas id="trendChart"></canvas></div></div>
-            <div class="glass-panel p-8 rounded-[2.5rem] flex items-center justify-center relative"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
+            <div class="lg:col-span-2 glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem]"><div class="h-48 md:h-56"><canvas id="trendChart"></canvas></div></div>
+            <div class="glass-panel p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center relative"><canvas id="typeChart"></canvas><div class="absolute text-2xl font-black text-white" id="totalAssetCount">0</div></div>
         </section>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div onclick="setFilter('all')" id="filter-all" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 active">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存 / TOTAL</div><div class="text-4xl font-black text-white italic" id="stat-all">0</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <div onclick="setFilter('all')" id="filter-all" class="stat-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-between h-32 md:h-40 active">
+                <div class="text-[9px] mono text-purple-400 uppercase tracking-widest">全量库存 / TOTAL</div><div class="text-3xl md:text-4xl font-black text-white italic" id="stat-all">0</div>
             </div>
-            <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-blue-500/30">
-                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / FACTORY</div><div class="text-4xl font-black text-white" id="stat-factory">0</div>
+            <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-between h-32 md:h-40 border-blue-500/30">
+                <div class="text-[9px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / FACTORY</div><div class="text-3xl md:text-4xl font-black text-white" id="stat-factory">0</div>
             </div>
-            <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-emerald-500/30">
-                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / RADAR</div><div class="text-4xl font-black text-white" id="stat-radar">0</div>
+            <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-between h-32 md:h-40 border-emerald-500/30">
+                <div class="text-[9px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / RADAR</div><div class="text-3xl md:text-4xl font-black text-white" id="stat-radar">0</div>
             </div>
         </div>
 
-        <main id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32"></main>
+        <main id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pb-32"></main>
     </div>
 
-    <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-6 md:p-12 hidden">
+    <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-4 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v3.9</div>
-                <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 Markdown PDF</button>
-                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v4.0</div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button id="pdfBtn" class="flex-1 md:flex-none px-6 py-3 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出无损 PDF</button>
+                    <button onclick="closeModal()" class="flex-1 md:flex-none px-6 py-3 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
                 </div>
             </div>
-            <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4 scroll-smooth"></div>
+            <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-2 scroll-smooth"></div>
         </div>
     </div>
 
@@ -90,8 +96,7 @@
 
         let globalData = { factory: [], radar: [] };
         let activeAsset = null;
-        let currentFilter = 'all';
-        let currentSearch = '';
+        let currentFilter = 'all', currentSearch = '';
         let charts = { trend: null, type: null };
 
         function showNotify(msg) {
@@ -119,8 +124,8 @@
                 globalData.factory = data.factory || []; globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
-                if (isManual) showNotify("同步完成");
-            } catch (err) { showNotify("同步受阻"); }
+                if (isManual) showNotify("数据已同步");
+            } catch (err) { showNotify("链路阻塞"); }
         }
 
         function renderUI() {
@@ -133,15 +138,14 @@
             const allItems = [...globalData.factory.map((item, i) => ({ ...item, _type: 'factory', _idx: i })), ...globalData.radar.map((item, i) => ({ ...item, _type: 'radar', _idx: i }))].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             const filtered = allItems.filter(item => (currentFilter === 'all' || item._type === currentFilter) && (item.sector || item.location || "").toLowerCase().includes(currentSearch));
             filtered.forEach(item => {
-                const isF = item._type === 'factory';
-                const accent = isF ? 'text-blue-500' : 'text-emerald-500';
+                const isF = item._type === 'factory', accent = isF ? 'text-blue-500' : 'text-emerald-500';
                 const card = document.createElement('div');
-                card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border border-white/5`;
+                card.className = `glass-panel p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] asset-card border border-white/5`;
                 card.onclick = () => openModal(item._type, item._idx);
                 card.innerHTML = `<button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
                     <div class="flex justify-between items-start mb-6"><span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span><span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span></div>
-                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">ASN_${item.id} →</div>`;
+                    <h4 class="text-white font-black text-lg md:text-xl mb-4 line-clamp-2 uppercase leading-tight">${isF ? item.sector : item.location}</h4>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic tracking-wider">ASN_${item.id} DECRYPT →</div>`;
                 grid.appendChild(card);
             });
         }
@@ -155,7 +159,7 @@
             document.getElementById('pdfBtn').onclick = () => generateFormattedPrint(activeAsset, content);
         }
 
-        // 🚀 核心修复：注入 Markdown 专属样式到虚拟沙盒 (V3.9)
+        // 🚀 核心修复：隔离沙盒 + 黑边像素消除 (V4.0)
         function generateFormattedPrint(asset, markdown) {
             const isF = asset._type === 'factory';
             const themeColor = isF ? "#3b82f6" : "#10b981";
@@ -172,23 +176,22 @@
                 <html>
                 <head>
                     <style>
-                        body { background: white !important; color: #1a1a1a !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 0; margin: 0; }
+                        body { background: white !important; color: #1a1a1a !important; font-family: -apple-system, sans-serif; padding: 0; margin: 0; }
                         .container { padding: 40px; }
-                        .header { border-bottom: 4px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+                        .header { border-bottom: 3px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; border-radius: 0 !important; }
                         .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #888; font-family: monospace; }
                         
-                        /* 🚀 注入 Markdown 样式 */
+                        /* Markdown 样式 */
                         .markdown-body { line-height: 1.7; font-size: 11pt; }
-                        .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; font-weight: bold; }
-                        .markdown-body h1 { font-size: 1.8em; }
-                        .markdown-body h2 { font-size: 1.4em; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                        .markdown-body p { margin-bottom: 1em; }
+                        .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; font-weight: bold; border-radius: 0 !important; }
+                        .markdown-body h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; }
                         .markdown-body strong { font-weight: 800; color: #000; }
-                        .markdown-body ul, .markdown-body ol { padding-left: 2em; margin-bottom: 1em; }
+                        .markdown-body ul { padding-left: 1.5em; margin-bottom: 1em; list-style-type: disc; }
                         .markdown-body li { margin-bottom: 0.5em; }
-                        .markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 85%; overflow: auto; white-space: pre-wrap; }
-                        .markdown-body code { background: rgba(175,184,193,0.2); padding: 0.2em 0.4em; border-radius: 6px; font-family: monospace; }
-                        .markdown-body blockquote { border-left: 4px solid #dfe2e5; color: #6a737d; padding: 0 1em; margin: 0 0 1em 0; }
+                        .markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; box-shadow: none !important; }
+                        
+                        /* 🚀 极致黑边消除 */
+                        * { box-shadow: none !important; text-shadow: none !important; border-radius: 0 !important; background-clip: padding-box !important; }
                         
                         @media print { @page { margin: 1.5cm; } .container { padding: 0; } }
                     </style>
@@ -208,7 +211,7 @@
                         <div class="markdown-body">${marked.parse(markdown)}</div>
                         <div class="footer">
                             <div>HUB: https://tools.lbuding.com | WECHAT: lengbuding0101</div>
-                            <div>SECURE_DOC_V3.9 © Pudding Lab</div>
+                            <div>SECURE_DOC_V4.0 © Pudding Lab</div>
                         </div>
                     </div>
                 </body>
@@ -216,9 +219,7 @@
             `;
 
             doc.open(); doc.write(printHTML); doc.close();
-
-            showNotify("正在注入渲染引擎，请稍候...");
-
+            showNotify("正在解析情报图谱...");
             iframe.contentWindow.onload = () => {
                 setTimeout(() => {
                     iframe.contentWindow.focus();
@@ -229,12 +230,11 @@
         }
 
         function initCharts() {
-            const ctxTrend = document.getElementById('trendChart').getContext('2d');
-            const ctxType = document.getElementById('typeChart').getContext('2d');
+            const ctxTrend = document.getElementById('trendChart').getContext('2d'), ctxType = document.getElementById('typeChart').getContext('2d');
             if(charts.trend) charts.trend.destroy(); if(charts.type) charts.type.destroy();
             const days = Array.from({length: 7}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return d.toISOString().split('T')[0]; }).reverse();
             const counts = days.map(day => [...globalData.factory, ...globalData.radar].filter(i => i.created_at.startsWith(day)).length);
-            charts.trend = new Chart(ctxTrend, { type: 'line', data: { labels: days.map(d => d.slice(5)), datasets: [{ data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' } } } } });
+            charts.trend = new Chart(ctxTrend, { type: 'line', data: { labels: days.map(d => d.slice(5)), datasets: [{ data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { stepSize: 1 } } } } });
             charts.type = new Chart(ctxType, { type: 'doughnut', data: { labels: ['Factory', 'Radar'], datasets: [{ data: [globalData.factory.length, globalData.radar.length], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
