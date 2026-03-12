@@ -7,24 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap');
-        :root { --main-blue: #3b82f6; --bg-dark: #020617; }
+        :root { --main-blue: #3b82f6; --bg-dark: #020617; --vault-purple: #a855f7; }
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 0); background-size: 40px 40px; }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glow-text { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        
+        /* 情报墙动画 */
+        .pulse-wall { border-left: 2px solid var(--main-blue); padding-left: 20px; position: relative; }
+        .pulse-item { animation: slideUpFade 0.6s ease-out forwards; opacity: 0; }
+        @keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
         input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
-        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
-        .notify-success { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-        .notify-info { border-color: #3b82f6; color: #bfdbfe; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .notify-error { border-color: #ef4444; color: #fca5a5; }
+        .notify-success { border-color: #10b981; color: #a7f3d0; }
+        
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.2); }
         ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 3px; }
     </style>
 </head>
@@ -45,75 +50,140 @@
             </div>
             <div id="userProfileArea" class="hidden flex items-center gap-4">
                 <a href="/dashboard/" class="px-4 py-1.5 bg-purple-600/10 border border-purple-500/40 rounded-full text-[10px] font-black text-purple-400 uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">进入金库 / DASHBOARD</a>
-                
                 <div class="glass px-4 py-1.5 rounded-full border border-blue-500/20 flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-bold text-blue-400 mono" id="userName">ARCHITECT</span>
+                    <span class="text-[10px] font-bold text-blue-400 mono uppercase" id="userName">ARCHITECT</span>
                 </div>
                 <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
             </div>
         </div>
     </nav>
 
-    <header class="max-w-7xl mx-auto w-full pt-32 px-8">
-        <h2 id="welcomeTitle" class="text-5xl md:text-8xl font-black tracking-tighter text-white leading-[0.9]">折腾出<br><span class="text-blue-500 italic glow-text">真实价值。</span></h2>
-        <p class="mt-8 text-slate-400 max-w-xl text-sm leading-relaxed">基于先进算力与自动化逻辑，将灵感与地理优势转化为硬核资产的极客试验场。</p>
+    <header class="max-w-7xl mx-auto w-full pt-20 pb-10 px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+            <h2 id="welcomeTitle" class="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.9]">
+                折腾出<br><span class="text-blue-500 italic glow-text">真实价值。</span>
+            </h2>
+            <p class="mt-8 text-slate-400 max-w-xl text-sm leading-relaxed">基于 DeepSeek 算力与地理套利逻辑，将灵感转化为硬核资产的极客试验场。</p>
+        </div>
+
+        <div class="glass p-8 rounded-[2rem] border-white/5 relative overflow-hidden h-64 flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-[10px] font-black text-blue-500 mono tracking-widest uppercase flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping"></span> [智算] 实验室情报脉动
+                </span>
+                <span class="text-[9px] text-slate-600 mono" id="wallStatus">OFFLINE</span>
+            </div>
+            <div id="intelligenceWall" class="flex-1 space-y-4 mono text-[11px] overflow-hidden">
+                <div class="text-slate-700 italic">> 正在等待特工凭证接入...</div>
+                <div class="text-slate-700 italic">> 卫星链路待机中...</div>
+            </div>
+            <div class="absolute bottom-[-20px] right-[-10px] text-[80px] font-black text-white/[0.02] pointer-events-none select-none">PUDDING</div>
+        </div>
     </header>
 
-    <main class="max-w-7xl mx-auto w-full px-8 py-20 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <a href="/factory/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all">
-            <div class="w-12 h-12 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-2xl">⚡</div>
+    <main class="max-w-7xl mx-auto w-full px-8 py-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <a href="/factory/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.2)] transition-all">
+            <div class="w-14 h-14 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">⚡</div>
             <div>
-                <h3 class="text-2xl font-black text-white mb-2">灵感价值工厂</h3>
-                <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform inline-block">进入车间 →</span>
+                <h3 class="text-3xl font-black text-white mb-2 tracking-tight">灵感价值工厂</h3>
+                <p class="text-[10px] text-slate-500 mb-4 uppercase mono">Inspiration_Processing_Unit</p>
+                <span class="text-blue-500 text-xs font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform inline-block">进入车间 / ENTER →</span>
             </div>
         </a>
-        <a href="/radar/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-emerald-500/50 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] transition-all">
-            <div class="w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">🌍</div>
+        <a href="/radar/" class="glass p-10 rounded-[2.5rem] flex flex-col justify-between h-80 border border-white/5 group hover:border-emerald-500/50 hover:shadow-[0_0_40px_rgba(16,185,129,0.2)] transition-all">
+            <div class="w-14 h-14 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🌍</div>
             <div>
-                <h3 class="text-2xl font-black text-white mb-2">全球套利雷达</h3>
-                <span class="text-emerald-500 text-[10px] font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform inline-block">启动扫描 →</span>
+                <h3 class="text-3xl font-black text-white mb-2 tracking-tight">全球套利雷达</h3>
+                <p class="text-[10px] text-slate-500 mb-4 uppercase mono">Geo_Arbitrage_Scanner</p>
+                <span class="text-emerald-500 text-xs font-black uppercase tracking-widest group-hover:translate-x-2 transition-transform inline-block">启动扫描 / SCAN →</span>
             </div>
         </a>
     </main>
 
-    <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
+    <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl hidden">
         <div class="w-full max-w-md glass p-10 rounded-[3rem] border-blue-500/30">
             <h3 id="modalTitle" class="text-3xl font-black text-white mb-8 italic">实验室身份接入</h3>
             <form id="authForm" class="space-y-4">
-                <input type="email" id="authEmail" placeholder="邮箱" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
-                <input type="password" id="authPassword" placeholder="密钥" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
-                <div id="registerFields" class="hidden"><input type="text" id="authUsername" placeholder="代号" class="w-full px-6 py-4 rounded-xl text-sm outline-none mt-4"></div>
-                <button type="submit" id="authSubmit" class="w-full py-5 mt-4 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-widest hover:bg-blue-500 active:scale-95 transition-all">确认接入</button>
+                <input type="email" id="authEmail" placeholder="认证邮箱" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                <input type="password" id="authPassword" placeholder="访问密钥" required class="w-full px-6 py-4 rounded-xl text-sm outline-none">
+                <div id="registerFields" class="hidden">
+                    <input type="text" id="authUsername" placeholder="特工代号 (例: Architect)" class="w-full px-6 py-4 rounded-xl text-sm outline-none mt-4">
+                </div>
+                <button type="submit" id="authSubmit" class="w-full py-5 mt-4 bg-blue-600 text-white font-black rounded-xl text-xs uppercase tracking-[0.3em] hover:bg-blue-500 active:scale-95 transition-all shadow-lg">确认接入 / ACCESS</button>
             </form>
-            <div class="flex justify-between mt-8 pt-4 border-t border-white/10">
-                <button onclick="toggleRegMode()" class="text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase">申请加入 / APPLY</button>
-                <button onclick="toggleAuthModal()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase">取消</button>
+            <div class="flex justify-between mt-8 pt-6 border-t border-white/10">
+                <button onclick="toggleRegMode()" class="text-[10px] font-bold text-slate-500 hover:text-blue-400 uppercase mono">申请代号 / APPLY</button>
+                <button onclick="toggleAuthModal()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase mono">取消</button>
             </div>
         </div>
     </div>
 
     <script>
         const AUTH_API = "https://nas-n8n.lbuding.com/webhook/auth";
+        const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         let isRegisterMode = false;
 
         function showNotify(msg, type = 'info') {
             const container = document.getElementById('notify-container');
             const card = document.createElement('div');
             card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
-            const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '💡';
-            const title = type === 'error' ? 'SYSTEM_ALERT' : type === 'success' ? 'ACCESS_GRANTED' : 'SYSTEM_INFO';
-            
-            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div><div class="leading-tight">${msg}</div></div>`;
+            const icon = type === 'error' ? '⚠️' : '✅';
+            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="leading-tight">${msg}</div></div>`;
             container.appendChild(card);
-            
-            setTimeout(() => {
-                card.style.animation = 'fadeOut 0.5s forwards';
-                setTimeout(() => card.remove(), 500);
-            }, 3000);
+            setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3000);
         }
 
-        // 🚀 优化后的本地校验：只相信存储，不再实时请求后端，彻底杜绝 429
+        // 🚀 核心：加载视觉情报墙
+        async function loadIntelligenceWall() {
+            const t = localStorage.getItem('pudding_token');
+            const e = localStorage.getItem('pudding_email');
+            const wall = document.getElementById('intelligenceWall');
+            const status = document.getElementById('wallStatus');
+
+            if (!t || !e) return;
+
+            status.innerText = "DECRYPTING...";
+            status.classList.add('text-blue-500');
+
+            try {
+                // 优先从本地缓存拿，如果没有再异步请求
+                let assets = JSON.parse(localStorage.getItem('pudding_assets'));
+                
+                if (!assets) {
+                    const res = await fetch(ASSETS_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
+                        body: JSON.stringify({ email: e })
+                    });
+                    const data = await res.json();
+                    assets = data;
+                }
+
+                const all = [
+                    ...(assets.factory || []).map(i => ({ t: 'FACTORY', n: i.sector })),
+                    ...(assets.radar || []).map(i => ({ t: 'RADAR', n: i.location }))
+                ].slice(0, 3); // 只取前三条
+
+                if (all.length > 0) {
+                    wall.innerHTML = all.map((item, idx) => `
+                        <div class="pulse-item flex items-center gap-3 text-blue-400" style="animation-delay: ${idx * 0.2}s">
+                            <span class="text-slate-600">[${item.t}]</span>
+                            <span class="truncate tracking-wider">${item.n.toUpperCase()}</span>
+                            <span class="text-[8px] opacity-30">LOCKED</span>
+                        </div>
+                    `).join('');
+                    status.innerText = "ACTIVE_FEED";
+                } else {
+                    wall.innerHTML = `<div class="text-slate-600 italic">> 暂无近期情报，等待生产投料...</div>`;
+                    status.innerText = "STANDBY";
+                }
+            } catch (err) {
+                status.innerText = "ENCRYPTED";
+                wall.innerHTML = `<div class="text-red-900/50 italic">> 链路波动，无法建立实时映射。</div>`;
+            }
+        }
+
         function localFastCheck() {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
@@ -123,7 +193,9 @@
                 document.getElementById('userProfileArea').classList.remove('hidden');
                 document.getElementById('userName').innerText = u.toUpperCase();
                 document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${u}</span>架构师。`;
-                // 这里不再执行 fetch(PROFILE_API)，首页秒开且无请求负担
+                
+                // 触发情报墙加载
+                loadIntelligenceWall();
             }
         }
 
@@ -132,7 +204,6 @@
             isRegisterMode = !isRegisterMode; 
             document.getElementById('registerFields').classList.toggle('hidden'); 
             document.getElementById('modalTitle').innerText = isRegisterMode ? "申请特工代号" : "实验室身份接入"; 
-            document.getElementById('authUsername').required = isRegisterMode;
         }
 
         document.getElementById('authForm').addEventListener('submit', async (e) => {
@@ -145,26 +216,20 @@
                     body: JSON.stringify({ action: isRegisterMode ? 'register' : 'login', email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value, username: document.getElementById('authUsername').value }) 
                 });
                 const data = await res.json();
-                
                 if (data.token) {
                     localStorage.setItem('pudding_token', data.token);
                     localStorage.setItem('pudding_user', data.username || "Architect");
                     localStorage.setItem('pudding_email', document.getElementById('authEmail').value); 
-                    showNotify("身份协议同步成功！", "success");
+                    showNotify("接入成功，欢迎进入实验室", "success");
                     setTimeout(() => location.reload(), 1000);
-                } else { 
-                    showNotify(data.message || "接入被拒绝，请核对凭证", "error"); 
-                }
-            } catch (err) { 
-                showNotify("通讯中心无响应，请检查雷达网络", "error"); 
-            } finally { 
-                btn.innerText = "确认接入"; btn.disabled = false; 
-            }
+                } else { showNotify(data.message || "接入拒绝", "error"); }
+            } catch (err) { showNotify("通讯中心无响应", "error"); }
+            finally { btn.innerText = "确认接入 / ACCESS"; btn.disabled = false; }
         });
 
         function handleLogout() { 
             localStorage.clear(); 
-            showNotify("正在注销终端...", "info");
+            showNotify("正在切断链路...", "info");
             setTimeout(() => location.reload(), 800);
         }
         
