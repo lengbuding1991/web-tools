@@ -38,16 +38,7 @@
         ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
         .prose h1, .prose h2, .prose h3 { color: #fff !important; margin-top: 1.5em !important; }
 
-        /* 🚀 核心：文本级 PDF 打印适配 */
-        @media print {
-            body > *:not(#print-area) { display: none !important; }
-            #print-area { display: block !important; visibility: visible !important; position: static !important; width: 100% !important; background: white !important; color: #000 !important; }
-            .prose { max-width: none !important; color: #111 !important; }
-            pre { white-space: pre-wrap !important; word-wrap: break-word !important; background: #f8f8f8 !important; color: #000 !important; border: 1px solid #ddd; padding: 1em; }
-            @page { margin: 2cm; }
-        }
-
-        /* 屏幕显示时隐藏打印层 */
+        /* 🚀 彻底修复空白/黑边的核心：平时隐藏，打印时由iframe接管 */
         #print-area { display: none; }
     </style>
 </head>
@@ -55,31 +46,6 @@
 
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-blue-500 font-bold mono animate-pulse tracking-[1em] text-lg">FACTORY_LINKING...</div></div>
-
-    <div id="print-area">
-        <div style="padding: 20px 0; border-bottom: 4px solid #3b82f6; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
-            <div>
-                <h1 style="margin:0; font-size:32px; color: #000; font-family: sans-serif;">布丁实验室 - 价值资产蓝图</h1>
-                <p style="color:#3b82f6; margin-top:8px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">CONFIDENTIAL_BLUEPRINT_ASSET</p>
-            </div>
-            <div style="text-align:right;">
-                <p id="pdf-date" style="margin:0; font-size:12px; color:#666;"></p>
-            </div>
-        </div>
-        
-        <div id="pdf-content" class="prose prose-slate max-w-none" style="min-height: 500px;"></div>
-        
-        <div style="margin-top: 80px; padding-top: 30px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 12px; color: #666; font-family: monospace;">
-            <div>
-                <p style="margin:0;">HUB: <strong>https://tools.lbuding.com</strong></p>
-                <p style="margin:5px 0 0 0;">WECHAT: <strong>lengbuding0101</strong></p>
-            </div>
-            <div style="text-align: right;">
-                <p style="margin:0;">GENERATED_BY_FACTORY_ENGINE</p>
-                <p style="margin:5px 0 0 0;">© Pudding Lab Confidential</p>
-            </div>
-        </div>
-    </div>
 
     <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5">
         <div class="flex items-center gap-4">
@@ -144,7 +110,7 @@
                     <div class="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                         <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Blueprint_Stability: 98.4%</div>
                         <button onclick="generatePrintPDF()" id="exportBtn" class="px-10 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                            ↓ 导出文本级 PDF 资产
+                            ↓ 导出格式化 PDF 蓝图
                         </button>
                     </div>
                 </div>
@@ -192,6 +158,7 @@
             const btn = document.getElementById('submitBtn');
             btn.innerText = "熔铸中 · 正在压榨算力...";
             btn.disabled = true;
+            addLog("开始提取能力参数...", "text-blue-400");
             addLog("唤醒 DeepSeek 深度算力池...", "text-blue-400");
             
             try {
@@ -211,35 +178,98 @@
 
                 const data = await res.json();
                 if (data.blueprint) {
-                    addLog("价值蓝图熔铸完成。", "text-green-500");
+                    addLog("价值蓝图熔铸完成，正在解码输出...", "text-green-500");
                     document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
                     setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 300);
                 }
             } catch (err) { 
-                showNotify("系统故障", "error");
+                showNotify("生产线故障，请检查 NAS 通信", "error");
+                addLog("致命错误：算力链路断开。", "text-red-500");
             } finally { 
                 btn.innerText = "激发生产线 · 熔铸价值蓝图"; 
                 btn.disabled = false; 
             }
         });
 
-        // 🚀 核心：文本级 PDF 导出引擎
+        // 🚀 核心：V3.9 隔离沙盒文本打印引擎
         function generatePrintPDF() {
-            const printContent = document.getElementById('pdf-content');
-            // 获取当前已经渲染好的 HTML
+            // 获取当前已经渲染好的 HTML 内容
             const markdownHTML = document.getElementById('blueprintContent').innerHTML;
 
-            // 1. 填充元数据与内容
-            document.getElementById('pdf-date').innerText = `DATE: ${new Date().toLocaleString()}`;
-            printContent.innerHTML = markdownHTML;
+            // 1. 创建隐形沙盒 iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
 
-            showNotify("正在调起文本打印引擎，请选择‘另存为PDF’");
+            // 2. 注入纯净的打印样式与 Markdown 格式定义
+            const doc = iframe.contentWindow.document;
+            const printHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { background: white !important; color: #1a1a1a !important; font-family: -apple-system, sans-serif; padding: 40px; margin: 0; }
+                        .header { border-bottom: 4px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+                        .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #888; font-family: monospace; }
+                        
+                        /* Markdown 深度排版适配 */
+                        .markdown-body { line-height: 1.7; font-size: 11pt; }
+                        .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: #000; margin-top: 1.5em; margin-bottom: 0.5em; font-weight: bold; }
+                        .markdown-body h1 { font-size: 1.8em; }
+                        .markdown-body h2 { font-size: 1.4em; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                        .markdown-body p { margin-bottom: 1em; }
+                        .markdown-body strong { font-weight: 800; color: #000; }
+                        .markdown-body ul, .markdown-body ol { padding-left: 2em; margin-bottom: 1em; }
+                        .markdown-body li { margin-bottom: 0.5em; list-style-type: disc; }
+                        .markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 85%; white-space: pre-wrap; }
+                        .markdown-body blockquote { border-left: 4px solid #dfe2e5; color: #6a737d; padding: 0 1em; margin: 0 0 1em 0; }
+                        
+                        @media print { 
+                            @page { margin: 1.5cm; } 
+                            body { padding: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div>
+                            <h1 style="margin:0; font-size:24pt; color: black;">布丁实验室 - 价值资产蓝图</h1>
+                            <p style="color:#3b82f6; margin:5px 0 0 0; font-weight:bold; font-size:10pt; letter-spacing:1px;">CONFIDENTIAL_BLUEPRINT_ASSET</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="margin:0; font-size:9pt; color:#666;">DATE: ${new Date().toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="markdown-body">${markdownHTML}</div>
+                    <div class="footer">
+                        <div>HUB: <strong>https://tools.lbuding.com</strong> | WECHAT: <strong>lengbuding0101</strong></div>
+                        <div>© Pudding Lab Confidential</div>
+                    </div>
+                </body>
+                </html>
+            `;
 
-            // 2. 关键：预留渲染时间，唤醒打印机
-            setTimeout(() => {
-                window.print();
-            }, 300);
+            doc.open();
+            doc.write(printHTML);
+            doc.close();
+
+            showNotify("正在解析排版，请在弹出窗口选‘另存为 PDF’", "success");
+
+            // 3. 等待渲染完成，调起打印
+            iframe.contentWindow.onload = () => {
+                setTimeout(() => {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    // 打印完成后移除沙盒
+                    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+                }, 600);
+            };
         }
     </script>
 </body>
