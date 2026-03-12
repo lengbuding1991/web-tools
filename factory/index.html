@@ -17,13 +17,13 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, background-color 0.3s ease; }
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
         
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
-        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
-        .notify-success { border-color: #10b981; color: #a7f3d0; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-        .notify-info { border-color: #3b82f6; color: #bfdbfe; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .notify-error { border-color: #ef4444; color: #fca5a5; }
+        .notify-success { border-color: #10b981; color: #a7f3d0; }
+        .notify-info { border-color: #3b82f6; color: #bfdbfe; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
@@ -33,7 +33,6 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.5); }
         
         .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
     </style>
@@ -43,8 +42,7 @@
     <div id="notify-container"></div>
 
     <div id="lockscreen">
-        <div id="lockTitle" class="text-blue-500 font-bold mono animate-pulse tracking-[0.5em] text-lg transition-colors">FACTORY_VERIFYING...</div>
-        <div id="lockSub" class="mt-4 text-[10px] text-slate-600 mono transition-colors">正在核验物理架构师权限</div>
+        <div class="text-blue-500 font-bold mono animate-pulse tracking-[0.5em] text-lg uppercase">Factory_Accessing...</div>
     </div>
 
     <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5 shadow-2xl">
@@ -65,10 +63,10 @@
         <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel z-10 shadow-sm">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
-                <span class="text-[11px] font-bold text-slate-400 mono tracking-widest" id="userTag">LOADING_STATION</span>
+                <span class="text-[11px] font-bold text-slate-400 mono tracking-widest" id="userTag">STATION_ACTIVE</span>
             </div>
-            <a href="/dashboard/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-purple-400 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all ml-auto mr-4 shadow-sm">进入金库</a>
-            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">返回基地</a>
+            <a href="/dashboard/" class="px-5 py-2 border border-purple-500/30 rounded-full text-[10px] font-bold uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all ml-auto mr-4 shadow-sm">进入金库</a>
+            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">返回基地</a>
         </header>
 
         <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 scroll-smooth" id="scrollArea">
@@ -114,65 +112,47 @@
 
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
-        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
 
         function showNotify(msg, type = 'info') {
             const container = document.getElementById('notify-container');
             const card = document.createElement('div');
             card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
             const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '⚡';
-            const title = type === 'error' ? 'FACTORY_ALERT' : type === 'success' ? 'SYSTEM_READY' : 'ENGINE_INFO';
-            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div><div class="leading-tight">${msg}</div></div>`;
+            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="leading-tight">${msg}</div></div>`;
             container.appendChild(card);
             setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
         }
 
+        // 🚀 优化后的进门逻辑：本地信任，秒开页面
         document.addEventListener('DOMContentLoaded', () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
-            const lockscreen = document.getElementById('lockscreen');
-            const lockTitle = document.getElementById('lockTitle');
-            const lockSub = document.getElementById('lockSub');
 
             if (!t || !u) { 
-                lockTitle.innerText = "ACCESS_DENIED";
-                lockTitle.classList.replace('text-blue-500', 'text-red-500');
-                lockSub.innerText = "未检测到有效身份凭证";
-                lockscreen.style.backgroundColor = 'rgba(10,0,0,0.95)';
-                showNotify("非法闯入，正在遣返大本营...", "error");
-                setTimeout(() => { window.location.href = "/"; }, 1500);
+                showNotify("身份凭证缺失，遣返中...", "error");
+                setTimeout(() => { window.location.href = "/"; }, 1000);
                 return; 
             }
 
-            setTimeout(() => {
-                lockscreen.style.opacity = '0';
-                lockscreen.style.pointerEvents = 'none'; 
-                setTimeout(() => lockscreen.style.display = 'none', 500); 
-                
-                document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
-                showNotify("算力链路连接成功，欢迎入驻。", "success");
+            // 立即更新 UI
+            document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
 
-                fetch(PROFILE_API, { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
-                }).then(res => res.json()).then(data => {
-                    if (data.status !== 'authorized') throw new Error("Token Invalid");
-                }).catch(() => {
-                    localStorage.removeItem('pudding_token');
-                    localStorage.removeItem('pudding_user');
-                    showNotify("凭据已过期，强制断开引擎", "error");
-                    setTimeout(() => window.location.href = "/", 1500);
-                });
-            }, 800);
+            // 快速解密锁屏
+            setTimeout(() => {
+                document.getElementById('lockscreen').style.opacity = '0';
+                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 400); 
+                showNotify("工厂终端已就绪，欢迎架构师。", "success");
+            }, 300);
+            
+            // 💡 这里彻底删除了 fetch(PROFILE_API) 逻辑，不再多余验证
         });
 
-        // 🚀 恢复为同步死等机制，屏蔽复杂轮询
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); 
-            btn.innerText = "算力正在燃烧，请耐心等待..."; 
+            btn.innerText = "算力正在燃烧..."; 
             btn.disabled = true;
-            showNotify("正在提交投料，唤醒 DeepSeek 引擎...", "info");
+            showNotify("正在提交灵感，唤醒 DeepSeek 引擎...", "info");
             
             try {
                 const res = await fetch(ENGINE_API, { 
@@ -187,33 +167,28 @@
                     }) 
                 });
                 
+                // 只有在后端明确返回 401 时，才清理 token
                 if (res.status === 401) {
-                    showNotify("凭证已过期，系统强制注销", "error");
+                    showNotify("凭证已失效，请重新登录", "error");
                     setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 1500);
                     return;
                 }
 
                 const data = await res.json();
-                
-                // 风控拦截
                 if (data.status === "error") {
                     showNotify(data.message, "error");
                     return; 
                 }
 
-                // 拿到最终蓝图
                 if (data.blueprint) {
                     document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
-                    showNotify("蓝图生成完毕，已扣除 1 点算力", "success");
-                    
-                    setTimeout(() => { 
-                        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                    }, 100);
+                    showNotify("价值蓝图生成成功！", "success");
+                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 100);
                 }
             } catch (err) { 
-                showNotify("引擎连接中断或超时，请检查网络或重试", "error");
+                showNotify("引擎响应超时，请检查 NAS 或重试", "error");
             } finally { 
                 btn.innerText = "调配算力 · 生成价值蓝图"; 
                 btn.disabled = false; 
@@ -223,19 +198,17 @@
         async function generatePoster() {
             const btn = document.getElementById('posterBtn');
             const wrap = document.getElementById('posterWrapper'); 
-            btn.innerText = "正在排版像素...";
+            btn.innerText = "排版中...";
             wrap.style.display = 'block';
-            showNotify("正在渲染高清海报，请稍候...", "info");
-            
             try {
                 const canvas = await html2canvas(wrap, { backgroundColor: "#050a15", scale: 2, useCORS: true });
                 const link = document.createElement('a'); 
-                link.download = `Pudding_Blueprint_${Date.now()}.png`; 
+                link.download = `Factory_Blueprint_${Date.now()}.png`; 
                 link.href = canvas.toDataURL('image/png'); 
                 link.click();
-                showNotify("海报导出成功！", "success");
+                showNotify("海报渲染成功！", "success");
             } catch(e) {
-                showNotify("渲染海报失败，请重试", "error");
+                showNotify("海报渲染失败", "error");
             } finally {
                 wrap.style.display = 'none';
                 btn.innerText = "↓ 导出为高清海报";

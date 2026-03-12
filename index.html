@@ -95,7 +95,6 @@
 
     <script>
         const AUTH_API = "https://nas-n8n.lbuding.com/webhook/auth";
-        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
         let isRegisterMode = false;
 
         function showNotify(msg, type = 'info') {
@@ -114,7 +113,8 @@
             }, 3000);
         }
 
-        function localFastCheckAndAudit() {
+        // 🚀 优化后的本地校验：只相信存储，不再实时请求后端，彻底杜绝 429
+        function localFastCheck() {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
             
@@ -123,20 +123,7 @@
                 document.getElementById('userProfileArea').classList.remove('hidden');
                 document.getElementById('userName').innerText = u.toUpperCase();
                 document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">${u}</span>架构师。`;
-
-                fetch(PROFILE_API, { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
-                }).then(res => res.json()).then(data => {
-                    if (data.status !== 'authorized') throw new Error("Token Invalid");
-                }).catch(err => {
-                    console.warn(">> [审计] 令牌已失效，清理环境...");
-                    localStorage.removeItem('pudding_token');
-                    localStorage.removeItem('pudding_user');
-                    localStorage.removeItem('pudding_email'); 
-                    showNotify("凭据已过期，请重新接入网络", "error");
-                    setTimeout(() => location.reload(), 1500);
-                });
+                // 这里不再执行 fetch(PROFILE_API)，首页秒开且无请求负担
             }
         }
 
@@ -181,7 +168,7 @@
             setTimeout(() => location.reload(), 800);
         }
         
-        window.addEventListener('DOMContentLoaded', localFastCheckAndAudit); 
+        window.addEventListener('DOMContentLoaded', localFastCheck); 
     </script>
 </body>
 </html>

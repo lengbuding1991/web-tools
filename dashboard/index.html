@@ -15,12 +15,10 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 统计卡片 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); }
         .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
         .asset-card:hover { transform: translateY(-5px); border-color: var(--vault-purple); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.2); }
         
-        /* 极致丝滑的加载屏 */
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
@@ -93,7 +91,7 @@
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex justify-between items-center mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Encrypted_Asset_v2.1</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Decrypted_Asset_View</div>
                 <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-xs font-bold text-slate-400 hover:bg-red-600 hover:text-white transition-all">关闭 / CLOSE</button>
             </div>
             <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none scroll-smooth"></div>
@@ -102,7 +100,6 @@
 
     <script>
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
-        const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
 
         let globalData = { factory: [], radar: [] };
 
@@ -115,53 +112,25 @@
             setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3000);
         }
 
-        // 🚀 核心逻辑优化：立刻显示，后台确认
         window.onload = () => {
             const t = localStorage.getItem('pudding_token');
             const e = localStorage.getItem('pudding_email');
             const u = localStorage.getItem('pudding_user');
+            const r = localStorage.getItem('pudding_role');
 
             if (!t || !e) { window.location.href = "/"; return; }
 
-            // 1. 【瞬时响应】立即渲染本地已知的操作员信息
+            // 1. 【瞬时加载】渲染本地已知的数据
             document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
+            if (r) document.getElementById('stat-role').innerText = r.toUpperCase();
             
-            // 2. 【快速开门】不再等服务器响应，0.3秒后直接显示内容
+            // 2. 【快速解锁】不再发起多余的 Profile 审计请求
             setTimeout(() => {
                 document.getElementById('lockscreen').style.opacity = '0';
                 setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 400);
-                fetchAssets(); // 拉取主要资产（这是核心，必须拉）
+                fetchAssets(); 
             }, 300);
-
-            // 3. 【后台审计】悄悄去查 Profile，不影响用户看数据
-            syncUserProfile(t, e);
         };
-
-        async function syncUserProfile(token, email) {
-            try {
-                const res = await fetch(PROFILE_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ email: email })
-                });
-                if (res.status === 401) throw new Error("Unauthorized");
-                
-                const data = await res.json();
-                const role = Array.isArray(data) ? data[0].role : data.role;
-                if (role) {
-                    document.getElementById('stat-role').innerText = role.toUpperCase();
-                    // 可以把 role 也存本地，下次进来连这步都不用等
-                    localStorage.setItem('pudding_role', role);
-                }
-            } catch (err) {
-                console.warn(">> 身份静默核验未通过，但不影响本地预览");
-                // 如果是彻底失效，可以友好提示
-                if (err.message === "Unauthorized") {
-                    showNotify("身份凭据过期，请重新接入", "error");
-                    setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 2000);
-                }
-            }
-        }
 
         async function fetchAssets() {
             const t = localStorage.getItem('pudding_token');
@@ -173,6 +142,14 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
                     body: JSON.stringify({ email: e })
                 });
+
+                // 如果资产拉取都报 401，才说明真的被登出了
+                if (res.status === 401) {
+                    showNotify("身份凭据过期", "error");
+                    setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 1500);
+                    return;
+                }
+
                 const data = await res.json();
                 
                 globalData.factory = data.factory || [];
@@ -184,14 +161,14 @@
                 renderGrid('factoryGrid', globalData.factory, 'factory');
                 renderGrid('radarGrid', globalData.radar, 'radar');
             } catch (err) {
-                showNotify("数据同步暂时受阻", "error");
+                showNotify("数据同步暂时受阻，请检查网络", "error");
             }
         }
 
         function renderGrid(containerId, data, type) {
             const grid = document.getElementById(containerId);
             if (!data || data.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/5 rounded-2xl opacity-30 mono text-xs uppercase tracking-widest">No_Archive</div>`;
+                grid.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/5 rounded-2xl opacity-30 mono text-xs uppercase">No_Data_Found</div>`;
                 return;
             }
             const isFactory = type === 'factory';
@@ -209,7 +186,7 @@
                     </div>
                     <h4 class="text-white font-black text-xl mb-4 line-clamp-2 leading-tight uppercase tracking-tight">${title}</h4>
                     <div class="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
-                        <span class="text-[10px] mono ${accentColor} font-bold tracking-tighter italic">DECRYPT →</span>
+                        <span class="text-[10px] mono ${accentColor} font-bold tracking-tighter">DECRYPT →</span>
                     </div>
                 </div>`;
             }).join('');
@@ -217,14 +194,13 @@
 
         function openModal(type, index) {
             const item = globalData[type][index];
-            const content = item.blueprint_content || item.report_content || "档案内容已损坏。";
+            const content = item.blueprint_content || item.report_content || "档案内容损坏。";
             document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
-            document.getElementById('assetModal')?.classList.add('hidden'); // 兼容旧ID
             document.getElementById('viewModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
