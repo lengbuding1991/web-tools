@@ -38,10 +38,17 @@
         ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
         .prose h1, .prose h2, .prose h3 { color: #fff !important; margin-top: 1.5em !important; }
 
-        /* 🚀 PDF 导出专用模板 (屏幕不可见) */
-        #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; background: white; color: #111; padding: 60px; font-family: serif; }
-        .pdf-header { border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .pdf-footer { margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 10px; color: #999; display: flex; justify-content: space-between; }
+        /* 🚀 核心：文本级 PDF 打印适配 */
+        @media print {
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { display: block !important; visibility: visible !important; position: static !important; width: 100% !important; background: white !important; color: #000 !important; }
+            .prose { max-width: none !important; color: #111 !important; }
+            pre { white-space: pre-wrap !important; word-wrap: break-word !important; background: #f8f8f8 !important; color: #000 !important; border: 1px solid #ddd; padding: 1em; }
+            @page { margin: 2cm; }
+        }
+
+        /* 屏幕显示时隐藏打印层 */
+        #print-area { display: none; }
     </style>
 </head>
 <body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
@@ -49,20 +56,28 @@
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-blue-500 font-bold mono animate-pulse tracking-[1em] text-lg">FACTORY_LINKING...</div></div>
 
-    <div id="pdf-template">
-        <div class="pdf-header">
+    <div id="print-area">
+        <div style="padding: 20px 0; border-bottom: 4px solid #3b82f6; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
             <div>
-                <h1 style="font-size: 26px; font-weight: 900; margin: 0; color: #000;">布丁实验室 - 价值资产蓝图</h1>
-                <p style="font-size: 10px; color: #3b82f6; margin-top: 5px; font-weight: bold;" class="mono uppercase tracking-widest">Confidential Blueprint Asset</p>
+                <h1 style="margin:0; font-size:32px; color: #000; font-family: sans-serif;">布丁实验室 - 价值资产蓝图</h1>
+                <p style="color:#3b82f6; margin-top:8px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">CONFIDENTIAL_BLUEPRINT_ASSET</p>
             </div>
-            <div style="text-align: right;">
-                <p style="font-size: 10px; margin: 0; color: #666;" id="pdf-date">DATE: ---</p>
+            <div style="text-align:right;">
+                <p id="pdf-date" style="margin:0; font-size:12px; color:#666;"></p>
             </div>
         </div>
-        <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
-        <div class="pdf-footer">
-            <div class="mono">WEBSITE: https://tools.lbuding.com</div>
-            <div class="mono">WECHAT: lengbuding0101</div>
+        
+        <div id="pdf-content" class="prose prose-slate max-w-none" style="min-height: 500px;"></div>
+        
+        <div style="margin-top: 80px; padding-top: 30px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 12px; color: #666; font-family: monospace;">
+            <div>
+                <p style="margin:0;">HUB: <strong>https://tools.lbuding.com</strong></p>
+                <p style="margin:5px 0 0 0;">WECHAT: <strong>lengbuding0101</strong></p>
+            </div>
+            <div style="text-align: right;">
+                <p style="margin:0;">GENERATED_BY_FACTORY_ENGINE</p>
+                <p style="margin:5px 0 0 0;">© Pudding Lab Confidential</p>
+            </div>
         </div>
     </div>
 
@@ -128,8 +143,8 @@
                     <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300"></div>
                     <div class="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                         <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Blueprint_Stability: 98.4%</div>
-                        <button onclick="generatePDF()" id="exportBtn" class="px-10 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                            ↓ 导出 PDF 资产报告
+                        <button onclick="generatePrintPDF()" id="exportBtn" class="px-10 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            ↓ 导出文本级 PDF 资产
                         </button>
                     </div>
                 </div>
@@ -177,7 +192,6 @@
             const btn = document.getElementById('submitBtn');
             btn.innerText = "熔铸中 · 正在压榨算力...";
             btn.disabled = true;
-            addLog("开始提取能力参数...", "text-blue-400");
             addLog("唤醒 DeepSeek 深度算力池...", "text-blue-400");
             
             try {
@@ -197,79 +211,35 @@
 
                 const data = await res.json();
                 if (data.blueprint) {
-                    addLog("价值蓝图熔铸完成，正在解码输出...", "text-green-500");
+                    addLog("价值蓝图熔铸完成。", "text-green-500");
                     document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
                     setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 300);
                 }
             } catch (err) { 
-                showNotify("生产线故障，请检查 NAS 通信", "error");
-                addLog("致命错误：算力链路断开。", "text-red-500");
+                showNotify("系统故障", "error");
             } finally { 
                 btn.innerText = "激发生产线 · 熔铸价值蓝图"; 
                 btn.disabled = false; 
             }
         });
 
-        // 🚀 终极 PDF 分页导出逻辑
-        async function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const btn = document.getElementById('exportBtn');
-            const content = document.getElementById('blueprintContent').innerHTML;
-            
-            btn.innerText = "正在排版资产...";
-            btn.disabled = true;
+        // 🚀 核心：文本级 PDF 导出引擎
+        function generatePrintPDF() {
+            const printContent = document.getElementById('pdf-content');
+            // 获取当前已经渲染好的 HTML
+            const markdownHTML = document.getElementById('blueprintContent').innerHTML;
 
-            // 填充隐藏模板
+            // 1. 填充元数据与内容
             document.getElementById('pdf-date').innerText = `DATE: ${new Date().toLocaleString()}`;
-            document.getElementById('pdf-content').innerHTML = content;
-            
-            const template = document.getElementById('pdf-template');
-            
-            try {
-                // 将长模板渲染为 Canvas
-                const canvas = await html2canvas(template, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: "#ffffff",
-                    logging: false
-                });
-                
-                const contentWidth = canvas.width;
-                const contentHeight = canvas.height;
+            printContent.innerHTML = markdownHTML;
 
-                // A4 标准尺寸 (mm)
-                const pageWidth = 210;
-                const pageHeight = 295; 
-                const imgWidth = pageWidth;
-                const imgHeight = (contentHeight * imgWidth) / contentWidth;
+            showNotify("正在调起文本打印引擎，请选择‘另存为PDF’");
 
-                let heightLeft = imgHeight;
-                let position = 0;
-                const imgData = canvas.toDataURL('image/png');
-                
-                const pdf = new jsPDF('p', 'mm', 'a4');
-
-                // 首页
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                // 循环切割后续页面
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-
-                pdf.save(`PuddingLab_Blueprint_${Date.now()}.pdf`);
-                showNotify("PDF 资产报告已成功导出", "success");
-            } catch (err) {
-                showNotify("导出引擎异常", "error");
-            } finally {
-                btn.innerText = "↓ 导出 PDF 资产报告";
-                btn.disabled = false;
-            }
+            // 2. 关键：预留渲染时间，唤醒打印机
+            setTimeout(() => {
+                window.print();
+            }, 300);
         }
     </script>
 </body>
