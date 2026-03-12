@@ -19,12 +19,12 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 统计卡片：三列自适应 */
+        /* 统计卡片 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
         .stat-card:hover { transform: translateY(-4px); border-color: var(--vault-purple); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15); }
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
 
-        /* 资产卡片：更简洁的 UI */
+        /* 资产卡片 */
         .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
         .asset-card:hover { border-color: var(--vault-purple); transform: scale(1.02); }
         
@@ -42,6 +42,11 @@
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
+
+        /* 🚀 PDF 导出专用模板 (隐藏) */
+        #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; background: white; color: #111; padding: 60px; font-family: serif; }
+        .pdf-header { border-bottom: 2px solid var(--vault-purple); padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .pdf-footer { margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 10px; color: #999; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
@@ -50,11 +55,21 @@
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
 
     <div id="pdf-template">
-        <div style="padding: 40px; border-bottom: 2px solid #a855f7; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div><h1 style="margin:0; font-size:28px;">布丁实验室资产报告</h1><p style="color:#666; margin-top:5px;">CONFIDENTIAL_REPORT_v3.0</p></div>
-            <div style="text-align:right;"><p id="pdf-asn" style="margin:0; font-weight:bold;"></p><p id="pdf-date" style="margin:0; font-size:12px; color:#999;"></p></div>
+        <div class="pdf-header" id="pdfHeaderLine">
+            <div>
+                <h1 style="font-size: 26px; font-weight: 900; margin: 0; color: #000;" id="pdfTitle">布丁实验室资产报告</h1>
+                <p style="font-size: 10px; color: #a855f7; margin-top: 5px; font-weight: bold;" class="mono uppercase tracking-widest" id="pdfSubTitle">Confidential Asset Report</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-size: 10px; margin: 0; color: #666;" id="pdf-asn">ASN: ---</p>
+                <p style="font-size: 10px; margin: 0; color: #666;" id="pdf-date">DATE: ---</p>
+            </div>
         </div>
-        <div id="pdf-content" class="prose max-w-none" style="padding: 40px;"></div>
+        <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
+        <div class="pdf-footer">
+            <div class="mono">HUB: https://tools.lbuding.com</div>
+            <div class="mono">CONTACT: wechat:lengbuding0101</div>
+        </div>
     </div>
 
     <div class="max-w-7xl mx-auto space-y-12">
@@ -66,8 +81,8 @@
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
                 <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="全库情报检索..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
                 <div class="flex gap-2">
-                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">返回基地</a>
-                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">刷新资产</button>
+                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
+                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">刷新资产</button>
                 </div>
             </div>
         </header>
@@ -117,7 +132,7 @@
                 <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Vault_Decrypted</div>
                 <div class="flex gap-4">
                     <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 PDF 报告</button>
-                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭 / CLOSE</button>
+                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
                 </div>
             </div>
             <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4 scroll-smooth"></div>
@@ -129,6 +144,7 @@
         const DELETE_API = "https://nas-n8n.lbuding.com/webhook/delete-asset";
 
         let globalData = { factory: [], radar: [] };
+        let activeAsset = null;
         let currentFilter = 'all';
         let currentSearch = '';
         let charts = { trend: null, type: null };
@@ -213,7 +229,7 @@
                         <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
                     <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase tracking-tight leading-tight">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold">解密档案 / DECRYPT →</div>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">DECRYPT_ASN_${item.id} →</div>
                 `;
                 grid.appendChild(card);
             });
@@ -230,7 +246,6 @@
             }).reverse();
             const counts = days.map(day => [...globalData.factory, ...globalData.radar].filter(i => i.created_at.startsWith(day)).length);
 
-            // 渐变色配置
             const gradient = ctxTrend.createLinearGradient(0, 0, 0, 200);
             gradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
             gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
@@ -262,10 +277,7 @@
                         backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%', borderRadius: 10
                     }]
                 },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    animation: { animateScale: true }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
@@ -287,33 +299,54 @@
         }
 
         function openModal(type, idx) {
-            const item = globalData[type][idx];
-            const content = item.blueprint_content || item.report_content;
+            activeAsset = globalData[type][idx];
+            activeAsset._type = type;
+            const content = activeAsset.blueprint_content || activeAsset.report_content;
             document.getElementById('modalBody').innerHTML = marked.parse(content || "档案损坏");
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             
-            document.getElementById('pdf-asn').innerText = `ASN-${item.id}`;
-            document.getElementById('pdf-date').innerText = new Date(item.created_at).toLocaleString();
-            document.getElementById('pdfBtn').onclick = () => exportPDF(item, content);
+            document.getElementById('pdfBtn').onclick = () => generatePDF(activeAsset, content);
         }
 
-        async function exportPDF(item, markdown) {
+        // 🚀 核心：多页 PDF 导出逻辑 (对齐 Factory/Radar 标准)
+        async function generatePDF(asset, markdown) {
             const { jsPDF } = window.jspdf;
-            const btn = document.getElementById('pdfBtn'); btn.innerText = "生成中..."; btn.disabled = true;
+            const btn = document.getElementById('pdfBtn');
+            btn.innerText = "加密排版中...";
+            btn.disabled = true;
+
+            // 动态调整 PDF 模板样式
+            const isF = asset._type === 'factory';
+            document.getElementById('pdfTitle').innerText = isF ? "布丁实验室 - 价值资产蓝图" : "布丁实验室 - 全球套利情报";
+            document.getElementById('pdfSubTitle').innerText = isF ? "Confidential Blueprint Asset" : "Confidential Arbitrage Intelligence";
+            document.getElementById('pdfSubTitle').style.color = isF ? "#3b82f6" : "#10b981";
+            document.getElementById('pdfHeaderLine').style.borderBottomColor = isF ? "#3b82f6" : "#10b981";
+            
+            document.getElementById('pdf-asn').innerText = `ASN: ${asset.id}`;
+            document.getElementById('pdf-date').innerText = `DATE: ${new Date(asset.created_at).toLocaleString()}`;
             document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
+            
+            const template = document.getElementById('pdf-template');
+            
             try {
-                const canvas = await html2canvas(document.getElementById('pdf-template'), { scale: 2, useCORS: true });
+                const canvas = await html2canvas(template, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgData = canvas.toDataURL('image/png');
                 const imgWidth = 210, imgHeight = (canvas.height * imgWidth) / canvas.width;
-                let hLeft = imgHeight, pos = 0;
+                let heightLeft = imgHeight, pos = 0, pageH = 295;
+
                 pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
-                hLeft -= 295;
-                while (hLeft > 0) { pos = hLeft - imgHeight; pdf.addPage(); pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight); hLeft -= 295; }
-                pdf.save(`Asset_v3_${item.id}.pdf`);
-                showNotify("报告导出成功");
-            } catch (err) { showNotify("导出失败", "error"); }
+                heightLeft -= pageH;
+                while (heightLeft > 0) {
+                    pos = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
+                    heightLeft -= pageH;
+                }
+                pdf.save(`PuddingLab_Asset_${asset.id}.pdf`);
+                showNotify("PDF 资产报告导出成功");
+            } catch (err) { showNotify("导出引擎异常", "error"); }
             finally { btn.innerText = "导出 PDF 报告"; btn.disabled = false; }
         }
 

@@ -6,7 +6,8 @@
     <title>价值工厂 | 布丁实验室</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
@@ -16,7 +17,6 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 极致下拉框样式 */
         .custom-select {
             appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233b82f6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
@@ -30,7 +30,6 @@
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #050a15; z-index: -1; }
         
         input, select { background: #0a1122 !important; border: 1px solid rgba(255,255,255,0.05) !important; color: #f8fafc !important; transition: all 0.3s !important; }
         input:focus, select:focus { border-color: var(--main-blue) !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
@@ -38,12 +37,34 @@
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
         .prose h1, .prose h2, .prose h3 { color: #fff !important; margin-top: 1.5em !important; }
+
+        /* 🚀 PDF 导出专用模板 (屏幕不可见) */
+        #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; background: white; color: #111; padding: 60px; font-family: serif; }
+        .pdf-header { border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .pdf-footer { margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 10px; color: #999; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
 
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-blue-500 font-bold mono animate-pulse tracking-[1em] text-lg">FACTORY_LINKING...</div></div>
+
+    <div id="pdf-template">
+        <div class="pdf-header">
+            <div>
+                <h1 style="font-size: 26px; font-weight: 900; margin: 0; color: #000;">布丁实验室 - 价值资产蓝图</h1>
+                <p style="font-size: 10px; color: #3b82f6; margin-top: 5px; font-weight: bold;" class="mono uppercase tracking-widest">Confidential Blueprint Asset</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-size: 10px; margin: 0; color: #666;" id="pdf-date">DATE: ---</p>
+            </div>
+        </div>
+        <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
+        <div class="pdf-footer">
+            <div class="mono">WEBSITE: https://tools.lbuding.com</div>
+            <div class="mono">WECHAT: lengbuding0101</div>
+        </div>
+    </div>
 
     <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5">
         <div class="flex items-center gap-4">
@@ -107,25 +128,14 @@
                     <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300"></div>
                     <div class="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                         <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Blueprint_Stability: 98.4%</div>
-                        <button onclick="generatePoster()" id="posterBtn" class="px-10 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                            ↓ 导出高清蓝图海报
+                        <button onclick="generatePDF()" id="exportBtn" class="px-10 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            ↓ 导出 PDF 资产报告
                         </button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
-
-    <div id="posterWrapper" class="p-20">
-        <div style="border-left: 4px solid #3b82f6; padding-left: 30px;">
-            <h2 class="text-white text-4xl font-black mb-2 uppercase italic tracking-tighter">Pudding Lab</h2>
-            <p class="text-blue-500 text-[10px] mono mb-12 tracking-[0.5em] uppercase">Value_Blueprint_Output_v3.1</p>
-        </div>
-        <div id="posterContent" class="prose prose-invert prose-blue max-w-none"></div>
-        <div class="mt-20 pt-10 border-t border-white/10 text-[9px] text-slate-600 mono text-right uppercase">
-            Generated by DeepSeek Intelligence Engine
-        </div>
-    </div>
 
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
@@ -189,7 +199,6 @@
                 if (data.blueprint) {
                     addLog("价值蓝图熔铸完成，正在解码输出...", "text-green-500");
                     document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
-                    document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
                     setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 300);
                 }
@@ -202,20 +211,65 @@
             }
         });
 
-        async function generatePoster() {
-            const btn = document.getElementById('posterBtn');
-            const wrap = document.getElementById('posterWrapper'); 
-            btn.innerText = "排版渲染中...";
-            wrap.style.display = 'block';
+        // 🚀 终极 PDF 分页导出逻辑
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const btn = document.getElementById('exportBtn');
+            const content = document.getElementById('blueprintContent').innerHTML;
+            
+            btn.innerText = "正在排版资产...";
+            btn.disabled = true;
+
+            // 填充隐藏模板
+            document.getElementById('pdf-date').innerText = `DATE: ${new Date().toLocaleString()}`;
+            document.getElementById('pdf-content').innerHTML = content;
+            
+            const template = document.getElementById('pdf-template');
+            
             try {
-                const canvas = await html2canvas(wrap, { backgroundColor: "#050a15", scale: 2, useCORS: true });
-                const link = document.createElement('a'); 
-                link.download = `PuddingLab_Blueprint_${Date.now()}.png`; 
-                link.href = canvas.toDataURL('image/png'); 
-                link.click();
-                showNotify("高清蓝图已保存至本地", "success");
-            } catch(e) { showNotify("海报渲染失败", "error"); }
-            finally { wrap.style.display = 'none'; btn.innerText = "↓ 导出高清蓝图海报"; }
+                // 将长模板渲染为 Canvas
+                const canvas = await html2canvas(template, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff",
+                    logging: false
+                });
+                
+                const contentWidth = canvas.width;
+                const contentHeight = canvas.height;
+
+                // A4 标准尺寸 (mm)
+                const pageWidth = 210;
+                const pageHeight = 295; 
+                const imgWidth = pageWidth;
+                const imgHeight = (contentHeight * imgWidth) / contentWidth;
+
+                let heightLeft = imgHeight;
+                let position = 0;
+                const imgData = canvas.toDataURL('image/png');
+                
+                const pdf = new jsPDF('p', 'mm', 'a4');
+
+                // 首页
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                // 循环切割后续页面
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save(`PuddingLab_Blueprint_${Date.now()}.pdf`);
+                showNotify("PDF 资产报告已成功导出", "success");
+            } catch (err) {
+                showNotify("导出引擎异常", "error");
+            } finally {
+                btn.innerText = "↓ 导出 PDF 资产报告";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
