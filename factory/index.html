@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>价值工厂 - 布丁实验室</title>
+    <title>价值工厂 | 布丁实验室</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -12,147 +12,163 @@
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
         
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
-        
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(59, 130, 246, 0.15); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
-        
-        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
-        .notify-error { border-color: #ef4444; color: #fca5a5; }
-        .notify-success { border-color: #10b981; color: #a7f3d0; }
-        .notify-info { border-color: #3b82f6; color: #bfdbfe; }
-        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+        /* 极致下拉框样式 */
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233b82f6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.5rem center;
+            background-size: 1rem;
+        }
 
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
+        
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #050a15; z-index: -1; }
-        input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
+        input, select { background: #0a1122 !important; border: 1px solid rgba(255,255,255,0.05) !important; color: #f8fafc !important; transition: all 0.3s !important; }
+        input:focus, select:focus { border-color: var(--main-blue) !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
         
-        .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
+        .prose h1, .prose h2, .prose h3 { color: #fff !important; margin-top: 1.5em !important; }
     </style>
 </head>
 <body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
 
     <div id="notify-container"></div>
+    <div id="lockscreen"><div class="text-blue-500 font-bold mono animate-pulse tracking-[1em] text-lg">FACTORY_LINKING...</div></div>
 
-    <div id="lockscreen">
-        <div class="text-blue-500 font-bold mono animate-pulse tracking-[0.5em] text-lg uppercase">Factory_Accessing...</div>
-    </div>
-
-    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5 shadow-2xl">
-        <div class="flex items-center gap-3 shrink-0">
-            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_20px_rgba(59,130,246,0.4)]">布</div>
+    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_25px_rgba(59,130,246,0.4)]">F</div>
             <div>
-                <h2 class="font-black text-white text-xl tracking-wide">价值工厂</h2>
-                <span class="text-[9px] text-blue-500 mono uppercase tracking-widest">DeepSeek Engine v3</span>
+                <h2 class="font-black text-white text-xl tracking-tight uppercase">价值工厂</h2>
+                <span class="text-[9px] text-blue-500 mono font-bold uppercase tracking-widest animate-pulse">Production_Line_Active</span>
             </div>
         </div>
-        <div class="p-5 bg-[#050a15] rounded-xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block shadow-inner" id="logs">
-            > 初始化工厂终端...<br>> 核心算力池连接成功...<br>> 准备接收灵感投料。
+        <div class="p-5 bg-black/40 rounded-2xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block" id="logs">
+            <div class="text-blue-900">> [系统] 核心堆栈已启动...</div>
+            <div class="text-blue-900">> [状态] 算力资源就绪，等待投料。</div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-        
-        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel z-10 shadow-sm">
+        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-white/5 glass-panel z-10">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
-                <span class="text-[11px] font-bold text-slate-400 mono tracking-widest" id="userTag">STATION_ACTIVE</span>
+                <span class="text-[10px] font-black text-slate-400 mono tracking-[0.3em]" id="userTag">ARCHITECT_STATION</span>
             </div>
-            <a href="/dashboard/" class="px-5 py-2 border border-purple-500/30 rounded-full text-[10px] font-bold uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all ml-auto mr-4 shadow-sm">进入金库</a>
-            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">返回基地</a>
+            <div class="flex gap-4">
+                <a href="/dashboard/" class="px-5 py-2.5 border border-purple-500/30 rounded-full text-[10px] font-black uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all">进入金库</a>
+                <a href="/" class="px-5 py-2.5 border border-white/10 rounded-full text-[10px] font-black uppercase text-slate-400 hover:bg-blue-600 hover:text-white transition-all">返回基地</a>
+            </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 scroll-smooth" id="scrollArea">
-            <div class="max-w-4xl mx-auto space-y-12 pb-32">
+        <div class="flex-1 overflow-y-auto p-6 md:p-12 lg:p-20" id="scrollArea">
+            <div class="max-w-4xl mx-auto space-y-16 pb-32">
                 
-                <div class="glass-panel p-8 md:p-12 rounded-[2.5rem] shadow-xl">
-                    <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-3">
-                            <label class="text-[10px] uppercase font-black text-blue-500 tracking-widest ml-1">核心技能输入</label>
-                            <input type="text" id="skills" required placeholder="如: Python编程, 英语翻译" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 outline-none transition-all placeholder-slate-600">
+                <div class="glass-panel p-10 md:p-14 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
+                    <form id="factoryForm" class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div class="space-y-4">
+                            <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em] ml-1">核心能力储备 / Skills</label>
+                            <input type="text" id="skills" required placeholder="例如：Python 自动化、产品设计、英语..." class="w-full px-7 py-5 rounded-2xl text-sm placeholder-slate-700">
                         </div>
-                        <div class="space-y-3">
-                            <label class="text-[10px] uppercase font-black text-blue-500 tracking-widest ml-1">时间精力投料</label>
-                            <input type="text" id="commitment" required placeholder="如: 每天下班后2小时" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 outline-none transition-all placeholder-slate-600">
+                        <div class="space-y-4">
+                            <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em] ml-1">算力投入周期 / Commitment</label>
+                            <input type="text" id="commitment" required placeholder="例如：每日 2 小时、周末全天..." class="w-full px-7 py-5 rounded-2xl text-sm placeholder-slate-700">
                         </div>
-                        <div class="md:col-span-2 space-y-3">
-                            <label class="text-[10px] uppercase font-black text-blue-500 tracking-widest ml-1">生产线选择</label>
-                            <select id="sector" class="w-full px-6 py-4 bg-[#0a1122] border border-white/10 rounded-xl text-sm text-white focus:border-blue-500 outline-none transition-all cursor-pointer">
-                                <option value="AI 自动化">⚡ AI 自动化工具链</option>
-                                <option value="内容工厂">📝 高产内容流水线</option>
-                                <option value="数字化套利">🌍 数字化地理套利</option>
+                        
+                        <div class="md:col-span-2 space-y-4">
+                            <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em] ml-1">生产线配方选择 / Production Line</label>
+                            <select id="sector" class="custom-select w-full px-7 py-5 rounded-2xl text-sm cursor-pointer">
+                                <option value="AI 自动化">⚡ AI 自动化智能体 (Agentic Workflows)</option>
+                                <option value="内容工厂">📝 现象级内容母舰 (Viral Media Engine)</option>
+                                <option value="数字化套利">🌍 跨地域资源套利 (Geo-Arbitrage System)</option>
+                                <option value="个人 IP 资产化">💎 个人 IP 资产化 (Personal Brand Assetization)</option>
+                                <option value="低代码产品孵化">🛠️ 低代码产品原型 (Low-code MVP Production)</option>
                             </select>
                         </div>
-                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 mt-4 bg-blue-600 text-white font-black rounded-xl text-sm uppercase tracking-widest hover:bg-blue-500 active:scale-95 transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)]">调配算力 · 生成价值蓝图</button>
+                        
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-6 mt-6 bg-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.4em] hover:bg-blue-500 active:scale-95 transition-all shadow-[0_15px_40px_rgba(59,130,246,0.25)]">
+                            激发生产线 · 熔铸价值蓝图
+                        </button>
                     </form>
                 </div>
 
-                <div id="resultArea" class="hidden glass-panel p-8 md:p-14 rounded-[3rem] shadow-2xl border border-blue-500/20">
-                    <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300 leading-relaxed"></div>
-                    <div class="mt-16 pt-8 border-t border-white/10 flex justify-end">
-                        <button onclick="generatePoster()" id="posterBtn" class="px-8 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">↓ 导出为高清海报</button>
+                <div id="resultArea" class="hidden glass-panel p-10 md:p-16 rounded-[3.5rem] shadow-2xl border border-blue-500/20">
+                    <div id="blueprintContent" class="prose prose-invert prose-blue max-w-none text-slate-300"></div>
+                    <div class="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Blueprint_Stability: 98.4%</div>
+                        <button onclick="generatePoster()" id="posterBtn" class="px-10 py-4 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            ↓ 导出高清蓝图海报
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="posterWrapper" class="p-16 border-4 border-blue-500/20">
-        <h2 class="text-white text-4xl font-black mb-2 uppercase italic tracking-tighter">Pudding Lab</h2>
-        <p class="text-blue-500 text-xs mono mb-12 tracking-[0.4em] uppercase">Value_Blueprint_Output</p>
+    <div id="posterWrapper" class="p-20">
+        <div style="border-left: 4px solid #3b82f6; padding-left: 30px;">
+            <h2 class="text-white text-4xl font-black mb-2 uppercase italic tracking-tighter">Pudding Lab</h2>
+            <p class="text-blue-500 text-[10px] mono mb-12 tracking-[0.5em] uppercase">Value_Blueprint_Output_v3.1</p>
+        </div>
         <div id="posterContent" class="prose prose-invert prose-blue max-w-none"></div>
+        <div class="mt-20 pt-10 border-t border-white/10 text-[9px] text-slate-600 mono text-right uppercase">
+            Generated by DeepSeek Intelligence Engine
+        </div>
     </div>
 
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
 
+        function addLog(msg, color = 'text-slate-500') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = color + ' mb-1';
+            div.innerText = `> ${msg}`;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
         function showNotify(msg, type = 'info') {
             const container = document.getElementById('notify-container');
             const card = document.createElement('div');
-            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
-            const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '⚡';
-            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="leading-tight">${msg}</div></div>`;
+            card.className = `notify-card mono text-[11px] font-bold text-white`;
+            const accent = type === 'error' ? 'border-red-500' : type === 'success' ? 'border-green-500' : 'border-blue-500';
+            card.classList.add(accent);
+            card.innerHTML = `⚡ ${msg}`;
             container.appendChild(card);
-            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
+            setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3500);
         }
 
-        // 🚀 优化后的进门逻辑：本地信任，秒开页面
         document.addEventListener('DOMContentLoaded', () => {
             const t = localStorage.getItem('pudding_token');
             const u = localStorage.getItem('pudding_user');
-
-            if (!t || !u) { 
-                showNotify("身份凭证缺失，遣返中...", "error");
-                setTimeout(() => { window.location.href = "/"; }, 1000);
-                return; 
-            }
-
-            // 立即更新 UI
+            if (!t || !u) { window.location.href = "/"; return; }
             document.getElementById('userTag').innerText = u.toUpperCase() + "_STATION";
-
-            // 快速解密锁屏
             setTimeout(() => {
                 document.getElementById('lockscreen').style.opacity = '0';
-                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 400); 
-                showNotify("工厂终端已就绪，欢迎架构师。", "success");
-            }, 300);
-            
-            // 💡 这里彻底删除了 fetch(PROFILE_API) 逻辑，不再多余验证
+                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500);
+                addLog(`特工 ${u} 身份校验通过。`, 'text-blue-400');
+            }, 500);
         });
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn'); 
-            btn.innerText = "算力正在燃烧..."; 
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "熔铸中 · 正在压榨算力...";
             btn.disabled = true;
-            showNotify("正在提交灵感，唤醒 DeepSeek 引擎...", "info");
+            addLog("开始提取能力参数...", "text-blue-400");
+            addLog("唤醒 DeepSeek 深度算力池...", "text-blue-400");
             
             try {
                 const res = await fetch(ENGINE_API, { 
@@ -167,30 +183,21 @@
                     }) 
                 });
                 
-                // 只有在后端明确返回 401 时，才清理 token
-                if (res.status === 401) {
-                    showNotify("凭证已失效，请重新登录", "error");
-                    setTimeout(() => { localStorage.clear(); window.location.href = "/"; }, 1500);
-                    return;
-                }
+                if (res.status === 401) { localStorage.clear(); window.location.href = "/"; return; }
 
                 const data = await res.json();
-                if (data.status === "error") {
-                    showNotify(data.message, "error");
-                    return; 
-                }
-
                 if (data.blueprint) {
+                    addLog("价值蓝图熔铸完成，正在解码输出...", "text-green-500");
                     document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
                     document.getElementById('resultArea').classList.remove('hidden');
-                    showNotify("价值蓝图生成成功！", "success");
-                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 100);
+                    setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 300);
                 }
             } catch (err) { 
-                showNotify("引擎响应超时，请检查 NAS 或重试", "error");
+                showNotify("生产线故障，请检查 NAS 通信", "error");
+                addLog("致命错误：算力链路断开。", "text-red-500");
             } finally { 
-                btn.innerText = "调配算力 · 生成价值蓝图"; 
+                btn.innerText = "激发生产线 · 熔铸价值蓝图"; 
                 btn.disabled = false; 
             }
         });
@@ -198,21 +205,17 @@
         async function generatePoster() {
             const btn = document.getElementById('posterBtn');
             const wrap = document.getElementById('posterWrapper'); 
-            btn.innerText = "排版中...";
+            btn.innerText = "排版渲染中...";
             wrap.style.display = 'block';
             try {
                 const canvas = await html2canvas(wrap, { backgroundColor: "#050a15", scale: 2, useCORS: true });
                 const link = document.createElement('a'); 
-                link.download = `Factory_Blueprint_${Date.now()}.png`; 
+                link.download = `PuddingLab_Blueprint_${Date.now()}.png`; 
                 link.href = canvas.toDataURL('image/png'); 
                 link.click();
-                showNotify("海报渲染成功！", "success");
-            } catch(e) {
-                showNotify("海报渲染失败", "error");
-            } finally {
-                wrap.style.display = 'none';
-                btn.innerText = "↓ 导出为高清海报";
-            }
+                showNotify("高清蓝图已保存至本地", "success");
+            } catch(e) { showNotify("海报渲染失败", "error"); }
+            finally { wrap.style.display = 'none'; btn.innerText = "↓ 导出高清蓝图海报"; }
         }
     </script>
 </body>
