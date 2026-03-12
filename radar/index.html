@@ -39,7 +39,7 @@
             <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)]">R</div>
             <div>
                 <h2 class="font-black text-white text-xl tracking-tight uppercase leading-none">套利雷达</h2>
-                <span class="text-[9px] text-emerald-500 mono font-bold uppercase tracking-widest animate-pulse mt-1 inline-block">Scanning_Global_Gap</span>
+                <span class="text-[9px] text-emerald-500 mono font-bold uppercase tracking-widest animate-pulse mt-1 inline-block">Scanner_Unit_Active</span>
             </div>
         </div>
         <div class="p-5 bg-black/40 rounded-2xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block" id="logs">
@@ -49,16 +49,19 @@
 
     <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
         <header class="h-16 md:h-20 shrink-0 flex items-center justify-between px-6 md:px-8 border-b border-white/5 glass-panel z-10">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
-                <span class="text-[10px] font-black text-slate-400 mono tracking-[0.2em] md:tracking-[0.3em]" id="userStation">SCANNER</span>
+            <div class="flex flex-col">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                    <span class="text-[10px] font-black text-slate-400 mono tracking-[0.2em]" id="userStation">SCANNER</span>
+                </div>
+                <p id="telemetry-data" class="text-[8px] text-emerald-500/40 mono mt-1 uppercase">Latency: --ms | Load: --%</p>
             </div>
             <div class="flex items-center gap-2 md:gap-4">
-                <a href="/dashboard/" class="px-4 py-2 border border-purple-500/30 rounded-full text-[9px] font-black uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all">进入金库</a>
-                <a href="/" class="px-4 py-2 border border-white/10 rounded-full text-[9px] font-black uppercase text-slate-400">返回基地</a>
-                <div class="hidden md:flex glass-panel px-4 py-2.5 rounded-full border border-blue-500/20 items-center gap-2">
+                <a href="/dashboard/" class="px-4 py-2 border border-purple-500/30 rounded-full text-[9px] font-black uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all">金库</a>
+                <a href="/" class="px-4 py-2 border border-white/10 rounded-full text-[9px] font-black uppercase text-slate-400">基地</a>
+                <div class="glass-panel px-3 py-1.5 rounded-full border border-blue-500/20 flex items-center gap-2">
                     <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
-                    <span class="text-[9px] font-bold text-blue-400 mono uppercase" id="userName">ARCHITECT</span>
+                    <span class="text-[9px] font-bold text-blue-400 mono uppercase" id="userName">---</span>
                 </div>
                 <button onclick="handleLogout()" class="px-3 py-2 text-slate-600 hover:text-red-400 transition-all font-bold text-[9px] uppercase mono">Logout</button>
             </div>
@@ -71,15 +74,15 @@
                     <form id="radarForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
                         <div class="space-y-4">
                             <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">监测目标区 / Location</label>
-                            <input type="text" id="location" required placeholder="例如：泰国曼谷, 日本东京..." class="w-full px-7 py-4 rounded-2xl text-sm">
+                            <input type="text" id="location" required placeholder="例如：泰国曼谷, 日本东京..." class="w-full px-7 py-4 rounded-2xl text-sm outline-none focus:ring-1 ring-emerald-500">
                         </div>
                         <div class="space-y-4">
                             <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">投入资本 / Capital</label>
-                            <input type="text" id="assets" required placeholder="例如：10万人民币..." class="w-full px-7 py-4 rounded-2xl text-sm">
+                            <input type="text" id="assets" required placeholder="例如：10万人民币..." class="w-full px-7 py-4 rounded-2xl text-sm outline-none focus:ring-1 ring-emerald-500">
                         </div>
                         <div class="md:col-span-2 space-y-4">
                             <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">地理套利赛道选择</label>
-                            <select id="niche" class="custom-select w-full px-7 py-4 rounded-2xl text-sm cursor-pointer">
+                            <select id="niche" class="custom-select w-full px-7 py-4 rounded-2xl text-sm cursor-pointer outline-none focus:ring-1 ring-emerald-500">
                                 <option value="数字游民生活套利">💻 数字游民高净值流转</option>
                                 <option value="跨境贸易降维打击">🚢 跨境贸易降维打击</option>
                                 <option value="全球资产价值洼地">💎 全球资产价值洼地</option>
@@ -93,8 +96,8 @@
 
                 <div id="resultArea" class="hidden glass-panel p-6 md:p-16 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl border border-emerald-500/20">
                     <div id="blueprintContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div>
-                    <div class="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Signal_Strength: High_Res</div>
+                    <div class="mt-12 md:mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Enterprise_Signal_Strength: High_Res</div>
                         <button id="exportBtn" class="w-full md:w-auto px-10 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm">↓ 导出格式化 PDF 情报</button>
                     </div>
                 </div>
@@ -108,29 +111,46 @@
 
         // 🚀 核心重构：调用中台安全网关
         window.onload = () => {
-            const isAuthorized = window.initSecurityGate("RADAR"); // 接入网关逻辑
-            if (!isAuthorized) return; // 拦截并等待自动跳转
+            if (!window.initSecurityGate("RADAR")) return; // 内核级鉴权与仪式感加载
 
             const u = localStorage.getItem('pudding_user');
             document.getElementById('userName').innerText = u.toUpperCase();
-            document.getElementById('userStation').innerText = u.toUpperCase() + "_SCANNER";
-            addLog(`卫星链路已握手，特工 ${u} 接入。`, 'text-emerald-400');
+            document.getElementById('userStation').innerText = u.toUpperCase() + "_SCANNER_UNIT";
+            
+            window.startTelemetry(); // 开启运行时遥测
+            addLog(`波束已聚焦，特工 ${u} 接入监测站。`, 'text-emerald-400');
         };
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); const btn = document.getElementById('submitBtn'); btn.innerText = "探测中..."; btn.disabled = true; addLog("正在锁定地理参数...", "text-emerald-400");
+            e.preventDefault(); 
+            const btn = document.getElementById('submitBtn'); 
+            btn.innerText = "探测中..."; btn.disabled = true; 
+            addLog("正在锁定地理参数并压榨算力...", "text-emerald-400");
+
             try {
-                const res = await fetch(RADAR_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ email: localStorage.getItem('pudding_email'), username: localStorage.getItem('pudding_user'), location: document.getElementById('location').value, assets: document.getElementById('assets').value, niche: document.getElementById('niche').value }) });
-                const data = await res.json();
-                const content = data.blueprint || data.report;
-                if (content) {
-                    addLog("信号捕捉成功。", "text-green-500");
+                // 🚀 使用企业级中间件：全自动 Token 注入与错误拦截
+                const data = await puddingRequest(RADAR_API, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        email: localStorage.getItem('pudding_email'), 
+                        username: localStorage.getItem('pudding_user'), 
+                        location: document.getElementById('location').value, 
+                        assets: document.getElementById('assets').value, 
+                        niche: document.getElementById('niche').value 
+                    })
+                });
+
+                if (data) {
+                    const content = data.blueprint || data.report;
+                    addLog("全球差价信号捕捉成功。", "text-green-500");
                     document.getElementById('blueprintContent').innerHTML = marked.parse(content);
                     document.getElementById('resultArea').classList.remove('hidden');
-                    document.getElementById('exportBtn').onclick = () => generateIsolatedPDF({id:'NEW'}, content, 'radar');
+                    // 🚀 调用统一 PDF 引擎
+                    document.getElementById('exportBtn').onclick = () => generateIsolatedPDF({id:'NEW_INTEL'}, content, 'radar');
                     setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 300);
                 }
-            } catch (err) { showNotify("信号丢失", "error"); } finally { btn.innerText = "发射探测波束 · 捕捉差价"; btn.disabled = false; }
+            } catch (err) { /* 内核自动处理显示 */ } 
+            finally { btn.innerText = "发射探测波束 · 捕捉差价"; btn.disabled = false; }
         });
     </script>
 </body>
