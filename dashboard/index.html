@@ -10,30 +10,33 @@
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --vault-purple: #a855f7; --bg-dark: #020617; }
         
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 概览卡片渐变 */
+        /* 瑞士银行卡片风格 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.3s ease; }
-        .stat-card:hover { border-color: var(--vault-purple); box-shadow: 0 0 20px rgba(168, 85, 247, 0.1); }
-        
-        /* 资产卡片 */
-        .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
         .asset-card:hover { transform: translateY(-5px); border-color: var(--vault-purple); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.2); }
         
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
 
     <div id="notify-container"></div>
+
+    <div id="lockscreen">
+        <div id="lockTitle" class="text-purple-500 font-bold mono animate-pulse tracking-[0.5em] text-lg uppercase">Vault_Syncing...</div>
+        <div id="lockSub" class="mt-4 text-[10px] text-slate-600 mono uppercase">正在建立安全数据隧道</div>
+    </div>
 
     <div class="max-w-7xl mx-auto space-y-12">
         
@@ -42,151 +45,164 @@
                 <div class="w-16 h-16 bg-purple-600 rounded-[1.5rem] flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
                 <div>
                     <h1 class="text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1>
-                    <p class="text-[10px] text-purple-400 font-bold mono tracking-[0.4em]">VAULT_SYSTEM_OPERATIONAL</p>
+                    <p class="text-[10px] text-purple-400 font-bold mono tracking-[0.4em]" id="opName">OPERATOR_ID: LOADING...</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
                 <a href="/" class="px-6 py-2.5 bg-slate-800/50 border border-white/10 rounded-full text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all">返回基地</a>
-                <a href="/factory/" class="px-6 py-2.5 bg-purple-600 text-white rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all shadow-lg shadow-purple-900/40">前往工厂</a>
+                <button onclick="fetchAssets()" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">刷新资产</button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-[0.2em] opacity-60">Agent_Auth_Level</div>
-                <div class="text-4xl font-black text-white italic uppercase" id="stat-role">ACCESSING...</div>
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">特工级别 / Status</div>
+                <div class="text-4xl font-black text-white italic" id="stat-role">ACCESSING...</div>
             </div>
-            <div class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-[0.2em] opacity-60">Compute_Quota_Used</div>
-                <div class="text-4xl font-black text-white" id="stat-usage">-- / --</div>
+            <div class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-blue-500/30">
+                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / Factory</div>
+                <div class="text-4xl font-black text-white" id="stat-factory">0 UNITS</div>
             </div>
-            <div class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-purple-500/40">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-[0.2em] opacity-60">Total_Asset_Value</div>
-                <div class="text-4xl font-black text-white" id="stat-count">0 UNITS</div>
+            <div class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-emerald-500/30">
+                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / Radar</div>
+                <div class="text-4xl font-black text-white" id="stat-radar">0 UNITS</div>
             </div>
         </div>
 
-        <section class="space-y-8">
-            <div class="flex items-center justify-between px-2">
-                <h3 class="text-sm font-black text-white uppercase tracking-[0.3em] flex items-center gap-3">
-                    <span class="w-2.5 h-2.5 bg-purple-500 rounded-full animate-ping"></span>
-                    资产情报流 / ASSET_STREAM
+        <main class="space-y-16">
+            <section>
+                <h3 class="text-xs font-black text-blue-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span> 工厂蓝图资产
                 </h3>
-            </div>
-            
-            <div id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="col-span-full py-32 text-center mono text-slate-700 text-sm italic animate-pulse">
-                    正在解密云端加密层，同步情报资产...
+                <div id="factoryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="col-span-full py-10 text-center mono text-slate-700">数据同步中...</div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <section>
+                <h3 class="text-xs font-black text-emerald-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> 雷达套利报告
+                </h3>
+                <div id="radarGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="col-span-full py-10 text-center mono text-slate-700">数据同步中...</div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10 shrink-0">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Decrypted_Document_v2.1</div>
+            <div class="flex justify-between items-center mb-10">
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Decrypted_Asset_View</div>
                 <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-xs font-bold text-slate-400 hover:bg-red-600 hover:text-white transition-all">关闭 / CLOSE</button>
             </div>
-            <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4 scroll-smooth"></div>
+            <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none scroll-smooth"></div>
         </div>
     </div>
 
     <script>
+        const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
-        const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-blueprints"; // 你的 n8n 接口
 
-        let globalAssets = [];
+        let globalData = { factory: [], radar: [] };
 
         function showNotify(msg, type = 'success') {
             const container = document.getElementById('notify-container');
             const card = document.createElement('div');
-            card.className = `notify-card notify-${type} mono text-[11px] font-bold text-purple-300 border-purple-500/30`;
-            card.innerHTML = `<div class="flex items-center gap-3">⚡ <span>${msg}</span></div>`;
+            card.className = `notify-card mono text-[11px] font-bold text-purple-300`;
+            card.innerHTML = `⚡ ${msg}`;
             container.appendChild(card);
             setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3000);
         }
 
-        async function initDashboard() {
+        window.onload = async () => {
             const t = localStorage.getItem('pudding_token');
             const e = localStorage.getItem('pudding_email');
             const u = localStorage.getItem('pudding_user');
 
             if (!t || !e) { window.location.href = "/"; return; }
 
+            document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
+
+            // 获取身份信息
             try {
-                // 1. 同步个人画像
-                const profRes = await fetch(PROFILE_API, {
+                const res = await fetch(PROFILE_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
                     body: JSON.stringify({ email: e })
                 });
-                const profData = await profRes.json();
-                document.getElementById('stat-role').innerText = (profData.role || 'USER').toUpperCase();
-                document.getElementById('stat-usage').innerText = `${profData.daily_usage || 0} UNITS`;
+                const data = await res.json();
+                document.getElementById('stat-role').innerText = (data.role || 'USER').toUpperCase();
+            } catch (err) {}
 
-                // 2. 拉取蓝图资产
-                fetchAssets(t, e);
-            } catch (err) {
-                showNotify("数据链路同步异常", "error");
-            }
-        }
+            // 解锁
+            setTimeout(() => {
+                document.getElementById('lockscreen').style.opacity = '0';
+                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500);
+                fetchAssets();
+            }, 800);
+        };
 
-        async function fetchAssets(token, email) {
-            const grid = document.getElementById('assetGrid');
+        async function fetchAssets() {
+            const t = localStorage.getItem('pudding_token');
+            const e = localStorage.getItem('pudding_email'); // 🚨 这里是关键，改成了 email
+            
             try {
                 const res = await fetch(ASSETS_API, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ email: email })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
+                    body: JSON.stringify({ email: e }) // 🚨 确保传给 n8n 的是 email
                 });
+                
                 const data = await res.json();
                 
-                // 兼容数组格式
-                globalAssets = Array.isArray(data) ? data : (data.assets || []);
-                document.getElementById('stat-count').innerText = `${globalAssets.length} UNITS`;
+                // 处理双表数据
+                globalData.factory = data.factory || [];
+                globalData.radar = data.radar || [];
+                
+                document.getElementById('stat-factory').innerText = `${globalData.factory.length} UNITS`;
+                document.getElementById('stat-radar').innerText = `${globalData.radar.length} UNITS`;
+                
+                renderGrid('factoryGrid', globalData.factory, 'factory');
+                renderGrid('radarGrid', globalData.radar, 'radar');
+                showNotify("所有加密档案同步完成");
 
-                if (globalAssets.length === 0) {
-                    grid.innerHTML = `<div class="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem] text-slate-700 mono">金库空虚，请尽快前往工厂投料生成。</div>`;
-                    return;
-                }
-
-                grid.innerHTML = globalAssets.map((item, index) => `
-                    <div class="glass-panel p-8 rounded-[2.5rem] asset-card flex flex-col h-72" onclick="openModal(${index})">
-                        <div class="flex justify-between items-start mb-6">
-                            <span class="mono text-[10px] text-purple-400 font-bold bg-purple-500/10 px-3 py-1 rounded-md border border-purple-500/20">ASN-${String(index + 1).padStart(3, '0')}</span>
-                            <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <h4 class="text-white font-black text-xl mb-4 line-clamp-2 leading-tight">${extractTitle(item.blueprint_content || item.report_content)}</h4>
-                        <p class="text-slate-500 text-[11px] mb-8 line-clamp-3 leading-relaxed">${extractSummary(item.blueprint_content || item.report_content)}</p>
-                        <div class="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-                            <span class="text-[9px] font-black text-purple-500 uppercase tracking-tighter">${item.sector || item.location || 'GEEK_ASSET'}</span>
-                            <span class="text-[10px] mono text-slate-600 uppercase">View_Details →</span>
-                        </div>
-                    </div>
-                `).join('');
-
-                showNotify(`已成功解密 ${globalAssets.length} 份情报资产`);
             } catch (err) {
-                grid.innerHTML = `<div class="col-span-full text-red-500 text-center mono">通信波段受阻，无法连接存储中心。</div>`;
+                showNotify("连接中心失败，请检查网络", "error");
             }
         }
 
-        function extractTitle(content) {
-            if (!content) return "未命名资产";
-            const match = content.match(/# (.*)|蓝图名称：(.*)|🚀 (.*)/);
-            return match ? (match[1] || match[2] || match[3]).trim() : "加密价值文件";
+        function renderGrid(containerId, data, type) {
+            const grid = document.getElementById(containerId);
+            if (!data || data.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/5 rounded-2xl opacity-30 mono text-xs">暂无存档记录</div>`;
+                return;
+            }
+
+            const isFactory = type === 'factory';
+            const accentColor = isFactory ? 'text-blue-500' : 'text-emerald-500';
+
+            grid.innerHTML = data.map((item, index) => `
+                <div class="glass-panel p-8 rounded-[2.5rem] asset-card flex flex-col h-64" onclick="openModal('${type}', ${index})">
+                    <div class="flex justify-between items-start mb-6">
+                        <span class="mono text-[9px] ${accentColor} font-bold bg-white/5 px-2 py-1 rounded">ASN-${String(index + 1).padStart(3, '0')}</span>
+                        <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <h4 class="text-white font-black text-lg mb-4 line-clamp-2 leading-tight">
+                        ${isFactory ? (item.sector || '灵感蓝图') : (item.location || '雷达情报')}
+                    </h4>
+                    <div class="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                        <span class="text-[9px] mono uppercase text-slate-500">${isFactory ? 'Factory_Asset' : 'Radar_Report'}</span>
+                        <span class="text-[10px] mono ${accentColor}">DECRYPT →</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function extractSummary(content) {
-            if (!content) return "无描述数据";
-            return content.replace(/[#*`]/g, '').slice(0, 120).trim() + "...";
-        }
-
-        function openModal(index) {
-            const item = globalAssets[index];
-            const content = item.blueprint_content || item.report_content;
-            document.getElementById('modalBody').innerHTML = marked.parse(content || "内容损坏");
+        function openModal(type, index) {
+            const item = globalData[type][index];
+            const content = item.blueprint_content || item.report_content || "档案内容丢失。";
+            document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -195,8 +211,6 @@
             document.getElementById('viewModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
-
-        window.onload = initDashboard;
     </script>
 </body>
 </html>
