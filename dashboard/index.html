@@ -12,30 +12,30 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        :root { --vault-purple: #a855f7; --bg-dark: #020617; }
+        :root { --vault-purple: #a855f7; --bg-dark: #020617; --blue-accent: #3b82f6; --emerald-accent: #10b981; }
         
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.3s; cursor: pointer; }
-        .stat-card:hover { transform: translateY(-3px); border-color: var(--vault-purple); }
-        .stat-card.active { border-color: var(--vault-purple); box-shadow: 0 0 25px rgba(168, 85, 247, 0.25); }
+        /* 统计卡片：三列自适应 */
+        .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .stat-card:hover { transform: translateY(-4px); border-color: var(--vault-purple); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15); }
+        .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
 
-        .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); position: relative; }
-        .asset-card:hover { transform: translateY(-5px); border-color: var(--vault-purple); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.2); }
+        /* 资产卡片：更简洁的 UI */
+        .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        .asset-card:hover { border-color: var(--vault-purple); transform: scale(1.02); }
         
-        /* 交互按钮 */
-        .card-action-btn { position: absolute; opacity: 0; transition: all 0.2s; z-index: 10; padding: 8px; border-radius: 8px; color: #64748b; }
-        .asset-card:hover .card-action-btn { opacity: 0.6; }
-        .card-action-btn:hover { opacity: 1 !important; }
-        .shredder-btn { top: 15px; right: 15px; }
-        .star-btn { top: 15px; right: 50px; }
-        .star-btn.active { opacity: 1 !important; color: #fbbf24; }
+        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0; transition: all 0.2s; z-index: 10; color: #64748b; }
+        .asset-card:hover .shredder-btn { opacity: 0.6; }
+        .shredder-btn:hover { opacity: 1 !important; color: #ef4444; }
 
         input[type="search"] { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(168, 85, 247, 0.2); color: white; outline: none; }
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
+        input[type="search"]:focus { border-color: var(--vault-purple); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
+
+        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         
@@ -47,81 +47,77 @@
 <body class="tech-grid p-4 md:p-12">
 
     <div id="notify-container"></div>
-
-    <div id="lockscreen">
-        <div class="text-purple-500 font-bold mono animate-pulse tracking-[0.5em] text-lg uppercase">Vault_Accessing...</div>
-    </div>
+    <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
 
     <div id="pdf-template">
-        <div class="pdf-watermark">PUDDING LAB ASSET</div>
-        <div class="pdf-header">
-            <div><h1 style="font-size: 24px; font-weight: 900; margin: 0; color: #111;">布丁实验室 - 价值资产报告</h1><p style="font-size: 10px; color: #666; margin-top: 5px;" class="mono">CONFIDENTIAL_ASSET_v2.8</p></div>
-            <div style="text-align: right;"><p style="font-size: 10px; margin: 0; color: #333;" id="pdf-asn">ASN: ---</p><p style="font-size: 10px; margin: 0; color: #333;" id="pdf-date">DATE: ---</p></div>
+        <div style="padding: 40px; border-bottom: 2px solid #a855f7; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div><h1 style="margin:0; font-size:28px;">布丁实验室资产报告</h1><p style="color:#666; margin-top:5px;">CONFIDENTIAL_REPORT_v3.0</p></div>
+            <div style="text-align:right;"><p id="pdf-asn" style="margin:0; font-weight:bold;"></p><p id="pdf-date" style="margin:0; font-size:12px; color:#999;"></p></div>
         </div>
-        <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
+        <div id="pdf-content" class="prose max-w-none" style="padding: 40px;"></div>
     </div>
 
     <div class="max-w-7xl mx-auto space-y-12">
         <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-10 border-b border-purple-500/10">
             <div class="flex items-center gap-5">
                 <div class="w-16 h-16 bg-purple-600 rounded-[1.5rem] flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
-                <div>
-                    <h1 class="text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1>
-                    <p class="text-[10px] text-purple-400 font-bold mono tracking-[0.4em]" id="opName">OPERATOR: LOADING...</p>
-                </div>
+                <div><h1 class="text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1><p class="text-[10px] text-purple-400 font-bold mono uppercase tracking-[0.4em]" id="opName">LOADING...</p></div>
             </div>
-            
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索资产..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="全库情报检索..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
                 <div class="flex gap-2">
-                    <a href="/" class="px-6 py-2.5 bg-slate-800/50 border border-white/10 rounded-full text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
-                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">同步云端</button>
+                    <a href="/" class="px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">返回基地</a>
+                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">刷新资产</button>
                 </div>
             </div>
         </header>
 
-        <section class="glass-panel p-8 rounded-[2.5rem] grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span> 近期生产趋势 (7 DAYS)
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 glass-panel p-8 rounded-[2.5rem]">
+                <div class="flex justify-between items-center mb-8">
+                    <div class="text-[10px] mono text-purple-400 uppercase tracking-widest flex items-center gap-2">
+                        <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span> 生产效率监测 (7 DAYS)
+                    </div>
                 </div>
-                <div class="h-48 w-full"><canvas id="trendChart"></canvas></div>
+                <div class="h-56"><canvas id="trendChart"></canvas></div>
             </div>
-            <div>
-                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest mb-4">资产赛道构成</div>
-                <div class="h-48 w-full flex justify-center"><canvas id="typeChart"></canvas></div>
+            <div class="glass-panel p-8 rounded-[2.5rem] flex flex-col">
+                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest mb-8">资产分布权重</div>
+                <div class="flex-1 flex items-center justify-center relative">
+                    <canvas id="typeChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-2xl font-black text-white" id="totalAssetCount">0</span>
+                        <span class="text-[8px] mono text-slate-500 uppercase">Total_Units</span>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div onclick="setFilter('all')" id="filter-all" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 active">
-                <div class="text-[9px] mono text-purple-400 uppercase tracking-tighter">全部 / Total</div>
-                <div class="text-3xl font-black text-white italic" id="stat-all">0</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div onclick="setFilter('all')" id="filter-all" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 active">
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">全量库存 / TOTAL</div>
+                <div class="text-4xl font-black text-white italic" id="stat-all">0</div>
             </div>
-            <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 border-blue-500/30">
-                <div class="text-[9px] mono text-blue-400 uppercase tracking-tighter">工厂 / Factory</div>
-                <div class="text-3xl font-black text-white" id="stat-factory">0</div>
+            <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-blue-500/30">
+                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / FACTORY</div>
+                <div class="text-4xl font-black text-white" id="stat-factory">0</div>
             </div>
-            <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 border-emerald-500/30">
-                <div class="text-[9px] mono text-emerald-400 uppercase tracking-tighter">雷达 / Radar</div>
-                <div class="text-3xl font-black text-white" id="stat-radar">0</div>
-            </div>
-            <div onclick="setFilter('fav')" id="filter-fav" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 border-amber-500/30">
-                <div class="text-[9px] mono text-amber-500 uppercase tracking-tighter">星标 / Favorites</div>
-                <div class="text-3xl font-black text-white" id="stat-fav">0</div>
+            <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-40 border-emerald-500/30">
+                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / RADAR</div>
+                <div class="text-4xl font-black text-white" id="stat-radar">0</div>
             </div>
         </div>
 
-        <main id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-6 pb-32"></main>
+        <main id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32"></main>
     </div>
 
-    <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl p-6 md:p-12 hidden">
+    <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Intelligence_Vault_v2.8</div>
+            <div class="flex justify-between items-center mb-10 shrink-0">
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Vault_Decrypted</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-5 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 PDF</button>
-                    <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 hover:text-white transition-all">关闭</button>
+                    <button id="pdfBtn" class="px-6 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 PDF 报告</button>
+                    <button onclick="closeModal()" class="px-6 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭 / CLOSE</button>
                 </div>
             </div>
             <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4 scroll-smooth"></div>
@@ -133,7 +129,6 @@
         const DELETE_API = "https://nas-n8n.lbuding.com/webhook/delete-asset";
 
         let globalData = { factory: [], radar: [] };
-        let favorites = JSON.parse(localStorage.getItem('pudding_favs') || '[]');
         let currentFilter = 'all';
         let currentSearch = '';
         let charts = { trend: null, type: null };
@@ -148,23 +143,22 @@
         }
 
         window.onload = () => {
-            const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user'), r = localStorage.getItem('pudding_role'), cached = localStorage.getItem('pudding_assets');
+            const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user'), cached = localStorage.getItem('pudding_assets');
             if (!t) { window.location.href = "/"; return; }
             document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
-            if (r) document.getElementById('stat-role').innerText = r.toUpperCase();
             
             if (cached) {
                 globalData = JSON.parse(cached);
-                renderUI();
-                initCharts();
+                renderUI(); initCharts();
+                showNotify("加密记忆链路建立成功");
             } else {
                 fetchAssets(false);
             }
 
             setTimeout(() => {
                 document.getElementById('lockscreen').style.opacity = '0';
-                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 400);
-            }, 300);
+                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500);
+            }, 500);
         };
 
         async function fetchAssets(isManual = false) {
@@ -173,107 +167,88 @@
             try {
                 const res = await fetch(ASSETS_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ email: e }) });
                 const data = await res.json();
-                globalData.factory = data.factory || [];
-                globalData.radar = data.radar || [];
+                globalData.factory = data.factory || []; globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
-                renderUI();
-                initCharts();
-                if (isManual) showNotify("云端情报同步成功");
-            } catch (err) { showNotify("同步受阻", "error"); }
-            finally { document.getElementById('syncBtn').innerText = "同步云端"; }
+                renderUI(); initCharts();
+                if (isManual) showNotify("云端情报库同步完成");
+            } catch (err) { showNotify("链路阻塞", "error"); }
+            finally { document.getElementById('syncBtn').innerText = "刷新资产"; }
         }
 
-        // 🚀 核心：渲染逻辑（支持置顶星标）
         function renderUI() {
-            document.getElementById('stat-all').innerText = globalData.factory.length + globalData.radar.length;
+            const totalCount = globalData.factory.length + globalData.radar.length;
+            document.getElementById('stat-all').innerText = totalCount;
             document.getElementById('stat-factory').innerText = globalData.factory.length;
             document.getElementById('stat-radar').innerText = globalData.radar.length;
-            document.getElementById('stat-fav').innerText = favorites.length;
+            document.getElementById('totalAssetCount').innerText = totalCount;
 
-            const grid = document.getElementById('assetGrid');
-            grid.innerHTML = '';
+            const grid = document.getElementById('assetGrid'); grid.innerHTML = '';
 
             const allItems = [
                 ...globalData.factory.map((item, i) => ({ ...item, _type: 'factory', _idx: i })),
                 ...globalData.radar.map((item, i) => ({ ...item, _type: 'radar', _idx: i }))
-            ].sort((a, b) => {
-                // 1. 星标置顶
-                const aFav = favorites.includes(`${a._type}_${a.id}`);
-                const bFav = favorites.includes(`${b._type}_${b.id}`);
-                if (aFav !== bFav) return bFav ? -1 : 1;
-                // 2. 日期排序
-                return new Date(b.created_at) - new Date(a.created_at);
-            });
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             const filtered = allItems.filter(item => {
-                const key = `${item._type}_${item.id}`;
-                const matchType = currentFilter === 'all' || (currentFilter === 'fav' ? favorites.includes(key) : item._type === currentFilter);
+                const matchType = currentFilter === 'all' || item._type === currentFilter;
                 const title = (item.sector || item.location || "").toLowerCase();
-                const matchSearch = title.includes(currentSearch);
-                return matchType && matchSearch;
+                return matchType && title.includes(currentSearch);
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-20 text-center mono opacity-10 uppercase tracking-widest">No_Asset_Found</div>`;
+                grid.innerHTML = `<div class="col-span-full py-20 text-center mono opacity-10 tracking-[1em]">NO_DATA</div>`;
                 return;
             }
 
             filtered.forEach(item => {
                 const isF = item._type === 'factory';
-                const key = `${item._type}_${item.id}`;
-                const isFav = favorites.includes(key);
                 const accent = isF ? 'text-blue-500' : 'text-emerald-500';
-
                 const card = document.createElement('div');
-                card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border ${isF ? 'border-blue-500/20' : 'border-emerald-500/20'}`;
+                card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border border-white/5 relative`;
                 card.onclick = () => openModal(item._type, item._idx);
                 card.innerHTML = `
-                    <button onclick="toggleFav(event, '${key}')" class="card-action-btn star-btn ${isFav ? 'active' : ''}" title="标记收藏">★</button>
-                    <button onclick="handleDelete(event, '${item._type}', ${item.id})" class="card-action-btn shredder-btn" title="物理抹除">✕</button>
+                    <button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
                     <div class="flex justify-between items-start mb-6">
                         <span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span>
                         <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
-                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase tracking-tight">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">VIEW_DETAIL →</div>
+                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase tracking-tight leading-tight">${isF ? item.sector : item.location}</h4>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold">解密档案 / DECRYPT →</div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        // 🚀 新增：可视化计算引擎
         function initCharts() {
             const ctxTrend = document.getElementById('trendChart').getContext('2d');
             const ctxType = document.getElementById('typeChart').getContext('2d');
-            
-            // 摧毁旧图表防止重影
-            if(charts.trend) charts.trend.destroy();
-            if(charts.type) charts.type.destroy();
+            if(charts.trend) charts.trend.destroy(); if(charts.type) charts.type.destroy();
 
-            // 数据处理：过去7天
-            const days = Array.from({length: 7}, (_, i) => {
-                const d = new Date(); d.setDate(d.getDate() - i);
-                return d.toISOString().split('T')[0];
+            const days = Array.from({length: 7}, (_, i) => { 
+                const d = new Date(); d.setDate(d.getDate() - i); 
+                return d.toISOString().split('T')[0]; 
             }).reverse();
+            const counts = days.map(day => [...globalData.factory, ...globalData.radar].filter(i => i.created_at.startsWith(day)).length);
 
-            const allData = [...globalData.factory, ...globalData.radar];
-            const counts = days.map(day => allData.filter(i => i.created_at.startsWith(day)).length);
+            // 渐变色配置
+            const gradient = ctxTrend.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+            gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
 
             charts.trend = new Chart(ctxTrend, {
                 type: 'line',
                 data: {
                     labels: days.map(d => d.slice(5)),
                     datasets: [{
-                        label: '生产量', data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 0, fill: true,
-                        backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4
+                        data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, 
+                        pointBackgroundColor: '#a855f7', fill: true, backgroundColor: gradient, tension: 0.4
                     }]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
                     scales: { 
-                        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9, family: 'JetBrains Mono' } } },
-                        y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { display: false } }
+                        x: { grid: { display: false }, ticks: { color: '#475569', font: { family: 'JetBrains Mono', size: 10 } } },
+                        y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { stepSize: 1, color: '#475569' } }
                     }
                 }
             });
@@ -284,34 +259,23 @@
                     labels: ['Factory', 'Radar'],
                     datasets: [{
                         data: [globalData.factory.length, globalData.radar.length],
-                        backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '80%'
+                        backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%', borderRadius: 10
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    animation: { animateScale: true }
+                }
             });
         }
 
-        function toggleFav(e, key) {
-            e.stopPropagation();
-            if (favorites.includes(key)) favorites = favorites.filter(k => k !== key);
-            else favorites.push(key);
-            localStorage.setItem('pudding_favs', JSON.stringify(favorites));
-            renderUI();
-            showNotify(favorites.includes(key) ? "已加入高价值档案库" : "已取消收藏");
-        }
-
         async function handleDelete(e, type, id) {
-            e.stopPropagation();
-            if (!confirm(`确认物理抹除？此操作不可逆。`)) return;
+            e.stopPropagation(); if (!confirm(`警告：正在销毁物理存档 ${id}，此操作不可撤销。`)) return;
             const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
             try {
                 const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
-                if (res.ok) {
-                    favorites = favorites.filter(k => k !== `${type}_${id}`); // 清理星标
-                    localStorage.setItem('pudding_favs', JSON.stringify(favorites));
-                    fetchAssets(true);
-                }
-            } catch (err) { showNotify("网络指令失败", "error"); }
+                if (res.ok) { fetchAssets(true); }
+            } catch (err) { showNotify("操作失败", "error"); }
         }
 
         function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
@@ -328,14 +292,15 @@
             document.getElementById('modalBody').innerHTML = marked.parse(content || "档案损坏");
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('pdfBtn').onclick = () => exportMultiPagePDF(item, content);
+            
+            document.getElementById('pdf-asn').innerText = `ASN-${item.id}`;
+            document.getElementById('pdf-date').innerText = new Date(item.created_at).toLocaleString();
+            document.getElementById('pdfBtn').onclick = () => exportPDF(item, content);
         }
 
-        async function exportMultiPagePDF(item, markdown) {
-            const { jsPDF } = window.jspdf; const btn = document.getElementById('pdfBtn');
-            btn.innerText = "正在渲染..."; btn.disabled = true;
-            document.getElementById('pdf-asn').innerText = `ASN: ${item.id}`;
-            document.getElementById('pdf-date').innerText = `DATE: ${new Date(item.created_at).toLocaleString()}`;
+        async function exportPDF(item, markdown) {
+            const { jsPDF } = window.jspdf;
+            const btn = document.getElementById('pdfBtn'); btn.innerText = "生成中..."; btn.disabled = true;
             document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
             try {
                 const canvas = await html2canvas(document.getElementById('pdf-template'), { scale: 2, useCORS: true });
@@ -346,9 +311,9 @@
                 pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
                 hLeft -= 295;
                 while (hLeft > 0) { pos = hLeft - imgHeight; pdf.addPage(); pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight); hLeft -= 295; }
-                pdf.save(`Asset_v2.8_${item.id}.pdf`);
-                showNotify("报告已通过加密链接导出");
-            } catch (err) { showNotify("导出引擎异常", "error"); }
+                pdf.save(`Asset_v3_${item.id}.pdf`);
+                showNotify("报告导出成功");
+            } catch (err) { showNotify("导出失败", "error"); }
             finally { btn.innerText = "导出 PDF 报告"; btn.disabled = false; }
         }
 
