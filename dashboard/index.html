@@ -8,33 +8,48 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --vault-purple: #a855f7; --bg-dark: #020617; }
+        
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0); background-size: 30px 30px; }
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); }
+        
+        /* 统计卡片状态 */
+        .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.3s; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--vault-purple); }
+        .stat-card.active { border-color: var(--vault-purple); box-shadow: 0 0 25px rgba(168, 85, 247, 0.25); }
+
+        /* 资产卡片动效 */
         .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .asset-card:hover { transform: translateY(-5px); border-color: var(--vault-purple); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.2); }
-        .delete-btn { position: absolute; top: 12px; right: 12px; opacity: 0; transition: all 0.2s; z-index: 10; }
-        .asset-card:hover .delete-btn { opacity: 0.5; }
-        .delete-btn:hover { opacity: 1 !important; color: #ef4444; }
         
+        /* 销毁按钮 */
+        .shredder-btn { position: absolute; top: 15px; right: 15px; opacity: 0; transition: all 0.2s; z-index: 10; padding: 8px; border-radius: 8px; color: #64748b; }
+        .asset-card:hover .shredder-btn { opacity: 0.5; }
+        .shredder-btn:hover { opacity: 1 !important; background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        /* 搜索框 */
+        input[type="search"] { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(168, 85, 247, 0.2); color: white; outline: none; transition: all 0.3s; }
+        input[type="search"]:focus { border-color: var(--vault-purple); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
+
+        /* 系统层 */
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
-        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* PDF 模板 */
         #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; background: white; color: #1a1a1a; padding: 60px; font-family: serif; }
         .pdf-header { border-bottom: 2px solid #a855f7; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .pdf-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; color: rgba(0,0,0,0.02); font-weight: 900; pointer-events: none; white-space: nowrap; }
+
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
-        
-        /* 搜索框美化 */
-        input[type="search"] { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(168, 85, 247, 0.2); color: white; outline: none; transition: all 0.3s; }
-        input[type="search"]:focus { border-color: var(--vault-purple); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
@@ -46,62 +61,80 @@
     </div>
 
     <div id="pdf-template">
+        <div class="pdf-watermark">PUDDING LAB ASSET</div>
         <div class="pdf-header">
-            <div><h1 style="font-size: 24px; font-weight: 900; margin: 0;">布丁实验室 - 资产报告</h1><p style="font-size: 10px; color: #666; margin-top: 5px;">CONFIDENTIAL_ASSET_v2.4</p></div>
-            <div style="text-align: right;"><p style="font-size: 10px; margin: 0;" id="pdf-asn">---</p><p style="font-size: 10px; margin: 0;" id="pdf-date">---</p></div>
+            <div>
+                <h1 style="font-size: 24px; font-weight: 900; margin: 0; color: #111;">布丁实验室 - 价值资产报告</h1>
+                <p style="font-size: 10px; color: #666; margin-top: 5px;" class="mono">CONFIDENTIAL_ASSET_v2.6_FINAL</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-size: 10px; margin: 0; color: #333;" id="pdf-asn">ASN: ---</p>
+                <p style="font-size: 10px; margin: 0; color: #333;" id="pdf-date">DATE: ---</p>
+            </div>
         </div>
-        <div id="pdf-content" class="prose prose-slate max-w-none"></div>
+        <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
+        <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 9px; color: #999; text-align: center;">
+            该文档由布丁实验室资产金库加密生成，严禁非法泄露。
+        </div>
     </div>
 
-    <div class="max-w-7xl mx-auto space-y-12 pb-32">
+    <div class="max-w-7xl mx-auto space-y-12">
         <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-10 border-b border-purple-500/10">
             <div class="flex items-center gap-5">
                 <div class="w-16 h-16 bg-purple-600 rounded-[1.5rem] flex items-center justify-center font-black text-white text-3xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
                 <div>
                     <h1 class="text-3xl font-black text-white tracking-tighter uppercase">资产指挥中心</h1>
-                    <p class="text-[10px] text-purple-400 font-bold mono tracking-[0.4em]" id="opName">LOADING...</p>
+                    <p class="text-[10px] text-purple-400 font-bold mono tracking-[0.4em]" id="opName">OPERATOR: LOADING...</p>
                 </div>
             </div>
+            
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索资产名称、赛道或关键词..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
-                <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-bold uppercase hover:bg-purple-600 hover:text-white transition-all whitespace-nowrap">刷新同步</button>
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案关键词..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
+                
+                <div class="flex gap-2 w-full md:w-auto">
+                    <a href="/" class="flex-1 md:flex-none px-6 py-2.5 bg-slate-800/50 border border-white/10 rounded-full text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center hover:bg-slate-700 hover:text-white transition-all shadow-sm">返回主页</a>
+                    
+                    <button id="syncBtn" onclick="fetchAssets(true)" class="flex-1 md:flex-none px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">同步资产</button>
+                </div>
             </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div onclick="filterType('all')" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 cursor-pointer hover:scale-[1.02] transition-transform">
+            <div onclick="setFilter('all')" id="filter-all" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 active">
                 <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">特工级别 / Status</div>
                 <div class="text-4xl font-black text-white italic uppercase" id="stat-role">AGENT</div>
             </div>
-            <div onclick="filterType('factory')" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-blue-500/30 cursor-pointer hover:scale-[1.02] transition-transform">
+            <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-blue-500/30">
                 <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / Factory</div>
                 <div class="text-4xl font-black text-white" id="stat-factory">0</div>
             </div>
-            <div onclick="filterType('radar')" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-emerald-500/30 cursor-pointer hover:scale-[1.02] transition-transform">
+            <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-emerald-500/30">
                 <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / Radar</div>
                 <div class="text-4xl font-black text-white" id="stat-radar">0</div>
             </div>
         </div>
 
-        <main id="mainGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-10">
+        <main id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-10 pb-32">
             </main>
     </div>
 
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex justify-between items-center mb-10 shrink-0">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Decrypted_Asset_v2.4</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Decrypted_v2.6</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-5 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出 PDF</button>
-                    <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600">关闭</button>
+                    <button id="pdfBtn" class="px-5 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 PDF 报告</button>
+                    <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 hover:text-white transition-all">关闭</button>
                 </div>
             </div>
-            <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4"></div>
+            <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-4 scroll-smooth"></div>
         </div>
     </div>
 
     <script>
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
+        const DELETE_API = "https://nas-n8n.lbuding.com/webhook/delete-asset";
+
         let globalData = { factory: [], radar: [] };
         let currentFilter = 'all';
         let currentSearch = '';
@@ -122,12 +155,14 @@
             const cached = localStorage.getItem('pudding_assets');
 
             if (!t) { window.location.href = "/"; return; }
+
             document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
             if (r) document.getElementById('stat-role').innerText = r.toUpperCase();
             
             if (cached) {
                 globalData = JSON.parse(cached);
-                renderAll();
+                renderUI();
+                showNotify("本地资产记忆已加载");
             } else {
                 fetchAssets(false);
             }
@@ -141,6 +176,9 @@
         async function fetchAssets(isManual = false) {
             const t = localStorage.getItem('pudding_token');
             const e = localStorage.getItem('pudding_email');
+            const btn = document.getElementById('syncBtn');
+            if (isManual) { btn.innerText = "同步中..."; btn.disabled = true; }
+            
             try {
                 const res = await fetch(ASSETS_API, {
                     method: 'POST',
@@ -151,26 +189,27 @@
                 globalData.factory = data.factory || [];
                 globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
-                renderAll();
-                if (isManual) showNotify("云端情报已重新校准");
-            } catch (err) { showNotify("同步受阻", "error"); }
+                renderUI();
+                if (isManual) showNotify("云端情报同步成功");
+            } catch (err) {
+                showNotify("信号被干扰，同步受阻", "error");
+            } finally {
+                if (isManual) { btn.innerText = "同步资产"; btn.disabled = false; }
+            }
         }
 
-        // 🚀 核心：统一渲染逻辑
-        function renderAll() {
+        function renderUI() {
             document.getElementById('stat-factory').innerText = globalData.factory.length;
             document.getElementById('stat-radar').innerText = globalData.radar.length;
-            
-            const mainGrid = document.getElementById('mainGrid');
-            mainGrid.innerHTML = '';
 
-            // 合并并打上来源标签
+            const grid = document.getElementById('assetGrid');
+            grid.innerHTML = '';
+
             const allItems = [
                 ...globalData.factory.map((item, i) => ({ ...item, _type: 'factory', _idx: i })),
                 ...globalData.radar.map((item, i) => ({ ...item, _type: 'radar', _idx: i }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-            // 过滤逻辑
             const filtered = allItems.filter(item => {
                 const matchType = currentFilter === 'all' || item._type === currentFilter;
                 const title = (item.sector || item.location || "").toLowerCase();
@@ -180,7 +219,7 @@
             });
 
             if (filtered.length === 0) {
-                mainGrid.innerHTML = `<div class="col-span-full py-20 text-center mono opacity-20 uppercase tracking-widest">No_Assets_Found</div>`;
+                grid.innerHTML = `<div class="col-span-full py-20 text-center mono opacity-10 uppercase tracking-[0.5em]">No_Assets_Found</div>`;
                 return;
             }
 
@@ -188,77 +227,99 @@
                 const isFactory = item._type === 'factory';
                 const accent = isFactory ? 'text-blue-500' : 'text-emerald-500';
                 const accentBorder = isFactory ? 'border-blue-500/20' : 'border-emerald-500/20';
-                const title = isFactory ? item.sector : item.location;
 
                 const card = document.createElement('div');
                 card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border ${accentBorder}`;
                 card.onclick = () => openModal(item._type, item._idx);
                 card.innerHTML = `
-                    <button onclick="handleDelete(event, '${item._type}', ${item.id})" class="delete-btn text-xs font-black">✕</button>
+                    <button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black" title="执行物理抹除">✕</button>
                     <div class="flex justify-between items-start mb-6">
                         <span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span>
                         <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
-                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${title}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold">DECRYPT →</div>
+                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${isFactory ? item.sector : item.location}</h4>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">DECRYPT_ASN_${item.id} →</div>
                 `;
-                mainGrid.appendChild(card);
+                grid.appendChild(card);
             });
+        }
+
+        async function handleDelete(e, type, id) {
+            e.stopPropagation();
+            if (!confirm(`[警告] 是否物理抹除 ${type.toUpperCase()} 记录 (ID: ${id})？该操作不可撤销。`)) return;
+
+            const t = localStorage.getItem('pudding_token');
+            const email = localStorage.getItem('pudding_email');
+            showNotify("执行指令：正在抹除档案...", "info");
+
+            try {
+                const res = await fetch(DELETE_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
+                    body: JSON.stringify({ id, type, email })
+                });
+
+                if (res.ok) {
+                    if (type === 'factory') globalData.factory = globalData.factory.filter(i => i.id !== id);
+                    else globalData.radar = globalData.radar.filter(i => i.id !== id);
+                    localStorage.setItem('pudding_assets', JSON.stringify(globalData));
+                    renderUI();
+                    showNotify("档案已物理抹除，系统缓存已更新", "success");
+                }
+            } catch (err) { showNotify("销毁任务通讯失败", "error"); }
         }
 
         function handleSearch() {
             currentSearch = document.getElementById('assetSearch').value.toLowerCase();
-            renderAll();
+            renderUI();
         }
 
-        function filterType(type) {
+        function setFilter(type) {
             currentFilter = type;
-            showNotify(`正在切换视角: ${type.toUpperCase()}`);
-            renderAll();
-        }
-
-        function handleDelete(e, type, id) {
-            e.stopPropagation();
-            if (confirm(`确认要销毁这份档案吗？(ID: ${id})`)) {
-                showNotify("档案已进入销毁流程 (需配置 n8n 节点)", "error");
-                // 此处需 fetch n8n 的删除接口，暂时从本地移除示意
-                if (type === 'factory') globalData.factory = globalData.factory.filter(i => i.id !== id);
-                else globalData.radar = globalData.radar.filter(i => i.id !== id);
-                localStorage.setItem('pudding_assets', JSON.stringify(globalData));
-                renderAll();
-            }
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`filter-${type}`).classList.add('active');
+            renderUI();
         }
 
         function openModal(type, idx) {
             const item = globalData[type][idx];
             const content = item.blueprint_content || item.report_content;
-            document.getElementById('modalBody').innerHTML = marked.parse(content);
+            document.getElementById('modalBody').innerHTML = marked.parse(content || "档案内容已损坏");
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('pdfBtn').onclick = () => exportPDF(item, content);
+            document.getElementById('pdfBtn').onclick = () => exportMultiPagePDF(item, content);
         }
 
-        // PDF 导出维持之前的分页逻辑
-        async function exportPDF(item, markdown) {
+        async function exportMultiPagePDF(item, markdown) {
             const { jsPDF } = window.jspdf;
+            const btn = document.getElementById('pdfBtn');
+            btn.innerText = "多页渲染排版中...";
+            btn.disabled = true;
+
             document.getElementById('pdf-asn').innerText = `ASN: ${item.id}`;
-            document.getElementById('pdf-date').innerText = new Date(item.created_at).toLocaleString();
+            document.getElementById('pdf-date').innerText = `DATE: ${new Date(item.created_at).toLocaleString()}`;
             document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
-            const canvas = await html2canvas(document.getElementById('pdf-template'), { scale: 2 });
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 210;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let hLeft = imgHeight;
-            let pos = 0;
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, pos, imgWidth, imgHeight);
-            hLeft -= 295;
-            while (hLeft > 0) {
-                pos = hLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, pos, imgWidth, imgHeight);
-                hLeft -= 295;
-            }
-            pdf.save(`Pudding_Asset_${item.id}.pdf`);
+            
+            try {
+                const canvas = await html2canvas(document.getElementById('pdf-template'), { scale: 2, useCORS: true });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let hLeft = imgHeight, pos = 0, pageH = 295;
+
+                pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
+                hLeft -= pageH;
+                while (hLeft > 0) {
+                    pos = hLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
+                    hLeft -= pageH;
+                }
+                pdf.save(`PuddingReport_${item.id}.pdf`);
+                showNotify("高清多页报告导出成功");
+            } catch (err) { showNotify("导出引擎异常", "error"); }
+            finally { btn.innerText = "导出多页报告"; btn.disabled = false; }
         }
 
         function closeModal() {
