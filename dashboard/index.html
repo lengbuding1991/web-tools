@@ -3,274 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人资产金库 - 布丁实验室</title>
+    <title>私密金库 - 布丁实验室</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --vault-purple: #a855f7; --bg-dark: #020617; }
         
-        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; min-height: 100vh; }
         .tech-grid { background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0); background-size: 30px 30px; }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 门禁锁屏 */
-        #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, background-color 0.3s ease; }
+        .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid rgba(168, 85, 247, 0.2); }
+        .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .asset-card:hover { transform: translateY(-5px); border-color: var(--vault-purple); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15); }
         
-        /* 通知系统 */
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; }
-        .notify-error { border-color: #ef4444; color: #fca5a5; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
-        .notify-success { border-color: #a855f7; color: #e9d5ff; box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }
-        .notify-info { border-color: #a855f7; color: #e9d5ff; box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }
+        .notify-success { border-color: var(--vault-purple); color: #e9d5ff; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-        /* 滚动条美化 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(168, 85, 247, 0.5); }
-        
-        /* Modal 弹窗 */
-        #assetModal.hidden { display: none; }
-        .prose h1, .prose h2, .prose h3, .prose strong { color: #f8fafc !important; }
-        .prose code { color: #c084fc !important; background: rgba(168,85,247,0.1); padding: 2px 6px; border-radius: 4px; }
-
-        /* 资产卡片悬浮特效 */
-        .asset-card { transition: all 0.3s ease; }
-        .asset-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); }
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
     </style>
 </head>
-<body class="tech-grid flex flex-col lg:flex-row w-full h-screen overflow-hidden">
-    
+<body class="tech-grid p-4 md:p-8">
+
     <div id="notify-container"></div>
 
-    <div id="lockscreen">
-        <div id="lockTitle" class="text-purple-500 font-bold mono animate-pulse tracking-[0.5em] text-lg transition-colors">VAULT_DECRYPTING...</div>
-        <div id="lockSub" class="mt-4 text-[10px] text-slate-600 mono transition-colors">正在校验物理架构师密钥库</div>
-    </div>
-
-    <aside class="w-full lg:w-80 p-6 md:p-8 flex flex-col gap-8 shrink-0 glass lg:h-full z-20 border-r border-purple-500/20 shadow-2xl">
-        <div class="flex items-center gap-4 shrink-0">
-            <div class="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-[0_0_20px_rgba(168,85,247,0.4)]">V</div>
-            <div>
-                <h2 class="text-white font-black text-xl tracking-wide">加密金库</h2>
-                <span class="text-[9px] text-purple-500 mono uppercase tracking-widest">Asset Dashboard</span>
-            </div>
-        </div>
+    <div class="max-w-7xl mx-auto space-y-10">
         
-        <div class="space-y-6 mt-4 flex-1">
-            <div class="p-6 bg-[#0a1122] border border-purple-500/20 rounded-2xl">
-                <div class="text-[9px] uppercase font-bold text-slate-500 tracking-widest mb-1">当前操作员</div>
-                <div class="text-lg font-black text-white mono" id="dashboardUser">LOADING...</div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-[#0a1122] border border-blue-500/20 rounded-xl text-center">
-                    <div class="text-2xl font-black text-blue-500 mono" id="factoryCount">0</div>
-                    <div class="text-[9px] uppercase font-bold text-slate-500 mt-1">工厂蓝图数</div>
+        <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-purple-500/10">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-purple-600 rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-[0_0_20px_rgba(168,85,247,0.4)]">金</div>
+                <div>
+                    <h1 class="text-2xl font-black text-white tracking-tight uppercase">私密资产金库</h1>
+                    <p class="text-[10px] text-purple-400 font-bold mono tracking-[0.3em]">PRIVATE_BLUEPRINT_STORAGE</p>
                 </div>
-                <div class="p-4 bg-[#0a1122] border border-emerald-500/20 rounded-xl text-center">
-                    <div class="text-2xl font-black text-emerald-500 mono" id="radarCount">0</div>
-                    <div class="text-[9px] uppercase font-bold text-slate-500 mt-1">雷达报告数</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-auto shrink-0 space-y-4">
-            <button onclick="fetchAssets()" class="w-full py-4 bg-purple-600/10 border border-purple-500/30 text-purple-400 font-black rounded-xl text-xs uppercase tracking-widest hover:bg-purple-600 hover:text-white active:scale-95 transition-all">刷新资产库</button>
-            <a href="/" class="flex justify-center w-full py-4 bg-slate-800/50 border border-white/10 text-slate-400 font-black rounded-xl text-xs uppercase tracking-widest hover:bg-slate-700 hover:text-white active:scale-95 transition-all">返回大本营</a>
-        </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-        <header class="h-20 shrink-0 flex items-center justify-between px-8 border-b border-purple-500/10 glass sticky top-0 z-10">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-purple-500 rounded-full animate-ping"></div>
-                <span class="mono text-[11px] font-bold text-purple-400 uppercase tracking-widest">DATA_SYNC_ACTIVE</span>
             </div>
             <div class="flex items-center gap-4">
-                <a href="/factory/" class="text-[10px] font-bold text-blue-500 hover:text-white uppercase transition-colors mono">>> 前往工厂</a>
-                <a href="/radar/" class="text-[10px] font-bold text-emerald-500 hover:text-white uppercase transition-colors mono">>> 前往雷达</a>
+                <a href="/" class="px-6 py-2.5 border border-white/10 rounded-full text-[11px] font-bold uppercase text-slate-400 hover:bg-white/5 transition-all">返回基地</a>
+                <a href="/factory/" class="px-6 py-2.5 bg-purple-600 text-white rounded-full text-[11px] font-bold uppercase hover:bg-purple-500 transition-all shadow-lg shadow-purple-900/20">去工厂生成</a>
             </div>
         </header>
-        
-        <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 scroll-smooth">
-            <div class="max-w-6xl mx-auto space-y-16 pb-32">
-                
-                <section>
-                    <div class="flex items-center gap-3 mb-8 border-b border-blue-500/20 pb-4">
-                        <span class="text-2xl">⚡</span>
-                        <h3 class="text-xl font-black text-white tracking-widest">灵感价值工厂资产</h3>
-                    </div>
-                    <div id="factoryGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-slate-500 text-sm mono">
-                        正在解密资产中...
-                    </div>
-                </section>
 
-                <section>
-                    <div class="flex items-center gap-3 mb-8 border-b border-emerald-500/20 pb-4">
-                        <span class="text-2xl">🌍</span>
-                        <h3 class="text-xl font-black text-white tracking-widest">全球套利雷达资产</h3>
-                    </div>
-                    <div id="radarGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-slate-500 text-sm mono">
-                        正在解密资产中...
-                    </div>
-                </section>
-
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-40">
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">特工等级 / Role</div>
+                <div class="text-3xl font-black text-white uppercase italic" id="stat-role">LOADING...</div>
+            </div>
+            <div class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-40">
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">今日算力消耗 / Burned</div>
+                <div class="text-3xl font-black text-white" id="stat-usage">-- / --</div>
+            </div>
+            <div class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-40 border-purple-500/40">
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">蓝图资产总额 / Total</div>
+                <div class="text-3xl font-black text-white" id="stat-count">0 UNITS</div>
             </div>
         </div>
-    </main>
 
-    <div id="assetModal" class="fixed inset-0 z-[50000] flex items-center justify-center p-4 md:p-10 bg-black/90 backdrop-blur-md hidden">
-        <div class="w-full max-w-4xl h-full flex flex-col bg-[#050a15] rounded-[2rem] border border-purple-500/30 shadow-2xl relative overflow-hidden">
-            <div class="h-16 shrink-0 flex items-center justify-between px-8 border-b border-white/10 glass sticky top-0">
-                <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest mono">DECRYPTED_DOCUMENT</span>
-                <button onclick="closeModal()" class="text-2xl text-slate-500 hover:text-red-400 transition-colors">&times;</button>
+        <section class="space-y-6">
+            <div class="flex items-center justify-between px-2">
+                <h3 class="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+                    资产列表 / ASSET_STREAM
+                </h3>
+                <span class="text-[10px] mono text-slate-600">ENCRYPTED_SSL_LAYER</span>
             </div>
-            <div class="flex-1 overflow-y-auto p-8 md:p-12">
-                <div id="modalContent" class="prose prose-invert prose-purple max-w-none text-slate-300"></div>
+            
+            <div id="blueprintGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="col-span-full py-20 text-center mono text-slate-700 text-sm animate-pulse">正在同步云端档案...</div>
             </div>
+        </section>
+    </div>
+
+    <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl p-6 md:p-12 overflow-y-auto hidden">
+        <div class="max-w-4xl mx-auto">
+            <button onclick="closeModal()" class="fixed top-8 right-8 text-slate-500 hover:text-white mono text-sm uppercase font-bold px-4 py-2 border border-white/10 rounded-full">关闭 / Close</button>
+            <div id="modalBody" class="prose prose-invert prose-purple max-w-none pb-32"></div>
         </div>
     </div>
 
     <script>
-        // 🚨 务必把这里的地址改成你刚刚 n8n 里配的 webhook 地址！
-        const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
+        const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-blueprints"; // 请确保这个 n8n 接口已准备好
 
-        // 存储拿到的数据，方便点开 Modal 时渲染
-        let globalFactoryData = [];
-        let globalRadarData = [];
-
-        function showNotify(msg, type = 'info') {
-            const container = document.getElementById('notify-container');
-            const card = document.createElement('div');
-            card.className = `notify-card notify-${type} mono text-[11px] font-bold`;
-            const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : '💎';
-            const title = type === 'error' ? 'VAULT_ALERT' : type === 'success' ? 'SYNC_COMPLETE' : 'VAULT_INFO';
-            card.innerHTML = `<span class="text-xl">${icon}</span><div><div class="uppercase opacity-50 mb-1 text-[9px]">${title}</div><div class="leading-tight">${msg}</div></div>`;
-            container.appendChild(card);
-            setTimeout(() => { card.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => card.remove(), 500); }, 3500);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
+        async function initDashboard() {
             const t = localStorage.getItem('pudding_token');
+            const e = localStorage.getItem('pudding_email');
             const u = localStorage.getItem('pudding_user');
-            const lockscreen = document.getElementById('lockscreen');
-            const lockTitle = document.getElementById('lockTitle');
-            const lockSub = document.getElementById('lockSub');
 
-            if (!t || !u) { 
-                lockTitle.innerText = "ACCESS_DENIED";
-                lockTitle.classList.replace('text-purple-500', 'text-red-500');
-                lockSub.innerText = "非特工身份，拒绝进入金库";
-                lockscreen.style.backgroundColor = 'rgba(10,0,0,0.95)';
-                showNotify("拦截：强制遣返大本营...", "error");
-                setTimeout(() => { window.location.href = "/"; }, 1500);
-                return; 
-            }
-
-            setTimeout(() => {
-                lockscreen.style.opacity = '0';
-                lockscreen.style.pointerEvents = 'none';
-                setTimeout(() => lockscreen.style.display = 'none', 500);
-                
-                document.getElementById('dashboardUser').innerText = u.toUpperCase();
-                showNotify("金库大门已开启，正在加载资产", "success");
-
-                // 异步核对 Token
-                fetch(PROFILE_API, { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`} 
-                }).then(res => res.json()).then(data => {
-                    if (data.status !== 'authorized') throw new Error();
-                }).catch(() => {
-                    localStorage.clear();
-                    showNotify("凭据已过期，切断连接", "error");
-                    setTimeout(() => window.location.href = "/", 1500);
-                });
-
-                // 拉取资产
-                fetchAssets();
-
-            }, 800);
-        });
-
-        async function fetchAssets() {
-            const u = localStorage.getItem('pudding_user');
-            const t = localStorage.getItem('pudding_token');
-            showNotify("正在向核心服务器请求资产列表...", "info");
-
-            try {
-                const res = await fetch(ASSETS_API, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, 
-                    body: JSON.stringify({ username: u }) 
-                });
-                
-                const data = await res.json();
-                
-                if (data.status === "success") {
-                    globalFactoryData = data.factory || [];
-                    globalRadarData = data.radar || [];
-                    
-                    document.getElementById('factoryCount').innerText = globalFactoryData.length;
-                    document.getElementById('radarCount').innerText = globalRadarData.length;
-                    
-                    renderGrid('factoryGrid', globalFactoryData, 'factory');
-                    renderGrid('radarGrid', globalRadarData, 'radar');
-                    
-                    showNotify("资产数据同步完成！", "success");
-                }
-            } catch (err) {
-                showNotify("连接核心数据库失败，请检查网络", "error");
-            }
-        }
-
-        function renderGrid(containerId, dataArray, type) {
-            const container = document.getElementById(containerId);
-            if (dataArray.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/10 rounded-2xl">未探测到资产记录。</div>`;
+            if (!t || !e) {
+                window.location.href = "/";
                 return;
             }
 
-            let html = '';
-            const isFactory = type === 'factory';
-            const colorBorder = isFactory ? 'border-blue-500/30' : 'border-emerald-500/30';
-            const colorText = isFactory ? 'text-blue-500' : 'text-emerald-500';
-
-            dataArray.forEach((item, index) => {
-                const title = isFactory ? item.sector : `${item.location} - ${item.niche}`;
-                const date = new Date(item.created_at).toLocaleString();
+            // 1. 获取用户信息
+            try {
+                const res = await fetch(PROFILE_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
+                    body: JSON.stringify({ email: e })
+                });
+                const data = await res.json();
                 
-                html += `
-                <div onclick="openModal('${type}', ${index})" class="asset-card cursor-pointer p-6 bg-[#0a1122] border ${colorBorder} rounded-2xl flex flex-col justify-between h-40">
-                    <div>
-                        <div class="text-[9px] ${colorText} font-bold tracking-widest mb-2">${date}</div>
-                        <h4 class="text-white font-bold text-base truncate">${title}</h4>
-                    </div>
-                    <div class="text-[10px] text-slate-500 uppercase flex items-center gap-2 mt-4">
-                        <span class="w-1.5 h-1.5 rounded-full ${isFactory ? 'bg-blue-500' : 'bg-emerald-500'}"></span>
-                        Click to Decrypt
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
+                // 实时渲染顶部概览
+                document.getElementById('stat-role').innerText = (data.role || 'USER').toUpperCase();
+                document.getElementById('stat-usage').innerText = `${data.daily_usage || 0} UNITS`;
+                
+                // 2. 获取所有蓝图资产
+                fetchAssets(t, e);
+            } catch (err) {
+                console.error("Profile sync failed");
+            }
         }
 
-        function openModal(type, index) {
-            const contentRaw = type === 'factory' ? globalFactoryData[index].blueprint_content : globalRadarData[index].report_content;
-            document.getElementById('modalContent').innerHTML = marked.parse(contentRaw || "数据损坏或为空");
-            document.getElementById('assetModal').classList.remove('hidden');
+        async function fetchAssets(token, email) {
+            const grid = document.getElementById('blueprintGrid');
+            try {
+                const res = await fetch(ASSETS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ email: email })
+                });
+                const assets = await res.json();
+                
+                document.getElementById('stat-count').innerText = `${assets.length} UNITS`;
+
+                if (!assets || assets.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-700 mono border-2 border-dashed border-white/5 rounded-[2.5rem]">金库暂无资产，请前往工厂投料。</div>`;
+                    return;
+                }
+
+                grid.innerHTML = assets.map((item, index) => `
+                    <div class="glass-panel p-8 rounded-[2.5rem] asset-card" onclick="openModal('${encodeURIComponent(item.blueprint_content)}')">
+                        <div class="flex justify-between items-start mb-6">
+                            <span class="mono text-[10px] text-purple-500 font-bold bg-purple-500/10 px-3 py-1 rounded-full">#${String(index + 1).padStart(3, '0')}</span>
+                            <span class="text-[10px] text-slate-500 mono">${new Date(item.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <h4 class="text-white font-black text-xl mb-3 line-clamp-2">${extractTitle(item.blueprint_content)}</h4>
+                        <p class="text-slate-500 text-xs mb-8 line-clamp-3">${extractSummary(item.blueprint_content)}</p>
+                        <div class="flex items-center gap-2 mt-auto">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            <span class="text-[9px] uppercase font-bold text-slate-400 mono tracking-widest">${item.sector || 'GENERAL'}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                grid.innerHTML = `<div class="col-span-full text-red-500 text-center mono">数据链路同步失败。</div>`;
+            }
+        }
+
+        // 简单的标题和摘要提取逻辑
+        function extractTitle(content) {
+            const match = content.match(/# (.*)|蓝图名称：(.*)|🚀 (.*)/);
+            return match ? (match[1] || match[2] || match[3]) : '未命名价值蓝图';
+        }
+        function extractSummary(content) {
+            return content.replace(/[#*`]/g, '').slice(0, 100) + '...';
+        }
+
+        function openModal(encodedContent) {
+            const content = decodeURIComponent(encodedContent);
+            document.getElementById('modalBody').innerHTML = marked.parse(content);
+            document.getElementById('viewModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
-            document.getElementById('assetModal').classList.add('hidden');
-            document.getElementById('modalContent').innerHTML = "";
+            document.getElementById('viewModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
         }
+
+        window.onload = initDashboard;
     </script>
 </body>
 </html>
