@@ -11,7 +11,6 @@
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; }
         
-        /* 🚀 核心骨架修复：锁死全屏高度，禁用外部滚动 */
         body { background-color: var(--bg-dark); color: #94a3b8; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
         
         .tech-grid { background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 0); background-size: 30px 30px; }
@@ -31,7 +30,6 @@
         #posterWrapper { position: fixed; top: -9999px; left: -9999px; width: 600px; background: #050a15; z-index: -1; }
         input, select { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         
-        /* 右侧内容区滚动条美化 */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 4px; }
@@ -69,7 +67,8 @@
                 <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
                 <span class="text-[11px] font-bold text-slate-400 mono tracking-widest" id="userTag">LOADING_STATION</span>
             </div>
-            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">返回基地</a>
+            <a href="/dashboard/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-purple-400 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all ml-auto mr-4 shadow-sm">进入金库</a>
+            <a href="/" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold uppercase text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">返回基地</a>
         </header>
 
         <div class="flex-1 overflow-y-auto p-6 md:p-10 lg:p-16 scroll-smooth" id="scrollArea">
@@ -116,6 +115,10 @@
     <script>
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
         const PROFILE_API = "https://nas-n8n.lbuding.com/webhook/get-user-profile";
+        
+        // 🚀 核心新增：专门用来查询叫号进度的 API
+        // ⚠️ 请确保这个地址和你 n8n 新建的“叫号机”Webhook 地址完全对应！
+        const TASK_API = "https://nas-n8n.lbuding.com/webhook/check-task";
 
         function showNotify(msg, type = 'info') {
             const container = document.getElementById('notify-container');
@@ -159,8 +162,7 @@
                 }).then(res => res.json()).then(data => {
                     if (data.status !== 'authorized') throw new Error("Token Invalid");
                 }).catch(() => {
-                    localStorage.removeItem('pudding_token');
-                    localStorage.removeItem('pudding_user');
+                    localStorage.clear();
                     showNotify("凭据已过期，强制断开引擎", "error");
                     setTimeout(() => window.location.href = "/", 1500);
                 });
@@ -174,11 +176,12 @@
             btn.disabled = true;
             
             try {
+                // 1. 发射请求，获取取餐小票
                 const res = await fetch(ENGINE_API, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, 
                     body: JSON.stringify({ 
-                        email: localStorage.getItem('pudding_email'), // 🚀 核心新增：把邮箱传给引擎作风控
+                        email: localStorage.getItem('pudding_email'),
                         username: localStorage.getItem('pudding_user'),
                         skills: document.getElementById('skills').value, 
                         commitment: document.getElementById('commitment').value, 
@@ -194,29 +197,78 @@
 
                 const data = await res.json();
 
-                // 🚀 核心新增：额度耗尽防刷系统拦截
                 if (data.status === "error") {
                     showNotify(data.message, "error");
-                    return; // 拦截执行，保留现场
+                    btn.innerText = "调配算力 · 生成价值蓝图"; 
+                    btn.disabled = false;
+                    return; 
                 }
 
-                if (data.blueprint) {
-                    document.getElementById('blueprintContent').innerHTML = marked.parse(data.blueprint);
-                    document.getElementById('posterContent').innerHTML = marked.parse(data.blueprint);
-                    document.getElementById('resultArea').classList.remove('hidden');
-                    showNotify("蓝图生成完毕，已扣除 1 点算力", "success");
-                    
-                    // 🚀 精准让右侧内容区向下滚动
-                    setTimeout(() => { 
-                        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                    }, 100);
+                // 🚀 2. 如果 n8n 返回了小票 task_id，进入异步轮询模式
+                if (data.status === "processing" && data.task_id) {
+                    showNotify("投料成功！引擎正在高压智算中...", "success");
+                    startPolling(data.task_id);
+                } 
+                // 兼容旧版同步模式（如果你暂时没改完 n8n 也能正常跑）
+                else if (data.blueprint) {
+                    renderBlueprint(data.blueprint);
+                    btn.innerText = "调配算力 · 生成价值蓝图"; 
+                    btn.disabled = false;
                 }
             } catch (err) { 
                 showNotify("引擎连接中断，请检查网络或 NAS 状态", "error");
-            } finally { 
-                btn.innerText = "调配算力 · 生成价值蓝图"; btn.disabled = false; 
+                btn.innerText = "调配算力 · 生成价值蓝图"; 
+                btn.disabled = false;
             }
         });
+
+        // 🚀 核心轮询引擎：每 3 秒去敲一次门
+        function startPolling(taskId) {
+            const btn = document.getElementById('submitBtn');
+            let elapsed = 0;
+            let dots = 0;
+
+            const timer = setInterval(async () => {
+                elapsed += 3;
+                dots = (dots + 1) % 4;
+                // 极客风打字机进度条
+                btn.innerText = `[智算燃烧中] 已耗时 ${elapsed}s ${'.'.repeat(dots)}`;
+
+                try {
+                    const res = await fetch(TASK_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task_id: taskId })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    // 🚨 注意：n8n 查数据库默认返回的是数组，我们做一层安全提取：
+                    const resultData = Array.isArray(data) ? data[0] : data;
+
+                    if (resultData && resultData.status === 'completed' && resultData.blueprint_content) {
+                        clearInterval(timer); // 拿到结果，立刻停止敲门
+                        renderBlueprint(resultData.blueprint_content);
+                        btn.innerText = "调配算力 · 生成价值蓝图"; 
+                        btn.disabled = false;
+                        showNotify("蓝图生成完毕，已自动提取入库", "success");
+                    }
+                } catch (e) {
+                    console.log(">> 轮询探测波段波动，等待重试...");
+                    // 遇到网络波动不报错，继续等下一次敲门
+                }
+            }, 3000); // 3000毫秒 = 3秒
+        }
+
+        // 提取出来的渲染函数，保持代码整洁
+        function renderBlueprint(markdownText) {
+            document.getElementById('blueprintContent').innerHTML = marked.parse(markdownText);
+            document.getElementById('posterContent').innerHTML = marked.parse(markdownText);
+            document.getElementById('resultArea').classList.remove('hidden');
+            setTimeout(() => { 
+                document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+            }, 100);
+        }
 
         async function generatePoster() {
             const btn = document.getElementById('posterBtn');
