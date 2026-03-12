@@ -16,7 +16,10 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .custom-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233b82f6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1.5rem center; background-size: 1rem; }
+        
+        /* 🚀 锁屏容器，initSecurityGate 会控制其内部文字与消失动画 */
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -26,7 +29,10 @@
 </head>
 <body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
     <div id="notify-container"></div>
-    <div id="lockscreen"><div class="text-blue-500 font-bold mono animate-pulse tracking-[1em] text-lg">FACTORY_LINKING...</div></div>
+    
+    <div id="lockscreen">
+        <div class="text-blue-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Link_Initializing...</div>
+    </div>
 
     <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5">
         <div class="flex items-center gap-4">
@@ -100,12 +106,16 @@
         const ENGINE_API = "https://nas-n8n.lbuding.com/webhook/factory-engine";
         function addLog(msg, color = 'text-slate-500') { const logs = document.getElementById('logs'); if(!logs) return; const div = document.createElement('div'); div.className = color + ' mb-1'; div.innerText = `> ${msg}`; logs.appendChild(div); logs.scrollTop = logs.scrollHeight; }
 
+        // 🚀 核心重构：调用中台安全网关
         window.onload = () => {
-            const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user');
-            if (!t || !u) { window.location.href = "/"; return; }
+            const isAuthorized = window.initSecurityGate("FACTORY"); // 调用中台逻辑
+            if (!isAuthorized) return; // 拦截后续执行，等待网关自动跳转
+
+            // 权限验证通过后的初始化逻辑
+            const u = localStorage.getItem('pudding_user');
             document.getElementById('userName').innerText = u.toUpperCase();
             document.getElementById('userStation').innerText = u.toUpperCase() + "_STATION";
-            setTimeout(() => { document.getElementById('lockscreen').style.opacity = '0'; setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); addLog(`特工 ${u} 接入。`, 'text-blue-400'); }, 500);
+            addLog(`特工 ${u} 接入。`, 'text-blue-400');
         };
 
         document.getElementById('factoryForm').addEventListener('submit', async (e) => {

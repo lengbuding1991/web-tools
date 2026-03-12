@@ -16,7 +16,10 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(16, 185, 129, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .custom-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2310b981'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1.5rem center; background-size: 1rem; }
+        
+        /* 🚀 锁屏容器样式 */
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -26,14 +29,17 @@
 </head>
 <body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
     <div id="notify-container"></div>
-    <div id="lockscreen"><div class="text-emerald-500 font-bold mono animate-pulse tracking-[1em] text-lg">RADAR_LINKING...</div></div>
+    
+    <div id="lockscreen">
+        <div class="text-emerald-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Link_Initializing...</div>
+    </div>
 
     <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)]">R</div>
             <div>
-                <h2 class="font-black text-white text-xl tracking-tight uppercase">套利雷达</h2>
-                <span class="text-[9px] text-emerald-500 mono font-bold uppercase tracking-widest animate-pulse">Scanning_Global_Gap</span>
+                <h2 class="font-black text-white text-xl tracking-tight uppercase leading-none">套利雷达</h2>
+                <span class="text-[9px] text-emerald-500 mono font-bold uppercase tracking-widest animate-pulse mt-1 inline-block">Scanning_Global_Gap</span>
             </div>
         </div>
         <div class="p-5 bg-black/40 rounded-2xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block" id="logs">
@@ -45,7 +51,7 @@
         <header class="h-16 md:h-20 shrink-0 flex items-center justify-between px-6 md:px-8 border-b border-white/5 glass-panel z-10">
             <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
-                <span class="text-[10px] font-black text-slate-400 mono tracking-[0.2em]" id="userStation">SCANNER</span>
+                <span class="text-[10px] font-black text-slate-400 mono tracking-[0.2em] md:tracking-[0.3em]" id="userStation">SCANNER</span>
             </div>
             <div class="flex items-center gap-2 md:gap-4">
                 <a href="/dashboard/" class="px-4 py-2 border border-purple-500/30 rounded-full text-[9px] font-black uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all">进入金库</a>
@@ -81,13 +87,13 @@
                                 <option value="离岸税务与被动收入">🌴 离岸税务与被动收入</option>
                             </select>
                         </div>
-                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 mt-2 bg-emerald-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.4em] hover:bg-emerald-500 shadow-lg transition-all">发射探测波束</button>
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 mt-2 bg-emerald-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.4em] hover:bg-emerald-500 shadow-xl transition-all">发射探测波束</button>
                     </form>
                 </div>
 
                 <div id="resultArea" class="hidden glass-panel p-6 md:p-16 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl border border-emerald-500/20">
                     <div id="blueprintContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div>
-                    <div class="mt-12 md:mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                         <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Signal_Strength: High_Res</div>
                         <button id="exportBtn" class="w-full md:w-auto px-10 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm">↓ 导出格式化 PDF 情报</button>
                     </div>
@@ -100,12 +106,15 @@
         const RADAR_API = "https://nas-n8n.lbuding.com/webhook/radar-engine";
         function addLog(msg, color = 'text-slate-500') { const logs = document.getElementById('logs'); if(!logs) return; const div = document.createElement('div'); div.className = color + ' mb-1'; div.innerText = `> ${msg}`; logs.appendChild(div); logs.scrollTop = logs.scrollHeight; }
 
+        // 🚀 核心重构：调用中台安全网关
         window.onload = () => {
-            const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user');
-            if (!t || !u) { window.location.href = "/"; return; }
+            const isAuthorized = window.initSecurityGate("RADAR"); // 接入网关逻辑
+            if (!isAuthorized) return; // 拦截并等待自动跳转
+
+            const u = localStorage.getItem('pudding_user');
             document.getElementById('userName').innerText = u.toUpperCase();
             document.getElementById('userStation').innerText = u.toUpperCase() + "_SCANNER";
-            setTimeout(() => { document.getElementById('lockscreen').style.opacity = '0'; setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); addLog(`波束已聚焦，特工 ${u} 在线。`, 'text-emerald-400'); }, 500);
+            addLog(`卫星链路已握手，特工 ${u} 接入。`, 'text-emerald-400');
         };
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {

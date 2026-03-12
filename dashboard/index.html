@@ -21,27 +21,34 @@
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
         .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .asset-card:hover { border-color: var(--vault-purple); transform: scale(1.02); }
-        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0.4; color: #64748b; }
+        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0.4; color: #64748b; transition: all 0.2s; }
+        .shredder-btn:hover { opacity: 1; color: #ef4444; }
+        
+        /* 🚀 锁屏样式 */
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
     <div id="notify-container"></div>
-    <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
+    
+    <div id="lockscreen">
+        <div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Initializing...</div>
+    </div>
 
     <div class="max-w-7xl mx-auto space-y-6 md:space-y-12">
         <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 md:pb-10 border-b border-purple-500/10">
             <div class="flex items-center gap-5">
                 <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
-                <div><h1 class="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none">资产指挥中心</h1><p class="text-[9px] text-purple-400 font-bold mono uppercase tracking-[0.4em] mt-2">Pudding_Vault_Secure</p></div>
+                <div><h1 class="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none">资产指挥中心</h1><p class="text-[9px] text-purple-400 mono uppercase tracking-[0.4em] mt-2">Pudding_Vault_Secure</p></div>
             </div>
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案..." class="px-6 py-3 rounded-full text-xs w-full md:w-64 bg-slate-900 border border-white/5 text-white outline-none focus:ring-1 ring-purple-500">
                 <div class="flex gap-2 w-full md:w-auto">
-                    <a href="/" class="flex-1 text-center px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">返回基地</a>
+                    <a href="/" class="flex-1 text-center px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
                     <div class="hidden md:flex glass-panel px-4 py-3 rounded-full border border-blue-500/20 items-center gap-2">
                         <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
                         <span class="text-[9px] font-bold text-blue-400 mono uppercase" id="opName">ARCHITECT</span>
@@ -50,6 +57,11 @@
                 </div>
             </div>
         </header>
+
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="全库档案快速检索..." class="px-6 py-3 rounded-full text-xs w-full md:w-80 bg-slate-900 border border-white/5 text-white outline-none focus:ring-1 ring-purple-500 transition-all">
+            <button id="syncBtn" onclick="fetchAssets(true)" class="w-full md:w-auto px-8 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">同步资产</button>
+        </div>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 glass-panel p-6 md:p-8 rounded-[2rem] shadow-xl"><div class="h-48 md:h-56"><canvas id="trendChart"></canvas></div></div>
@@ -72,13 +84,10 @@
     </div>
 
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-4 md:p-12 hidden">
-        <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 text-white">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v4.2</div>
-                <div class="flex gap-2 w-full md:w-auto">
-                    <button id="pdfBtn" class="flex-1 md:flex-none px-6 py-3 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出无损 PDF</button>
-                    <button onclick="closeModal()" class="flex-1 md:flex-none px-6 py-3 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
-                </div>
+        <div class="max-w-4xl mx-auto h-full flex flex-col text-white">
+            <div class="flex justify-between items-center mb-10">
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Terminal_v4.3</div>
+                <div class="flex gap-2"><button id="pdfBtn" class="px-6 py-3 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出无损 PDF</button><button onclick="closeModal()" class="px-6 py-3 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button></div>
             </div>
             <div id="modalBody" class="flex-1 overflow-y-auto prose prose-invert prose-purple max-w-none pr-2 scroll-smooth"></div>
         </div>
@@ -87,16 +96,16 @@
     <script>
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         const DELETE_API = "https://nas-n8n.lbuding.com/webhook/delete-asset";
-        let globalData = { factory: [], radar: [] };
-        let currentFilter = 'all', currentSearch = '';
-        let charts = { trend: null, type: null };
+        let globalData = { factory: [], radar: [] }, charts = { trend: null, type: null };
 
+        // 🚀 核心重构：调用中台安全网关
         window.onload = () => {
-            const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user'), cached = localStorage.getItem('pudding_assets');
-            if (!t) { window.location.href = "/"; return; }
+            const isAuthorized = window.initSecurityGate("VAULT"); // 接入网关逻辑
+            if (!isAuthorized) return; 
+
+            const u = localStorage.getItem('pudding_user');
             document.getElementById('opName').innerText = u.toUpperCase();
-            if (cached) { globalData = JSON.parse(cached); renderUI(); initCharts(); } else { fetchAssets(false); }
-            setTimeout(() => { document.getElementById('lockscreen').style.opacity = '0'; setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); }, 500);
+            fetchAssets(false);
         };
 
         async function fetchAssets(isManual = false) {
@@ -107,8 +116,8 @@
                 globalData.factory = data.factory || []; globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
-                if (isManual) showNotify("数据已同步");
-            } catch (err) { showNotify("同步受阻", "error"); }
+                if (isManual) showNotify("金库数据已更新");
+            } catch (err) { showNotify("同步异常", "error"); }
         }
 
         function renderUI() {
@@ -119,7 +128,7 @@
             document.getElementById('totalAssetCount').innerText = totalCount;
             const grid = document.getElementById('assetGrid'); grid.innerHTML = '';
             const allItems = [...globalData.factory.map((item, i) => ({ ...item, _type: 'factory', _idx: i })), ...globalData.radar.map((item, i) => ({ ...item, _type: 'radar', _idx: i }))].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            const filtered = allItems.filter(item => (currentFilter === 'all' || item._type === currentFilter) && (item.sector || item.location || "").toLowerCase().includes(currentSearch));
+            const filtered = allItems.filter(item => (item.sector || item.location || "").toLowerCase().includes(document.getElementById('assetSearch').value.toLowerCase()));
             filtered.forEach(item => {
                 const isF = item._type === 'factory', accent = isF ? 'text-blue-500' : 'text-emerald-500';
                 const card = document.createElement('div');
@@ -127,31 +136,27 @@
                 card.onclick = () => openModal(item._type, item._idx);
                 card.innerHTML = `<button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
                     <div class="flex justify-between items-start mb-6"><span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span><span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span></div>
-                    <h4 class="text-white font-black text-lg md:text-xl mb-4 line-clamp-2 uppercase">${isF ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">ASN_${item.id} DECRYPT →</div>`;
+                    <h4 class="text-white font-black text-lg md:text-xl mb-4 line-clamp-2 uppercase">${item.sector || item.location}</h4>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono font-bold italic opacity-60">ASN_${item.id} →</div>`;
                 grid.appendChild(card);
             });
         }
 
         function openModal(type, idx) {
-            const asset = globalData[type][idx];
-            const content = asset.blueprint_content || asset.report_content;
+            const asset = globalData[type][idx], content = asset.blueprint_content || asset.report_content;
             document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('pdfBtn').onclick = () => generateIsolatedPDF(asset, content, type); // 🚀 调用中台逻辑
+            document.getElementById('pdfBtn').onclick = () => generateIsolatedPDF(asset, content, type);
         }
 
-        // 🚀 修改：使用中台的 Toast 确认对话框逻辑
         async function handleDelete(e, type, id) { 
             e.stopPropagation(); 
-            const confirmed = await showConfirmToast(`确认物理销毁 ASN-${id}？`);
+            const confirmed = await showConfirmToast(`确认永久移除记录 ASN-${id}？`); 
             if (!confirmed) return; 
-
-            const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
             try {
-                const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
-                if (res.ok) { fetchAssets(true); showNotify("资产已抹除"); }
+                const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('pudding_token')}` }, body: JSON.stringify({ id, type, email: localStorage.getItem('pudding_email') }) });
+                if (res.ok) { fetchAssets(true); showNotify("已抹除资产"); }
             } catch (err) { showNotify("操作失败", "error"); } 
         }
 
@@ -160,11 +165,11 @@
             if(charts.trend) charts.trend.destroy(); if(charts.type) charts.type.destroy();
             const days = Array.from({length: 7}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return d.toISOString().split('T')[0]; }).reverse();
             const counts = days.map(day => [...globalData.factory, ...globalData.radar].filter(i => i.created_at.startsWith(day)).length);
-            charts.trend = new Chart(ctxTrend, { type: 'line', data: { labels: days.map(d => d.slice(5)), datasets: [{ data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { stepSize: 1 } } } } });
+            charts.trend = new Chart(ctxTrend, { type: 'line', data: { labels: days.map(d => d.slice(5)), datasets: [{ data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' } } } } });
             charts.type = new Chart(ctxType, { type: 'doughnut', data: { labels: ['Factory', 'Radar'], datasets: [{ data: [globalData.factory.length, globalData.radar.length], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '85%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
+        function handleSearch() { renderUI(); }
         function setFilter(type) { currentFilter = type; document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active')); document.getElementById(`filter-${type}`).classList.add('active'); renderUI(); }
         function closeModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
     </script>
