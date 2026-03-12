@@ -47,17 +47,17 @@
         <div class="pdf-watermark">PUDDING LAB ASSET</div>
         <div class="pdf-header">
             <div>
-                <h1 style="font-size: 24px; font-weight: 900; margin: 0;">布丁实验室 - 价值资产证书</h1>
-                <p style="font-size: 10px; color: #666; margin-top: 5px;" class="mono">CONFIDENTIAL_ASSET_BLUEPRINT</p>
+                <h1 style="font-size: 24px; font-weight: 900; margin: 0; color: #1a1a1a;">布丁实验室 - 价值资产报告</h1>
+                <p style="font-size: 10px; color: #666; margin-top: 5px;" class="mono">CONFIDENTIAL_ASSET_v2.3</p>
             </div>
             <div style="text-align: right;">
-                <p style="font-size: 10px; margin: 0;" id="pdf-asn">ASN: ---</p>
-                <p style="font-size: 10px; margin: 0;" id="pdf-date">DATE: ---</p>
+                <p style="font-size: 10px; margin: 0; color: #333;" id="pdf-asn">ASN: ---</p>
+                <p style="font-size: 10px; margin: 0; color: #333;" id="pdf-date">DATE: ---</p>
             </div>
         </div>
-        <div id="pdf-content" class="prose prose-slate max-w-none"></div>
-        <div style="margin-top: 60px; border-top: 1px solid #eee; pt-20; font-size: 9px; color: #999; text-align: center;">
-            该文档由布丁实验室资产管理系统加密生成，仅限特工本人传阅。
+        <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
+        <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 9px; color: #999; text-align: center;">
+            此报告由布丁实验室资产金库自动导出。未经许可，禁止分发。
         </div>
     </div>
 
@@ -72,7 +72,7 @@
             </div>
             <div class="flex items-center gap-4">
                 <a href="/" class="px-6 py-2.5 bg-slate-800/50 border border-white/10 rounded-full text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all">返回基地</a>
-                <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase hover:bg-purple-600 hover:text-white transition-all">同步云端</button>
+                <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase hover:bg-purple-600 hover:text-white transition-all">刷新数据</button>
             </div>
         </header>
 
@@ -94,7 +94,7 @@
         <main class="space-y-16">
             <section id="factorySection">
                 <h3 class="text-xs font-black text-blue-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span> 价值工厂蓝图
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span> 价值工厂档案
                 </h3>
                 <div id="factoryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
             </section>
@@ -110,9 +110,9 @@
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex justify-between items-center mb-10 shrink-0">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Encrypted_Asset_v2.2</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest">Encrypted_Asset_v2.3</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-5 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all">下载资产报告 (PDF)</button>
+                    <button id="pdfBtn" class="px-5 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 transition-all">导出多页报告 (PDF)</button>
                     <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 hover:text-white transition-all">关闭</button>
                 </div>
             </div>
@@ -123,7 +123,7 @@
     <script>
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         let globalData = { factory: [], radar: [] };
-        let currentActiveItem = null;
+        let currentItem = null;
 
         function showNotify(msg, type = 'success') {
             const container = document.getElementById('notify-container');
@@ -146,10 +146,11 @@
             document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
             if (r) document.getElementById('stat-role').innerText = r.toUpperCase();
             
+            // 离线优先加载
             if (cached) {
                 globalData = JSON.parse(cached);
                 updateUI();
-                showNotify("本地资产档案已就绪");
+                showNotify("指挥中心记忆同步成功");
             } else {
                 fetchAssets(false);
             }
@@ -177,11 +178,11 @@
                 globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 updateUI();
-                if (isManual) showNotify("云端档案同步完成");
+                if (isManual) showNotify("云端档案已更新");
             } catch (err) {
-                showNotify("同步受阻，请检查 NAS", "error");
+                showNotify("连接受阻", "error");
             } finally {
-                if (isManual) { btn.innerText = "同步云端"; btn.disabled = false; }
+                if (isManual) { btn.innerText = "刷新数据"; btn.disabled = false; }
             }
         }
 
@@ -195,7 +196,7 @@
         function renderGrid(containerId, data, type) {
             const grid = document.getElementById(containerId);
             if (!data || data.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/5 rounded-2xl opacity-20 mono text-xs">NO_DATA</div>`;
+                grid.innerHTML = `<div class="col-span-full py-10 text-center border border-dashed border-white/5 rounded-2xl opacity-20 mono text-xs uppercase">No_Archive</div>`;
                 return;
             }
             const isFactory = type === 'factory';
@@ -208,57 +209,77 @@
                         <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
                     <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${isFactory ? (item.sector || '灵感蓝图') : (item.location || '雷达情报')}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent}">DECRYPT →</div>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold tracking-widest">DECRYPT →</div>
                 </div>`).join('');
         }
 
         function openModal(type, index) {
             const item = globalData[type][index];
-            currentActiveItem = { ...item, type, asn: `ASN-${String(index+1).padStart(3,'0')}` };
+            currentItem = { ...item, asn: `ASN-${String(index+1).padStart(3,'0')}` };
             const content = item.blueprint_content || item.report_content;
-            document.getElementById('modalBody').innerHTML = marked.parse(content || "内容损坏");
+            document.getElementById('modalBody').innerHTML = marked.parse(content || "内容已损坏");
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             
-            // 绑定下载按钮
-            document.getElementById('pdfBtn').onclick = () => exportToPDF(content);
+            document.getElementById('pdfBtn').onclick = () => exportToMultiPagePDF(content);
         }
 
-        async function exportToPDF(markdown) {
+        // 🚀 核心分页导出逻辑
+        async function exportToMultiPagePDF(markdown) {
             const { jsPDF } = window.jspdf;
             const btn = document.getElementById('pdfBtn');
-            btn.innerText = "正在排版渲染...";
+            btn.innerText = "多页排版渲染中...";
             btn.disabled = true;
 
-            // 1. 填充模板
-            document.getElementById('pdf-asn').innerText = `ASN: ${currentActiveItem.asn}`;
-            document.getElementById('pdf-date').innerText = `DATE: ${new Date(currentActiveItem.created_at).toLocaleString()}`;
+            // 填充隐藏模板
+            document.getElementById('pdf-asn').innerText = `ASN: ${currentItem.asn}`;
+            document.getElementById('pdf-date').innerText = `DATE: ${new Date(currentItem.created_at).toLocaleString()}`;
             document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
             
             const template = document.getElementById('pdf-template');
             
             try {
-                // 2. 转换为 Canvas
+                // 将长模板渲染为 Canvas
                 const canvas = await html2canvas(template, {
                     scale: 2,
                     useCORS: true,
-                    backgroundColor: "#ffffff"
+                    backgroundColor: "#ffffff",
+                    logging: false
                 });
                 
-                // 3. 生成 PDF (A4 纸张比例)
+                const contentWidth = canvas.width;
+                const contentHeight = canvas.height;
+
+                // A4 标准尺寸 (mm)
+                const pageWidth = 210;
+                const pageHeight = 295; // 留出 2mm 冗余
+                const imgWidth = pageWidth;
+                const imgHeight = (contentHeight * imgWidth) / contentWidth;
+
+                let heightLeft = imgHeight;
+                let position = 0;
                 const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
                 
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`PuddingLab_Asset_${currentActiveItem.asn}.pdf`);
-                showNotify("报告已存入您的本地磁盘");
+                const pdf = new jsPDF('p', 'mm', 'a4');
+
+                // 首页
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                // 循环切割后续页面
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save(`Asset_Report_${currentItem.asn}.pdf`);
+                showNotify("多页高清报告已保存");
             } catch (err) {
-                showNotify("导出失败，请重试", "error");
+                showNotify("导出失败", "error");
             } finally {
-                btn.innerText = "下载资产报告 (PDF)";
+                btn.innerText = "导出多页报告 (PDF)";
                 btn.disabled = false;
             }
         }
