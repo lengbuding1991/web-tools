@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
@@ -18,36 +19,27 @@
         .glass-panel { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(168, 85, 247, 0.15); }
         .mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 统计卡片状态 */
         .stat-card { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(15, 23, 42, 1) 100%); border: 1px solid rgba(168, 85, 247, 0.2); transition: all 0.3s; cursor: pointer; }
         .stat-card:hover { transform: translateY(-3px); border-color: var(--vault-purple); }
         .stat-card.active { border-color: var(--vault-purple); box-shadow: 0 0 25px rgba(168, 85, 247, 0.25); }
 
-        /* 资产卡片动效 */
         .asset-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .asset-card:hover { transform: translateY(-5px); border-color: var(--vault-purple); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.2); }
         
-        /* 销毁按钮 */
-        .shredder-btn { position: absolute; top: 15px; right: 15px; opacity: 0; transition: all 0.2s; z-index: 10; padding: 8px; border-radius: 8px; color: #64748b; }
-        .asset-card:hover .shredder-btn { opacity: 0.5; }
-        .shredder-btn:hover { opacity: 1 !important; background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        /* 交互按钮 */
+        .card-action-btn { position: absolute; opacity: 0; transition: all 0.2s; z-index: 10; padding: 8px; border-radius: 8px; color: #64748b; }
+        .asset-card:hover .card-action-btn { opacity: 0.6; }
+        .card-action-btn:hover { opacity: 1 !important; }
+        .shredder-btn { top: 15px; right: 15px; }
+        .star-btn { top: 15px; right: 50px; }
+        .star-btn.active { opacity: 1 !important; color: #fbbf24; }
 
-        /* 搜索框 */
-        input[type="search"] { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(168, 85, 247, 0.2); color: white; outline: none; transition: all 0.3s; }
-        input[type="search"]:focus { border-color: var(--vault-purple); box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
-
-        /* 系统层 */
+        input[type="search"] { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(168, 85, 247, 0.2); color: white; outline: none; }
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.4s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        /* PDF 模板 */
-        #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; background: white; color: #1a1a1a; padding: 60px; font-family: serif; }
-        .pdf-header { border-bottom: 2px solid #a855f7; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .pdf-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; color: rgba(0,0,0,0.02); font-weight: 900; pointer-events: none; white-space: nowrap; }
-
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 10px; }
     </style>
@@ -63,19 +55,10 @@
     <div id="pdf-template">
         <div class="pdf-watermark">PUDDING LAB ASSET</div>
         <div class="pdf-header">
-            <div>
-                <h1 style="font-size: 24px; font-weight: 900; margin: 0; color: #111;">布丁实验室 - 价值资产报告</h1>
-                <p style="font-size: 10px; color: #666; margin-top: 5px;" class="mono">CONFIDENTIAL_ASSET_v2.6_FINAL</p>
-            </div>
-            <div style="text-align: right;">
-                <p style="font-size: 10px; margin: 0; color: #333;" id="pdf-asn">ASN: ---</p>
-                <p style="font-size: 10px; margin: 0; color: #333;" id="pdf-date">DATE: ---</p>
-            </div>
+            <div><h1 style="font-size: 24px; font-weight: 900; margin: 0; color: #111;">布丁实验室 - 价值资产报告</h1><p style="font-size: 10px; color: #666; margin-top: 5px;" class="mono">CONFIDENTIAL_ASSET_v2.8</p></div>
+            <div style="text-align: right;"><p style="font-size: 10px; margin: 0; color: #333;" id="pdf-asn">ASN: ---</p><p style="font-size: 10px; margin: 0; color: #333;" id="pdf-date">DATE: ---</p></div>
         </div>
         <div id="pdf-content" class="prose prose-slate max-w-none" style="color: #333;"></div>
-        <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 9px; color: #999; text-align: center;">
-            该文档由布丁实验室资产金库加密生成，严禁非法泄露。
-        </div>
     </div>
 
     <div class="max-w-7xl mx-auto space-y-12">
@@ -89,41 +72,55 @@
             </div>
             
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案关键词..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
-                
-                <div class="flex gap-2 w-full md:w-auto">
-                    <a href="/" class="flex-1 md:flex-none px-6 py-2.5 bg-slate-800/50 border border-white/10 rounded-full text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center hover:bg-slate-700 hover:text-white transition-all shadow-sm">返回主页</a>
-                    
-                    <button id="syncBtn" onclick="fetchAssets(true)" class="flex-1 md:flex-none px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">同步资产</button>
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索资产..." class="px-6 py-2.5 rounded-full text-xs w-full md:w-64">
+                <div class="flex gap-2">
+                    <a href="/" class="px-6 py-2.5 bg-slate-800/50 border border-white/10 rounded-full text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-white transition-all shadow-sm">返回基地</a>
+                    <button id="syncBtn" onclick="fetchAssets(true)" class="px-6 py-2.5 border border-purple-500/30 text-purple-400 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">同步云端</button>
                 </div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div onclick="setFilter('all')" id="filter-all" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 active">
-                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest">特工级别 / Status</div>
-                <div class="text-4xl font-black text-white italic uppercase" id="stat-role">AGENT</div>
+        <section class="glass-panel p-8 rounded-[2.5rem] grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div class="text-[10px] mono text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span> 近期生产趋势 (7 DAYS)
+                </div>
+                <div class="h-48 w-full"><canvas id="trendChart"></canvas></div>
             </div>
-            <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-blue-500/30">
-                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest">工厂蓝图 / Factory</div>
-                <div class="text-4xl font-black text-white" id="stat-factory">0</div>
+            <div>
+                <div class="text-[10px] mono text-blue-400 uppercase tracking-widest mb-4">资产赛道构成</div>
+                <div class="h-48 w-full flex justify-center"><canvas id="typeChart"></canvas></div>
             </div>
-            <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-8 rounded-[2.5rem] flex flex-col justify-between h-44 border-emerald-500/30">
-                <div class="text-[10px] mono text-emerald-400 uppercase tracking-widest">雷达报告 / Radar</div>
-                <div class="text-4xl font-black text-white" id="stat-radar">0</div>
+        </section>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div onclick="setFilter('all')" id="filter-all" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 active">
+                <div class="text-[9px] mono text-purple-400 uppercase tracking-tighter">全部 / Total</div>
+                <div class="text-3xl font-black text-white italic" id="stat-all">0</div>
+            </div>
+            <div onclick="setFilter('factory')" id="filter-factory" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 border-blue-500/30">
+                <div class="text-[9px] mono text-blue-400 uppercase tracking-tighter">工厂 / Factory</div>
+                <div class="text-3xl font-black text-white" id="stat-factory">0</div>
+            </div>
+            <div onclick="setFilter('radar')" id="filter-radar" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 border-emerald-500/30">
+                <div class="text-[9px] mono text-emerald-400 uppercase tracking-tighter">雷达 / Radar</div>
+                <div class="text-3xl font-black text-white" id="stat-radar">0</div>
+            </div>
+            <div onclick="setFilter('fav')" id="filter-fav" class="stat-card p-6 rounded-[2rem] flex flex-col justify-between h-36 border-amber-500/30">
+                <div class="text-[9px] mono text-amber-500 uppercase tracking-tighter">星标 / Favorites</div>
+                <div class="text-3xl font-black text-white" id="stat-fav">0</div>
             </div>
         </div>
 
-        <main id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-10 pb-32">
-            </main>
+        <main id="assetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-6 pb-32"></main>
     </div>
 
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl p-6 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10 shrink-0">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Decrypted_v2.6</div>
+            <div class="flex justify-between items-center mb-10">
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Intelligence_Vault_v2.8</div>
                 <div class="flex gap-4">
-                    <button id="pdfBtn" class="px-5 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 PDF 报告</button>
+                    <button id="pdfBtn" class="px-5 py-2 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 transition-all">导出 PDF</button>
                     <button onclick="closeModal()" class="px-5 py-2 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 hover:text-white transition-all">关闭</button>
                 </div>
             </div>
@@ -136,8 +133,10 @@
         const DELETE_API = "https://nas-n8n.lbuding.com/webhook/delete-asset";
 
         let globalData = { factory: [], radar: [] };
+        let favorites = JSON.parse(localStorage.getItem('pudding_favs') || '[]');
         let currentFilter = 'all';
         let currentSearch = '';
+        let charts = { trend: null, type: null };
 
         function showNotify(msg, type = 'success') {
             const container = document.getElementById('notify-container');
@@ -149,20 +148,15 @@
         }
 
         window.onload = () => {
-            const t = localStorage.getItem('pudding_token');
-            const u = localStorage.getItem('pudding_user');
-            const r = localStorage.getItem('pudding_role');
-            const cached = localStorage.getItem('pudding_assets');
-
+            const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user'), r = localStorage.getItem('pudding_role'), cached = localStorage.getItem('pudding_assets');
             if (!t) { window.location.href = "/"; return; }
-
             document.getElementById('opName').innerText = `OPERATOR: ${u.toUpperCase()}`;
             if (r) document.getElementById('stat-role').innerText = r.toUpperCase();
             
             if (cached) {
                 globalData = JSON.parse(cached);
                 renderUI();
-                showNotify("本地资产记忆已加载");
+                initCharts();
             } else {
                 fetchAssets(false);
             }
@@ -174,33 +168,27 @@
         };
 
         async function fetchAssets(isManual = false) {
-            const t = localStorage.getItem('pudding_token');
-            const e = localStorage.getItem('pudding_email');
-            const btn = document.getElementById('syncBtn');
-            if (isManual) { btn.innerText = "同步中..."; btn.disabled = true; }
-            
+            const t = localStorage.getItem('pudding_token'), e = localStorage.getItem('pudding_email');
+            if (isManual) document.getElementById('syncBtn').innerText = "同步中...";
             try {
-                const res = await fetch(ASSETS_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
-                    body: JSON.stringify({ email: e })
-                });
+                const res = await fetch(ASSETS_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ email: e }) });
                 const data = await res.json();
                 globalData.factory = data.factory || [];
                 globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI();
+                initCharts();
                 if (isManual) showNotify("云端情报同步成功");
-            } catch (err) {
-                showNotify("信号被干扰，同步受阻", "error");
-            } finally {
-                if (isManual) { btn.innerText = "同步资产"; btn.disabled = false; }
-            }
+            } catch (err) { showNotify("同步受阻", "error"); }
+            finally { document.getElementById('syncBtn').innerText = "同步云端"; }
         }
 
+        // 🚀 核心：渲染逻辑（支持置顶星标）
         function renderUI() {
+            document.getElementById('stat-all').innerText = globalData.factory.length + globalData.radar.length;
             document.getElementById('stat-factory').innerText = globalData.factory.length;
             document.getElementById('stat-radar').innerText = globalData.radar.length;
+            document.getElementById('stat-fav').innerText = favorites.length;
 
             const grid = document.getElementById('assetGrid');
             grid.innerHTML = '';
@@ -208,72 +196,125 @@
             const allItems = [
                 ...globalData.factory.map((item, i) => ({ ...item, _type: 'factory', _idx: i })),
                 ...globalData.radar.map((item, i) => ({ ...item, _type: 'radar', _idx: i }))
-            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            ].sort((a, b) => {
+                // 1. 星标置顶
+                const aFav = favorites.includes(`${a._type}_${a.id}`);
+                const bFav = favorites.includes(`${b._type}_${b.id}`);
+                if (aFav !== bFav) return bFav ? -1 : 1;
+                // 2. 日期排序
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
 
             const filtered = allItems.filter(item => {
-                const matchType = currentFilter === 'all' || item._type === currentFilter;
+                const key = `${item._type}_${item.id}`;
+                const matchType = currentFilter === 'all' || (currentFilter === 'fav' ? favorites.includes(key) : item._type === currentFilter);
                 const title = (item.sector || item.location || "").toLowerCase();
-                const content = (item.blueprint_content || item.report_content || "").toLowerCase();
-                const matchSearch = title.includes(currentSearch) || content.includes(currentSearch);
+                const matchSearch = title.includes(currentSearch);
                 return matchType && matchSearch;
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-20 text-center mono opacity-10 uppercase tracking-[0.5em]">No_Assets_Found</div>`;
+                grid.innerHTML = `<div class="col-span-full py-20 text-center mono opacity-10 uppercase tracking-widest">No_Asset_Found</div>`;
                 return;
             }
 
             filtered.forEach(item => {
-                const isFactory = item._type === 'factory';
-                const accent = isFactory ? 'text-blue-500' : 'text-emerald-500';
-                const accentBorder = isFactory ? 'border-blue-500/20' : 'border-emerald-500/20';
+                const isF = item._type === 'factory';
+                const key = `${item._type}_${item.id}`;
+                const isFav = favorites.includes(key);
+                const accent = isF ? 'text-blue-500' : 'text-emerald-500';
 
                 const card = document.createElement('div');
-                card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border ${accentBorder}`;
+                card.className = `glass-panel p-8 rounded-[2.5rem] asset-card border ${isF ? 'border-blue-500/20' : 'border-emerald-500/20'}`;
                 card.onclick = () => openModal(item._type, item._idx);
                 card.innerHTML = `
-                    <button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black" title="执行物理抹除">✕</button>
+                    <button onclick="toggleFav(event, '${key}')" class="card-action-btn star-btn ${isFav ? 'active' : ''}" title="标记收藏">★</button>
+                    <button onclick="handleDelete(event, '${item._type}', ${item.id})" class="card-action-btn shredder-btn" title="物理抹除">✕</button>
                     <div class="flex justify-between items-start mb-6">
                         <span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span>
                         <span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
-                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase">${isFactory ? item.sector : item.location}</h4>
-                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">DECRYPT_ASN_${item.id} →</div>
+                    <h4 class="text-white font-black text-xl mb-4 line-clamp-2 uppercase tracking-tight">${isF ? item.sector : item.location}</h4>
+                    <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">VIEW_DETAIL →</div>
                 `;
                 grid.appendChild(card);
             });
         }
 
+        // 🚀 新增：可视化计算引擎
+        function initCharts() {
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            const ctxType = document.getElementById('typeChart').getContext('2d');
+            
+            // 摧毁旧图表防止重影
+            if(charts.trend) charts.trend.destroy();
+            if(charts.type) charts.type.destroy();
+
+            // 数据处理：过去7天
+            const days = Array.from({length: 7}, (_, i) => {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                return d.toISOString().split('T')[0];
+            }).reverse();
+
+            const allData = [...globalData.factory, ...globalData.radar];
+            const counts = days.map(day => allData.filter(i => i.created_at.startsWith(day)).length);
+
+            charts.trend = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: days.map(d => d.slice(5)),
+                    datasets: [{
+                        label: '生产量', data: counts, borderColor: '#a855f7', borderWidth: 3, pointRadius: 0, fill: true,
+                        backgroundColor: 'rgba(168, 85, 247, 0.05)', tension: 0.4
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9, family: 'JetBrains Mono' } } },
+                        y: { border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { display: false } }
+                    }
+                }
+            });
+
+            charts.type = new Chart(ctxType, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Factory', 'Radar'],
+                    datasets: [{
+                        data: [globalData.factory.length, globalData.radar.length],
+                        backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0, cutout: '80%'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function toggleFav(e, key) {
+            e.stopPropagation();
+            if (favorites.includes(key)) favorites = favorites.filter(k => k !== key);
+            else favorites.push(key);
+            localStorage.setItem('pudding_favs', JSON.stringify(favorites));
+            renderUI();
+            showNotify(favorites.includes(key) ? "已加入高价值档案库" : "已取消收藏");
+        }
+
         async function handleDelete(e, type, id) {
             e.stopPropagation();
-            if (!confirm(`[警告] 是否物理抹除 ${type.toUpperCase()} 记录 (ID: ${id})？该操作不可撤销。`)) return;
-
-            const t = localStorage.getItem('pudding_token');
-            const email = localStorage.getItem('pudding_email');
-            showNotify("执行指令：正在抹除档案...", "info");
-
+            if (!confirm(`确认物理抹除？此操作不可逆。`)) return;
+            const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
             try {
-                const res = await fetch(DELETE_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
-                    body: JSON.stringify({ id, type, email })
-                });
-
+                const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
                 if (res.ok) {
-                    if (type === 'factory') globalData.factory = globalData.factory.filter(i => i.id !== id);
-                    else globalData.radar = globalData.radar.filter(i => i.id !== id);
-                    localStorage.setItem('pudding_assets', JSON.stringify(globalData));
-                    renderUI();
-                    showNotify("档案已物理抹除，系统缓存已更新", "success");
+                    favorites = favorites.filter(k => k !== `${type}_${id}`); // 清理星标
+                    localStorage.setItem('pudding_favs', JSON.stringify(favorites));
+                    fetchAssets(true);
                 }
-            } catch (err) { showNotify("销毁任务通讯失败", "error"); }
+            } catch (err) { showNotify("网络指令失败", "error"); }
         }
 
-        function handleSearch() {
-            currentSearch = document.getElementById('assetSearch').value.toLowerCase();
-            renderUI();
-        }
-
+        function handleSearch() { currentSearch = document.getElementById('assetSearch').value.toLowerCase(); renderUI(); }
         function setFilter(type) {
             currentFilter = type;
             document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
@@ -284,48 +325,34 @@
         function openModal(type, idx) {
             const item = globalData[type][idx];
             const content = item.blueprint_content || item.report_content;
-            document.getElementById('modalBody').innerHTML = marked.parse(content || "档案内容已损坏");
+            document.getElementById('modalBody').innerHTML = marked.parse(content || "档案损坏");
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             document.getElementById('pdfBtn').onclick = () => exportMultiPagePDF(item, content);
         }
 
         async function exportMultiPagePDF(item, markdown) {
-            const { jsPDF } = window.jspdf;
-            const btn = document.getElementById('pdfBtn');
-            btn.innerText = "多页渲染排版中...";
-            btn.disabled = true;
-
+            const { jsPDF } = window.jspdf; const btn = document.getElementById('pdfBtn');
+            btn.innerText = "正在渲染..."; btn.disabled = true;
             document.getElementById('pdf-asn').innerText = `ASN: ${item.id}`;
             document.getElementById('pdf-date').innerText = `DATE: ${new Date(item.created_at).toLocaleString()}`;
             document.getElementById('pdf-content').innerHTML = marked.parse(markdown);
-            
             try {
                 const canvas = await html2canvas(document.getElementById('pdf-template'), { scale: 2, useCORS: true });
-                const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgWidth = 210;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                let hLeft = imgHeight, pos = 0, pageH = 295;
-
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 210, imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let hLeft = imgHeight, pos = 0;
                 pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
-                hLeft -= pageH;
-                while (hLeft > 0) {
-                    pos = hLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight);
-                    hLeft -= pageH;
-                }
-                pdf.save(`PuddingReport_${item.id}.pdf`);
-                showNotify("高清多页报告导出成功");
+                hLeft -= 295;
+                while (hLeft > 0) { pos = hLeft - imgHeight; pdf.addPage(); pdf.addImage(imgData, 'PNG', 0, pos, imgWidth, imgHeight); hLeft -= 295; }
+                pdf.save(`Asset_v2.8_${item.id}.pdf`);
+                showNotify("报告已通过加密链接导出");
             } catch (err) { showNotify("导出引擎异常", "error"); }
-            finally { btn.innerText = "导出多页报告"; btn.disabled = false; }
+            finally { btn.innerText = "导出 PDF 报告"; btn.disabled = false; }
         }
 
-        function closeModal() {
-            document.getElementById('viewModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
+        function closeModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
     </script>
 </body>
 </html>
