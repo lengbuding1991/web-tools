@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>全球套利雷达 | 布丁实验室</title>
+    <link rel="icon" href="../favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="../js/pudding-core.js"></script>
@@ -23,72 +24,77 @@
         .prose h1, .prose h2, .prose h3 { color: #fff !important; margin-top: 1.5em !important; }
     </style>
 </head>
-<body class="tech-grid flex flex-col h-screen overflow-hidden">
-    <div id="pudding-header"></div>
-    
+<body class="tech-grid flex flex-col md:flex-row w-full h-screen overflow-hidden">
     <div id="notify-container"></div>
-    <div id="lockscreen"><div class="text-emerald-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Radar_Linking...</div></div>
+    <div id="lockscreen"><div class="text-emerald-500 font-bold mono animate-pulse tracking-[1em] text-lg">RADAR_LINKING...</div></div>
 
-    <div class="flex flex-1 overflow-hidden">
-        <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-full z-20 border-r border-white/5 hidden lg:flex">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)]">R</div>
-                <div>
-                    <h2 class="font-black text-white text-xl tracking-tight uppercase leading-none">套利雷达</h2>
-                    <span class="text-[8px] text-emerald-500 mono font-bold uppercase tracking-widest animate-pulse mt-1 inline-block">Scanning_Global_Gap</span>
+    <aside class="w-full md:w-80 p-6 md:p-8 flex flex-col gap-6 shrink-0 glass-panel h-auto md:h-full z-20 border-r border-white/5">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_25px_rgba(16,185,129,0.4)]">R</div>
+            <div>
+                <h2 class="font-black text-white text-xl tracking-tight uppercase">套利雷达</h2>
+                <span class="text-[9px] text-emerald-500 mono font-bold uppercase tracking-widest animate-pulse">Scanning_Global_Gap</span>
+            </div>
+        </div>
+        <div class="p-5 bg-black/40 rounded-2xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto hidden md:block" id="logs">
+            <div class="text-emerald-900">> [系统] 卫星链路已握手...</div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
+        <header class="h-16 md:h-20 shrink-0 flex items-center justify-between px-6 md:px-8 border-b border-white/5 glass-panel z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                <span class="text-[10px] font-black text-slate-400 mono tracking-[0.2em]" id="userStation">SCANNER</span>
+            </div>
+            <div class="flex items-center gap-2 md:gap-4">
+                <a href="/dashboard/" class="px-4 py-2 border border-purple-500/30 rounded-full text-[9px] font-black uppercase text-purple-400 hover:bg-purple-600 hover:text-white transition-all">进入金库</a>
+                <a href="/" class="px-4 py-2 border border-white/10 rounded-full text-[9px] font-black uppercase text-slate-400">返回基地</a>
+                <div class="hidden md:flex glass-panel px-4 py-2.5 rounded-full border border-blue-500/20 items-center gap-2">
+                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                    <span class="text-[9px] font-bold text-blue-400 mono uppercase" id="userName">ARCHITECT</span>
                 </div>
+                <button onclick="handleLogout()" class="px-3 py-2 text-slate-600 hover:text-red-400 transition-all font-bold text-[9px] uppercase mono">Logout</button>
             </div>
-            <div class="p-5 bg-black/40 rounded-2xl border border-white/5 mono text-[10px] text-slate-500 flex-1 overflow-y-auto" id="logs">
-                <div class="text-emerald-900">> [系统] 卫星链路握手成功...</div>
-            </div>
-        </aside>
+        </header>
 
-        <main class="flex-1 flex flex-col h-full overflow-hidden z-10">
-            <div class="h-12 shrink-0 flex items-center px-8 border-b border-white/5 bg-slate-900/40">
-                <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span class="text-[9px] font-black text-slate-500 mono tracking-[0.3em] uppercase" id="userStation">SCANNER_STATION_LOADING...</span>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 md:p-12 lg:p-20" id="scrollArea">
-                <div class="max-w-4xl mx-auto space-y-10 pb-32">
-                    <div class="glass-panel p-6 md:p-14 rounded-[2rem] md:rounded-[3rem] shadow-2xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-1 h-full bg-emerald-600"></div>
-                        <form id="radarForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-                            <div class="space-y-4">
-                                <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">监测目标区 / Location</label>
-                                <input type="text" id="location" required placeholder="例如：泰国曼谷, 日本东京..." class="w-full px-7 py-4 rounded-2xl text-sm outline-none focus:ring-1 ring-emerald-500 transition-all">
-                            </div>
-                            <div class="space-y-4">
-                                <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">投入资本 / Capital</label>
-                                <input type="text" id="assets" required placeholder="例如：10万人民币..." class="w-full px-7 py-4 rounded-2xl text-sm outline-none focus:ring-1 ring-emerald-500 transition-all">
-                            </div>
-                            <div class="md:col-span-2 space-y-4">
-                                <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">地理套利赛道选择</label>
-                                <select id="niche" class="custom-select w-full px-7 py-4 rounded-2xl text-sm cursor-pointer outline-none focus:ring-1 ring-emerald-500">
-                                    <option value="数字游民生活套利">💻 数字游民高净值流转</option>
-                                    <option value="跨境贸易降维打击">🚢 跨境贸易降维打击</option>
-                                    <option value="全球资产价值洼地">💎 全球资产价值洼地</option>
-                                    <option value="技能全球化溢价">🛠️ 技能全球化溢价</option>
-                                    <option value="离岸税务与被动收入">🌴 离岸税务与被动收入</option>
-                                </select>
-                            </div>
-                            <button type="submit" id="submitBtn" class="md:col-span-2 py-5 mt-2 bg-emerald-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.4em] hover:bg-emerald-500 shadow-xl transition-all">发射探测波束 · 捕捉全球差价</button>
-                        </form>
-                    </div>
-
-                    <div id="resultArea" class="hidden glass-panel p-6 md:p-16 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl border border-emerald-500/20">
-                        <div id="blueprintContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div>
-                        <div class="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Enterprise_Signal_Strength: Ultra</div>
-                            <button id="exportBtn" class="w-full md:w-auto px-10 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm">↓ 导出格式化 PDF 情报</button>
+        <div class="flex-1 overflow-y-auto p-4 md:p-12 lg:p-20" id="scrollArea">
+            <div class="max-w-4xl mx-auto space-y-10 pb-32">
+                <div class="glass-panel p-6 md:p-14 rounded-[2rem] md:rounded-[3rem] shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-emerald-600"></div>
+                    <form id="radarForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                        <div class="space-y-4">
+                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">监测目标区 / Location</label>
+                            <input type="text" id="location" required placeholder="例如：泰国曼谷, 日本东京..." class="w-full px-7 py-4 rounded-2xl text-sm">
                         </div>
+                        <div class="space-y-4">
+                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">投入资本 / Capital</label>
+                            <input type="text" id="assets" required placeholder="例如：10万人民币..." class="w-full px-7 py-4 rounded-2xl text-sm">
+                        </div>
+                        <div class="md:col-span-2 space-y-4">
+                            <label class="text-[10px] uppercase font-black text-emerald-500 tracking-[0.2em] ml-1">地理套利赛道选择</label>
+                            <select id="niche" class="custom-select w-full px-7 py-4 rounded-2xl text-sm cursor-pointer">
+                                <option value="数字游民生活套利">💻 数字游民高净值流转</option>
+                                <option value="跨境贸易降维打击">🚢 跨境贸易降维打击</option>
+                                <option value="全球资产价值洼地">💎 全球资产价值洼地</option>
+                                <option value="技能全球化溢价">🛠️ 技能全球化溢价</option>
+                                <option value="离岸税务与被动收入">🌴 离岸税务与被动收入</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="submitBtn" class="md:col-span-2 py-5 mt-2 bg-emerald-600 text-white font-black rounded-2xl text-xs uppercase tracking-[0.4em] hover:bg-emerald-500 shadow-lg transition-all">发射探测波束</button>
+                    </form>
+                </div>
+
+                <div id="resultArea" class="hidden glass-panel p-6 md:p-16 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl border border-emerald-500/20">
+                    <div id="blueprintContent" class="prose prose-invert prose-emerald max-w-none text-slate-300"></div>
+                    <div class="mt-12 md:mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="text-[9px] mono text-slate-600 uppercase tracking-widest">Signal_Strength: High_Res</div>
+                        <button id="exportBtn" class="w-full md:w-auto px-10 py-4 bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm">↓ 导出格式化 PDF 情报</button>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script>
         const RADAR_API = "https://nas-n8n.lbuding.com/webhook/radar-engine";
@@ -96,13 +102,10 @@
 
         window.onload = () => {
             const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user');
-            if (!t || !u) { window.location.href = "../"; return; }
-            document.getElementById('userStation').innerText = `${u.toUpperCase()}_SCANNER_UNIT`;
-            setTimeout(() => { 
-                document.getElementById('lockscreen').style.opacity = '0'; 
-                setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); 
-                addLog(`波束已聚焦，特工 ${u} 在线。`, 'text-emerald-400'); 
-            }, 500);
+            if (!t || !u) { window.location.href = "/"; return; }
+            document.getElementById('userName').innerText = u.toUpperCase();
+            document.getElementById('userStation').innerText = u.toUpperCase() + "_SCANNER";
+            setTimeout(() => { document.getElementById('lockscreen').style.opacity = '0'; setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); addLog(`波束已聚焦，特工 ${u} 在线。`, 'text-emerald-400'); }, 500);
         };
 
         document.getElementById('radarForm').addEventListener('submit', async (e) => {
@@ -112,14 +115,13 @@
                 const data = await res.json();
                 const content = data.blueprint || data.report;
                 if (content) {
-                    addLog("全球差价信号捕捉成功。", "text-green-500");
+                    addLog("信号捕捉成功。", "text-green-500");
                     document.getElementById('blueprintContent').innerHTML = marked.parse(content);
                     document.getElementById('resultArea').classList.remove('hidden');
-                    // 🚀 核心：调用中台 PDF 引擎，传入 'radar' 类型以匹配配色
-                    document.getElementById('exportBtn').onclick = () => generateIsolatedPDF({id:'NEW_INTEL'}, content, 'radar');
+                    document.getElementById('exportBtn').onclick = () => generateIsolatedPDF({id:'NEW'}, content, 'radar');
                     setTimeout(() => { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' }); }, 300);
                 }
-            } catch (err) { showNotify("卫星链路同步失败", "error"); } finally { btn.innerText = "发射探测波束 · 捕捉差价"; btn.disabled = false; }
+            } catch (err) { showNotify("信号丢失", "error"); } finally { btn.innerText = "发射探测波束 · 捕捉差价"; btn.disabled = false; }
         });
     </script>
 </body>

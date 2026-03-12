@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>资产指挥中心 | 布丁实验室</title>
+    <link rel="icon" href="../favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,31 +21,35 @@
         .stat-card.active { border-color: var(--vault-purple); background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 1) 100%); }
         .asset-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); position: relative; }
         .asset-card:hover { border-color: var(--vault-purple); transform: scale(1.02); }
-        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0.4; color: #64748b; transition: all 0.2s; }
-        .shredder-btn:hover { opacity: 1; color: #ef4444; }
+        .shredder-btn { position: absolute; top: 20px; right: 20px; opacity: 0.4; color: #64748b; }
         #lockscreen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
         .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
     </style>
 </head>
 <body class="tech-grid p-4 md:p-12">
-    <div id="pudding-header"></div>
     <div id="notify-container"></div>
     <div id="lockscreen"><div class="text-purple-500 font-bold mono animate-pulse tracking-[1em] text-lg uppercase">Vault_Syncing...</div></div>
 
-    <div class="max-w-7xl mx-auto space-y-6 md:space-y-12 mt-6">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-purple-500/10">
-            <div>
-                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">金库概览</h2>
-                <p class="text-[9px] text-purple-400 mono uppercase tracking-[0.3em]">Operational_Status: Monitoring</p>
+    <div class="max-w-7xl mx-auto space-y-6 md:space-y-12">
+        <header class="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 md:pb-10 border-b border-purple-500/10">
+            <div class="flex items-center gap-5">
+                <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_30px_rgba(168,85,247,0.3)]">V</div>
+                <div><h1 class="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none">资产指挥中心</h1><p class="text-[9px] text-purple-400 font-bold mono uppercase tracking-[0.4em] mt-2">Pudding_Vault_Secure</p></div>
             </div>
             <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="全库档案快速检索..." class="px-6 py-3 rounded-full text-xs w-full md:w-80 bg-slate-900 border border-white/5 text-white outline-none focus:ring-1 ring-purple-500 transition-all">
-                <button id="syncBtn" onclick="fetchAssets(true)" class="w-full md:w-auto px-8 py-3 border border-purple-500/30 text-purple-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all">同步资产</button>
+                <input type="search" id="assetSearch" oninput="handleSearch()" placeholder="搜索档案..." class="px-6 py-3 rounded-full text-xs w-full md:w-64 bg-slate-900 border border-white/5 text-white outline-none focus:ring-1 ring-purple-500">
+                <div class="flex gap-2 w-full md:w-auto">
+                    <a href="/" class="flex-1 text-center px-6 py-3 bg-slate-800/40 border border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all">返回基地</a>
+                    <div class="hidden md:flex glass-panel px-4 py-3 rounded-full border border-blue-500/20 items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                        <span class="text-[9px] font-bold text-blue-400 mono uppercase" id="opName">ARCHITECT</span>
+                    </div>
+                    <button onclick="handleLogout()" class="px-4 py-3 border border-white/5 text-slate-600 hover:text-red-400 transition-all font-bold text-[10px] uppercase mono">Logout</button>
+                </div>
             </div>
-        </div>
+        </header>
 
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 glass-panel p-6 md:p-8 rounded-[2rem] shadow-xl"><div class="h-48 md:h-56"><canvas id="trendChart"></canvas></div></div>
@@ -69,9 +74,9 @@
     <div id="viewModal" class="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl p-4 md:p-12 hidden">
         <div class="max-w-4xl mx-auto h-full flex flex-col">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 text-white">
-                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic leading-none">Security_Terminal_v4.3</div>
+                <div class="text-[10px] font-black text-purple-500 mono uppercase tracking-widest italic">Asset_Secure_Terminal_v4.2</div>
                 <div class="flex gap-2 w-full md:w-auto">
-                    <button id="pdfBtn" class="flex-1 md:flex-none px-6 py-3 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500 shadow-lg shadow-purple-500/20">导出 PDF 资产</button>
+                    <button id="pdfBtn" class="flex-1 md:flex-none px-6 py-3 bg-purple-600 text-white rounded-full text-[10px] font-bold uppercase hover:bg-purple-500">导出无损 PDF</button>
                     <button onclick="closeModal()" class="flex-1 md:flex-none px-6 py-3 border border-white/10 rounded-full text-[10px] font-bold text-slate-400 hover:bg-red-600 transition-all">关闭</button>
                 </div>
             </div>
@@ -83,13 +88,14 @@
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         const DELETE_API = "https://nas-n8n.lbuding.com/webhook/delete-asset";
         let globalData = { factory: [], radar: [] };
-        let activeAsset = null, currentFilter = 'all', currentSearch = '';
+        let currentFilter = 'all', currentSearch = '';
         let charts = { trend: null, type: null };
 
         window.onload = () => {
-            const t = localStorage.getItem('pudding_token');
-            if (!t) { window.location.href = "../"; return; } // 企业级：统一鉴权回退路径
-            fetchAssets(false);
+            const t = localStorage.getItem('pudding_token'), u = localStorage.getItem('pudding_user'), cached = localStorage.getItem('pudding_assets');
+            if (!t) { window.location.href = "/"; return; }
+            document.getElementById('opName').innerText = u.toUpperCase();
+            if (cached) { globalData = JSON.parse(cached); renderUI(); initCharts(); } else { fetchAssets(false); }
             setTimeout(() => { document.getElementById('lockscreen').style.opacity = '0'; setTimeout(() => document.getElementById('lockscreen').style.display = 'none', 500); }, 500);
         };
 
@@ -101,7 +107,7 @@
                 globalData.factory = data.factory || []; globalData.radar = data.radar || [];
                 localStorage.setItem('pudding_assets', JSON.stringify(globalData));
                 renderUI(); initCharts();
-                if (isManual) showNotify("中台数据同步成功");
+                if (isManual) showNotify("数据已同步");
             } catch (err) { showNotify("同步受阻", "error"); }
         }
 
@@ -121,7 +127,7 @@
                 card.onclick = () => openModal(item._type, item._idx);
                 card.innerHTML = `<button onclick="handleDelete(event, '${item._type}', ${item.id})" class="shredder-btn text-[10px] font-black">✕</button>
                     <div class="flex justify-between items-start mb-6"><span class="mono text-[9px] ${accent} font-bold bg-white/5 px-2 py-1 rounded">${item._type.toUpperCase()}</span><span class="text-[9px] text-slate-600 mono">${new Date(item.created_at).toLocaleDateString()}</span></div>
-                    <h4 class="text-white font-black text-lg md:text-xl mb-4 line-clamp-2 uppercase leading-tight">${isF ? item.sector : item.location}</h4>
+                    <h4 class="text-white font-black text-lg md:text-xl mb-4 line-clamp-2 uppercase">${isF ? item.sector : item.location}</h4>
                     <div class="mt-auto pt-4 border-t border-white/5 text-[10px] mono ${accent} font-bold italic">ASN_${item.id} DECRYPT →</div>`;
                 grid.appendChild(card);
             });
@@ -133,18 +139,19 @@
             document.getElementById('modalBody').innerHTML = marked.parse(content);
             document.getElementById('viewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('pdfBtn').onclick = () => generateIsolatedPDF(asset, content, type); // 🚀 引用中台引擎
+            document.getElementById('pdfBtn').onclick = () => generateIsolatedPDF(asset, content, type); // 🚀 调用中台逻辑
         }
 
+        // 🚀 修改：使用中台的 Toast 确认对话框逻辑
         async function handleDelete(e, type, id) { 
             e.stopPropagation(); 
-            const confirmed = await showConfirmToast(`确认永久移除该项企业级资产记录 ASN-${id}？`); // 🚀 引用中台确认逻辑
+            const confirmed = await showConfirmToast(`确认物理销毁 ASN-${id}？`);
             if (!confirmed) return; 
 
             const t = localStorage.getItem('pudding_token'), email = localStorage.getItem('pudding_email');
             try {
                 const res = await fetch(DELETE_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ id, type, email }) });
-                if (res.ok) { fetchAssets(true); showNotify("资产记录已抹除"); }
+                if (res.ok) { fetchAssets(true); showNotify("资产已抹除"); }
             } catch (err) { showNotify("操作失败", "error"); } 
         }
 

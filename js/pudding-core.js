@@ -1,82 +1,104 @@
 /**
- * Pudding Lab Enterprise UI Engine v4.3 (Robust Version)
- * 强化版：自启动注入、多级路径修复、控制台自检
+ * Pudding Lab Core Engine v4.2
+ * 共享逻辑中台：通知、PDF、鉴权、确认
  */
 
-(function() {
-    console.log("🚀 Pudding Core Engine v4.3 启动中...");
+// 1. 标准通知 Toast
+window.showNotify = (msg, type = 'success') => {
+    const container = document.getElementById('notify-container');
+    if (!container) return;
+    const card = document.createElement('div');
+    card.className = `notify-card text-white font-bold mono text-[11px]`;
+    // 根据类型调整边框色
+    card.style.borderColor = type === 'error' ? '#ef4444' : (type === 'radar' ? '#10b981' : '#3b82f6');
+    card.innerHTML = `⚡ ${msg}`;
+    container.appendChild(card);
+    setTimeout(() => { 
+        card.style.opacity = '0'; 
+        setTimeout(() => card.remove(), 500); 
+    }, 3000);
+};
 
-    // 自动识别路径：确保在根目录和子目录下 Favicon 和链接都正确
-    const path = window.location.pathname;
-    const isSubDir = path.includes('/dashboard/') || path.includes('/factory/') || path.includes('/radar/');
-    const basePath = isSubDir ? '../' : './';
-
-    // 1. 核心注入逻辑
-    window.injectPuddingHeader = () => {
-        const headerPlaceholder = document.getElementById('pudding-header');
-        if (!headerPlaceholder) {
-            console.error("❌ 引擎异常：未找到 id='pudding-header' 的注入点");
-            return;
-        }
-
-        const user = localStorage.getItem('pudding_user') || 'GUEST';
-        const isLogged = !!localStorage.getItem('pudding_token');
-
-        headerPlaceholder.innerHTML = `
-        <nav class="h-20 flex items-center justify-between px-6 md:px-8 glass border-b border-white/5 sticky top-0 z-50">
-            <div class="flex items-center gap-3 md:gap-4">
-                <a href="${basePath}" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg text-xl shadow-blue-500/20 hover:scale-105 transition-transform">B</a>
-                <div>
-                    <h1 class="text-xs md:text-sm font-black text-white tracking-widest uppercase leading-tight">Pudding Lab <span class="text-[8px] bg-blue-500/20 text-blue-400 px-1 rounded ml-1">ENT</span></h1>
-                    <p class="text-[8px] md:text-[9px] text-blue-500 font-bold tracking-[0.2em] md:tracking-[0.3em]">数字化资产实验基地</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                ${!isLogged ? `
-                    <button onclick="toggleAuthModal()" class="px-4 md:px-6 py-2 bg-blue-600/10 border border-blue-500/40 rounded-full text-[9px] md:text-[10px] font-black text-blue-400 uppercase tracking-widest hover:bg-blue-600/20 transition-all">接入实验室 / CONNECT</button>
-                ` : `
-                    <div class="flex items-center gap-2 md:gap-4">
-                        <a href="${basePath}dashboard/" class="px-3 md:px-4 py-1.5 bg-purple-600/10 border border-purple-500/40 rounded-full text-[9px] md:text-[10px] font-black text-purple-400 hover:bg-purple-600 hover:text-white transition-all shadow-sm">进入金库</a>
-                        <div class="glass px-3 md:px-4 py-1.5 rounded-full border border-blue-500/20 flex items-center gap-2">
-                            <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
-                            <span class="text-[9px] md:text-[10px] font-bold text-blue-400 mono uppercase">${user}</span>
-                        </div>
-                        <button onclick="handleLogout()" class="text-[9px] md:text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
-                    </div>
-                `}
-            </div>
-        </nav>`;
-        console.log("✅ 导航栏注入完成，当前用户:", user);
-    };
-
-    // 2. 通用服务
-    window.showNotify = (msg, type = 'success') => {
+// 2. 带按钮的 Toast 确认对话框 (Promise 版)
+window.showConfirmToast = (msg) => {
+    return new Promise((resolve) => {
         const container = document.getElementById('notify-container');
-        if (!container) return;
+        if (!container) return resolve(false);
         const card = document.createElement('div');
-        card.className = `notify-card text-white border-blue-500 font-bold mono text-[11px]`;
-        if(type === 'error') card.style.borderColor = '#ef4444';
-        card.innerHTML = `⚡ ${msg}`;
-        container.appendChild(card);
-        setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3000);
-    };
+        card.className = `notify-card border-red-500/50 bg-slate-900/95 flex flex-col gap-4`;
+        card.innerHTML = `
+            <div class="flex items-center gap-3 text-red-400 font-bold text-[11px]">
+                <span class="animate-pulse">⚠️</span> ${msg}
+            </div>
+            <div class="flex gap-2">
+                <button id="toast-ok" class="flex-1 py-2 bg-red-600/20 border border-red-600/40 text-red-500 text-[9px] font-black rounded-lg hover:bg-red-600 hover:text-white transition-all uppercase">Confirm</button>
+                <button id="toast-cancel" class="flex-1 py-2 bg-slate-800 text-slate-400 text-[9px] font-black rounded-lg hover:bg-slate-700 transition-all uppercase">Cancel</button>
+            </div>
+        `;
+        container.prepend(card);
 
-    window.handleLogout = () => {
-        localStorage.clear();
-        window.location.href = basePath;
-    };
+        const handleOk = () => { cleanup(); resolve(true); };
+        const handleCancel = () => { cleanup(); resolve(false); };
+        const cleanup = () => {
+            card.style.opacity = '0';
+            setTimeout(() => card.remove(), 500);
+        };
 
-    // 3. 自动挂载 Favicon (企业级全局策略)
-    if (!document.querySelector('link[rel="icon"]')) {
-        const link = document.createElement('link');
-        link.rel = 'icon'; link.type = 'image/png'; link.href = basePath + 'favicon.png';
-        document.head.appendChild(link);
-    }
+        card.querySelector('#toast-ok').onclick = handleOk;
+        card.querySelector('#toast-cancel').onclick = handleCancel;
+        setTimeout(() => { if(card.parentNode) { cleanup(); resolve(false); } }, 10000); // 10秒超时
+    });
+};
+
+// 3. 跨平台隔离沙盒 PDF 生成引擎 (支持无黑边与格式注入)
+window.generateIsolatedPDF = (asset, markdown, type = 'factory') => {
+    const themeColor = type === 'factory' ? "#3b82f6" : "#10b981";
+    const subTitle = type === 'factory' ? "BLUEPRINT_ASSET_REPORT" : "RADAR_INTEL_REPORT";
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed'; iframe.style.right = '0'; iframe.style.bottom = '0';
+    iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    const printHTML = `
+        <html>
+        <head>
+            <style>
+                body { background: white !important; color: #1a1a1a !important; font-family: sans-serif; padding: 40px; margin: 0; }
+                .header { border-bottom: 3px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+                .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #888; font-family: monospace; }
+                .markdown-body { line-height: 1.7; font-size: 11pt; }
+                .markdown-body h1, .markdown-body h2 { color: #000; margin-top: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                .markdown-body strong { font-weight: 800; color: #000; }
+                .markdown-body ul { padding-left: 1.5em; }
+                * { box-shadow: none !important; border-radius: 0 !important; background-clip: padding-box !important; }
+                @media print { @page { margin: 1.5cm; } .container { padding: 0; } }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div><h1 style="margin:0; font-size:24pt;">布丁实验室资产报告</h1><p style="color:${themeColor}; margin:5px 0; font-weight:bold;">${subTitle}</p></div>
+                <div style="text-align:right;"><p style="margin:0; font-weight:bold;">ASN: ${asset.id}</p><p style="margin:0; font-size:9pt; color:#666;">DATE: ${new Date(asset.created_at).toLocaleString()}</p></div>
+            </div>
+            <div class="markdown-body">${marked.parse(markdown)}</div>
+            <div class="footer"><div>HUB: https://tools.lbuding.com | WECHAT: lengbuding0101</div><div>© Pudding Lab Confidential</div></div>
+        </body>
+        </html>`;
     
-    // 4. 强力自启动监控
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', window.injectPuddingHeader);
-    } else {
-        window.injectPuddingHeader();
-    }
-})();
+    doc.open(); doc.write(printHTML); doc.close();
+    window.showNotify("正在解析排版...");
+    iframe.contentWindow.onload = () => {
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            setTimeout(() => document.body.removeChild(iframe), 1000);
+        }, 600);
+    };
+};
+
+// 4. 通用登出
+window.handleLogout = () => {
+    localStorage.clear();
+    location.href = "/";
+};
