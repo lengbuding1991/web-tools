@@ -6,6 +6,7 @@
     <title>布丁实验室 | 大本营</title>
     <link rel="icon" href="./favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./js/pudding-core.js?v=5.3"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap');
         :root { --main-blue: #3b82f6; --bg-dark: #020617; --vault-purple: #a855f7; }
@@ -15,14 +16,12 @@
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glow-text { text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         
-        /* 🚀 统一 Toast 样式 */
         #notify-container { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .notify-card { pointer-events: auto; min-width: 280px; padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(15, 23, 42, 0.95); animation: slideIn 0.4s forwards; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* 情报墙动画 */
-        .pulse-item { animation: slideUpFade 0.6s ease-out forwards; opacity: 0; }
-        @keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .pulse-item { animation: slideInLeft 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
         input { background: #0f172a !important; border: 1px solid #1e293b !important; color: #f8fafc !important; }
         ::-webkit-scrollbar { width: 6px; }
@@ -48,7 +47,7 @@
                 <a href="/dashboard/" class="px-3 md:px-4 py-1.5 bg-purple-600/10 border border-purple-500/40 rounded-full text-[9px] md:text-[10px] font-black text-purple-400 uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all shadow-sm">进入金库</a>
                 <div class="glass px-3 md:px-4 py-1.5 rounded-full border border-blue-500/20 flex items-center gap-2">
                     <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
-                    <span class="text-[9px] md:text-[10px] font-bold text-blue-400 mono uppercase" id="userName">ARCHITECT</span>
+                    <span class="text-[9px] md:text-[10px] font-bold text-blue-400 mono uppercase" id="userName">---</span>
                 </div>
                 <button onclick="handleLogout()" class="text-[9px] md:text-[10px] font-bold text-slate-600 hover:text-red-400 uppercase mono">Logout</button>
             </div>
@@ -71,7 +70,7 @@
                 <span class="text-[9px] text-slate-600 mono" id="wallStatus">OFFLINE</span>
             </div>
             <div id="intelligenceWall" class="flex-1 space-y-4 mono text-[10px] md:text-[11px] overflow-hidden">
-                <div class="text-slate-700 italic">> 正在等待特工凭证接入...</div>
+                <div class="text-slate-700 italic">> 正在等待凭证接入...</div>
             </div>
             <div class="absolute bottom-[-20px] right-[-10px] text-[80px] font-black text-white/[0.02] pointer-events-none select-none">PUDDING</div>
         </div>
@@ -119,29 +118,66 @@
         const ASSETS_API = "https://nas-n8n.lbuding.com/webhook/get-user-assets";
         let isRegisterMode = false;
 
-        // 🚀 V4.1 统一 Toast 通知
-        function showNotify(msg, type = 'success') {
-            const container = document.getElementById('notify-container');
-            const card = document.createElement('div');
-            card.className = `notify-card text-white border-blue-500 font-bold mono text-[11px]`;
-            if(type === 'error') card.style.borderColor = '#ef4444';
-            card.innerHTML = `⚡ ${msg}`;
-            container.appendChild(card);
-            setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 500); }, 3000);
-        }
-
-        async function loadIntelligenceWall() {
-            const t = localStorage.getItem('pudding_token'), e = localStorage.getItem('pudding_email');
+        // 🚀 核心优化：缓存优先（Cache-First）情报流，彻底解决 429 报错
+        async function startIntelligenceStream() {
             const wall = document.getElementById('intelligenceWall');
             const status = document.getElementById('wallStatus');
+            const t = localStorage.getItem('pudding_token'), e = localStorage.getItem('pudding_email');
+            const cachedAssets = localStorage.getItem('pudding_assets');
+            
             if (!t || !e) return;
-            try {
-                const res = await fetch(ASSETS_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, body: JSON.stringify({ email: e }) });
-                const data = await res.json();
-                const all = [...(data.factory || []).map(i => ({ t: 'FACTORY', n: i.sector })), ...(data.radar || []).map(i => ({ t: 'RADAR', n: i.location }))].slice(0, 3);
-                wall.innerHTML = all.length ? all.map((item, idx) => `<div class="pulse-item flex items-center gap-3 text-blue-400" style="animation-delay: ${idx * 0.2}s"><span class="text-slate-600 font-bold">[${item.t}]</span><span class="truncate tracking-wider">${item.n.toUpperCase()}</span></div>`).join('') : `<div class="text-slate-600 italic">> 暂无近期情报，等待生产投料...</div>`;
-                status.innerText = "ACTIVE_FEED";
-            } catch (err) { status.innerText = "SYNC_ERR"; }
+
+            let data;
+            // 🛡️ 逻辑拦截：如果缓存存在，绝不发起请求
+            if (cachedAssets) {
+                console.log("📦 [Home] 检测到现有资产快照，正在跳过 API 请求以规避 429 错误。");
+                data = JSON.parse(cachedAssets);
+            } else {
+                try {
+                    console.log("📡 [Home] 缓存缺失，正在建立初始化同步...");
+                    const res = await fetch(ASSETS_API, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` }, 
+                        body: JSON.stringify({ email: e }) 
+                    });
+                    data = await res.json();
+                    localStorage.setItem('pudding_assets', JSON.stringify(data));
+                } catch (err) { 
+                    console.error("Wall_Sync_Err:", err);
+                    status.innerText = "SYNC_ERR"; 
+                    return;
+                }
+            }
+
+            const allAssets = [
+                ...(data.factory || []).map(i => ({ t: 'FACTORY', n: i.sector })),
+                ...(data.radar || []).map(i => ({ t: 'RADAR', n: i.location }))
+            ];
+
+            if (allAssets.length === 0) {
+                wall.innerHTML = `<div class="text-slate-600 italic">> 暂无近期情报...</div>`;
+                return;
+            }
+
+            status.innerText = "STREAM_ACTIVE";
+            wall.innerHTML = "";
+
+            const updateWall = () => {
+                const item = allAssets[Math.floor(Math.random() * allAssets.length)];
+                const newLog = document.createElement('div');
+                newLog.className = "pulse-item flex items-center gap-3 text-blue-400";
+                newLog.innerHTML = `<span class="text-slate-600 font-bold">[${item.t}]</span><span class="truncate tracking-wider">${item.n.toUpperCase()}</span>`;
+                wall.prepend(newLog);
+                if (wall.children.length > 4) {
+                    const last = wall.lastElementChild;
+                    last.style.opacity = '0';
+                    last.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => last.remove(), 500);
+                }
+            };
+
+            updateWall();
+            setInterval(updateWall, 5000);
         }
 
         function localFastCheck() {
@@ -149,10 +185,9 @@
             if (t && u) {
                 document.getElementById('authStatusArea').classList.add('hidden');
                 document.getElementById('userProfileArea').classList.remove('hidden');
-                // 🚀 恢复用户名展示
                 document.getElementById('userName').innerText = u.toUpperCase();
                 document.getElementById('welcomeTitle').innerHTML = `欢迎回来，<br><span class="text-blue-500 glow-text">Agent ${u}。</span>`;
-                loadIntelligenceWall();
+                startIntelligenceStream();
             }
         }
 
@@ -163,19 +198,24 @@
             e.preventDefault();
             const btn = document.getElementById('authSubmit'); btn.innerText = "VERIFYING..."; btn.disabled = true;
             try {
-                const res = await fetch(AUTH_API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: isRegisterMode ? 'register' : 'login', email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value, username: document.getElementById('authUsername').value }) });
+                const res = await fetch(AUTH_API, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ action: isRegisterMode ? 'register' : 'login', email: document.getElementById('authEmail').value, password: document.getElementById('authPassword').value, username: document.getElementById('authUsername').value }) 
+                });
                 const data = await res.json();
                 if (data.token) {
                     localStorage.setItem('pudding_token', data.token);
                     localStorage.setItem('pudding_user', data.username || "Agent");
                     localStorage.setItem('pudding_email', document.getElementById('authEmail').value); 
-                    showNotify("身份验证成功，欢迎接入。");
-                    setTimeout(() => location.reload(), 1000);
+                    // 🚀 登录成功后，清除旧缓存以强制下次获取最新资产
+                    localStorage.removeItem('pudding_assets');
+                    showNotify("认证成功"); 
+                    setTimeout(() => location.reload(), 800);
                 } else { showNotify(data.message || "拒绝访问", "error"); }
             } catch (err) { showNotify("链路阻塞", "error"); } finally { btn.innerText = "确认接入 ACCESS"; btn.disabled = false; }
         });
 
-        function handleLogout() { localStorage.clear(); location.reload(); }
         window.addEventListener('DOMContentLoaded', localFastCheck); 
     </script>
 </body>
